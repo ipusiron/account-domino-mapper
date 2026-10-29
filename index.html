@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ja" data-app-ready="false">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; connect-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。">
+  <title>Account Domino Mapper</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="theme-init.js"></script>
+  <script src="domino-core.js" defer></script>
+  <script src="domino-data.js" defer></script>
+  <script src="domino-view.js" defer></script>
+  <script src="messages.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="masthead">
+      <h1>Account Domino <span>Mapper</span></h1>
+      <fieldset id="startup-tools" class="header-tools startup-control-group" disabled aria-label="表示 / Display" data-i18n-aria="displayControls">
+        <button id="theme" class="icon-button" type="button" data-i18n-aria="themeToggle" aria-label="明暗を切り替える">◐</button>
+        <button id="language" class="icon-button" type="button" data-i18n-aria="languageToggle" aria-label="言語を切り替える">EN</button>
+        <button id="help" class="icon-button" type="button" data-i18n-aria="help" aria-haspopup="dialog" aria-label="ヘルプと座学">?</button>
+      </fieldset>
+    </div>
+  </header>
+  <main>
+    <aside id="startup-note" class="startup-note" role="status">
+      <p>図と操作を準備中 / <span lang="en">Loading diagrams and controls</span></p>
+      <details id="startup-help">
+        <summary>表示されない場合 / <span lang="en">If nothing appears</span></summary>
+        <p>説明文はこのまま読めます。図と操作が表示されない場合は、JavaScriptを有効にして別タブで開き直してください。</p>
+        <p lang="en">You can read the explanations. If diagrams and controls do not appear, enable JavaScript and reopen this page in a new tab.</p>
+        <a id="startup-reload" href="" target="_blank" rel="noopener noreferrer">別タブで開き直す / Reopen in a new tab</a>
+      </details>
+    </aside>
+    <noscript>JavaScriptを有効にしてください。 / Please enable JavaScript.</noscript>
+    <p class="intro" data-i18n="intro">架空の3人のアカウントの地図で、1つの漏えいがログインと復旧の線を伝って広がる様子と、入口を1つ変えたときの違いを確かめる教材です。アカウントの強さは、ログインと復旧のうち、いちばん弱い入口で決まります。漏えいは防げなくても、連鎖は自分で断てます。</p>
+    <fieldset id="startup-controls" class="startup-control-group" disabled aria-label="教材 / Learning aid" data-i18n-aria="learningControls">
+      <section id="person-band" class="person-band" aria-labelledby="person-heading">
+        <h2 id="person-heading" data-i18n="personHeading">人物（架空）</h2>
+        <div class="person-buttons" role="group" aria-labelledby="person-heading">
+          <button id="person-worker" type="button" data-key="persona:worker" aria-pressed="true" data-i18n="personWorker">会社員 ハルト</button>
+          <button id="person-parent" type="button" data-key="persona:parent" aria-pressed="false" data-i18n="personParent">高齢の親 シズエ</button>
+          <button id="person-student" type="button" data-key="persona:student" aria-pressed="false" data-i18n="personStudent">学生 ミオ</button>
+        </div>
+        <p id="person-counts" class="person-counts">アカウント9・パスワードの系統3。架空の人物で、本物のアカウントの情報を入れる欄はありません。</p>
+      </section>
+      <p id="person-status" class="visually-hidden" role="status" aria-live="polite"></p>
+      <nav class="tabs" role="tablist" aria-label="学ぶ順番" data-i18n-aria="tablist">
+        <button id="tab-chain" role="tab" type="button" aria-controls="panel-chain"
+          aria-selected="true" tabindex="0" data-i18n="tabChain">連鎖を追う</button>
+        <button id="tab-lockout" role="tab" type="button" aria-controls="panel-lockout"
+          aria-selected="false" tabindex="-1" data-i18n="tabLockout">閉め出し</button>
+        <button id="tab-compare" role="tab" type="button" aria-controls="panel-compare"
+          aria-selected="false" tabindex="-1" data-i18n="tabCompare">1手で比べる</button>
+        <button id="tab-rules" role="tab" type="button" aria-controls="panel-rules"
+          aria-selected="false" tabindex="-1" data-i18n="tabRules">規則表</button>
+      </nav>
+      <section id="panel-chain" class="panel" role="tabpanel" aria-labelledby="tab-chain" tabindex="0">
+        <h2 data-i18n="tabChain">連鎖を追う</h2>
+        <p data-i18n="chainIntro">攻撃カードを1枚選ぶと、攻撃者がそこから入れるアカウントを段ごとに数えます。攻撃者が入れるようになることを「倒れる」と呼びます。段0はカードが渡したもの、段1はそれだけで入口が開くアカウント、段2はさらにその先です。</p>
+      </section>
+      <section id="panel-lockout" class="panel" role="tabpanel" aria-labelledby="tab-lockout" tabindex="0" hidden>
+        <h2 data-i18n="tabLockout">閉め出し</h2>
+        <p data-i18n="lockIntro">本人がスマホ・電話番号・メールのどれかを失ったとき、手元に残ったもので入れるかを並べます。○の横の「＋番号で×」は、それも一緒に失うと入れなくなる、という意味です。</p>
+      </section>
+      <section id="panel-compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
+        <h2 data-i18n="tabCompare">1手で比べる</h2>
+        <p data-i18n="compareIntro">ログインか復旧の入口を1つだけ変えて、攻撃の広がりと閉め出しを前後で比べます。1手は3種類です。ログインにスマホを足す・条件を1つ付け替える・復旧の入口を1つ外す（条件が2つある入口を外すと、線は2本なくなります）。</p>
+      </section>
+      <section id="panel-rules" class="panel" role="tabpanel" aria-labelledby="tab-rules" tabindex="0" hidden>
+        <h2 data-i18n="rulesHeading">規則表（単純化した模型）</h2>
+        <p data-i18n="rulesIntro">この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。</p>
+      </section>
+    </fieldset>
+  </main>
+  <footer><a href="https://github.com/ipusiron/account-domino-mapper" data-i18n="footerLink" target="_blank" rel="noopener noreferrer">GitHub（ipusiron/account-domino-mapper）</a></footer>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="help-header"><h2 id="help-title" data-i18n="help">ヘルプと座学</h2>
+      <button id="close-help" type="button" data-i18n="close">閉じる</button></div>
+    <div class="help-body" role="region" tabindex="0" data-i18n-aria="helpBody" aria-label="ヘルプの本文">
+      <h3 data-i18n="helpFirst">はじめて読むとき</h3>
+      <p data-i18n="helpFirstText">最初は「連鎖を追う」で会社員の漏えいを1段ずつ進め、次に「閉め出し」、最後に「1手で比べる」で同じ人の1手を試してください。</p>
+      <h3 data-i18n="helpKeysHeading">操作</h3>
+      <p data-i18n="helpKeys">タブは←→・Home・Endで移り、ヘルプはEscで閉じます。</p>
+      <h3 data-i18n="helpTermsHeading">用語</h3>
+      <dl id="help-terms" class="glossary">
+        <dt data-i18n="termAccount">アカウント</dt>
+        <dd data-i18n="termAccountMeaning">メール・銀行・SNSなどの1つ。地図の表の1行（広い画面の図では、資格情報より右に並ぶ箱）</dd>
+        <dt data-i18n="termEntrance">入口</dt>
+        <dd data-i18n="termEntranceMeaning">1つのアカウントに入る手段。ログインの入口と復旧の入口がある</dd>
+        <dt data-i18n="termRequirement">条件</dt>
+        <dd data-i18n="termRequirementMeaning">入口に要るもの。2つ以上なら「かつ」</dd>
+        <dt data-i18n="termAndOr">かつ／または</dt>
+        <dd data-i18n="termAndOrMeaning">1つの入口の条件はすべて要る／入口はどれか1つ開けばよい</dd>
+        <dt data-i18n="termFamily">系統</dt>
+        <dd data-i18n="termFamilyMeaning">パスワードを色と英字で表したもの（赤A）。同じ系統は使い回し（少し変えたものを含む）</dd>
+        <dt data-i18n="termLineType">線の種類</dt>
+        <dd data-i18n="termLineTypeMeaning">パスワードの系統・多要素・メール・SMS・窓口・紙の回復コードの6種</dd>
+        <dt data-i18n="termAttackCard">攻撃カード</dt>
+        <dd data-i18n="termAttackCardMeaning">攻撃者が最初に手にするもの（漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすまし）</dd>
+        <dt data-i18n="termFalls">倒れる</dt>
+        <dd data-i18n="termFallsMeaning">攻撃者がそのアカウントに入れるようになること</dd>
+        <dt data-i18n="termStep">段</dt>
+        <dd data-i18n="termStepMeaning">段0はカードが渡したもの。段rは、条件がすべて段r−1までにそろった入口で開いたもの</dd>
+        <dt data-i18n="termEntranceUsed">開けた入口</dt>
+        <dd data-i18n="termEntranceUsedMeaning">そのアカウントを開いた入口</dd>
+        <dt data-i18n="termBackdoor">裏口</dt>
+        <dd data-i18n="termBackdoorMeaning">そのカードで倒れるが、復旧の入口をすべて外すと倒れないアカウント。開けた入口がログインでも、その条件のメールが復旧の線で倒れていれば裏口</dd>
+        <dt data-i18n="termLossCard">喪失カード</dt>
+        <dd data-i18n="termLossCardMeaning">本人が失うもの（スマホをなくした・電話番号を手放した・メールが消えた・紙の回復コードをなくした）</dd>
+        <dt data-i18n="termLocked">閉め出し（×）</dt>
+        <dd data-i18n="termLockedMeaning">失ったあと、手元に残ったもので入れないこと</dd>
+        <dt data-i18n="termGone">消</dt>
+        <dd data-i18n="termGoneMeaning">メールのアカウントそのものが消えた状態。閉め出しには数えない</dd>
+        <dt data-i18n="termOneMore">あと1つ失うと×</dt>
+        <dd data-i18n="termOneMoreMeaning">○の後ろの「（＋番号で×）」。それも一緒に失うと入れない</dd>
+        <dt data-i18n="termTwoAtOnce">2つ同時</dt>
+        <dd data-i18n="termTwoAtOnceMeaning">2つを同時に失ったときだけ閉め出される</dd>
+        <dt data-i18n="termChange">1手</dt>
+        <dd data-i18n="termChangeMeaning">足す・付け替える・外すのどれか1つで、入口を1つ変える（条件が2つの入口を外すと、線は2本なくなる）</dd>
+        <dt data-i18n="termSaved">守れた／新たに倒れる</dt>
+        <dd data-i18n="termSavedMeaning">手の前は倒れ、手のあとは倒れない／その逆</dd>
+        <dt data-i18n="termUnlocked">解ける／新たに×</dt>
+        <dd data-i18n="termUnlockedMeaning">手の前は閉め出され、手のあとは入れる／その逆</dd>
+        <dt data-i18n="termSum">延べ</dt>
+        <dd data-i18n="termSumMeaning">4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）</dd>
+        <dt data-i18n="termImportant">★</dt>
+        <dd data-i18n="termImportantMeaning">重要なアカウント（並べ方で先に数える）</dd>
+        <dt data-i18n="termHoldings">手元</dt>
+        <dd data-i18n="termHoldingsMeaning">本人が直接持つもの</dd>
+      </dl>
+      <h3 data-i18n="helpAboutHeading">この教材について</h3>
+      <p data-i18n="helpAbout">学習用の教材です。本物のアカウントの構成は入れません（入れる欄もありません）。保存するのは言語と明暗の設定だけです。この画面から外へ何かを送る機能はありません。出典のリンクは、押したときだけ別タブで開きます。</p>
+    </div>
+  </dialog>
+</body>
+</html>
