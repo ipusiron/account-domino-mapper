@@ -82,6 +82,7 @@
           <button id="step-play" type="button" data-key="step:play" aria-pressed="false">▶ 再生</button>
         </div>
         <p id="step-line" class="step-line"></p>
+        <p id="step-hint" class="step-hint" data-i18n="stepHint" hidden>「最初から」を押すと、段0から1段ずつ追えます。</p>
         <p id="step-summary" class="step-summary"></p>
         <p id="step-status" class="visually-hidden" role="status" aria-live="polite"></p>
         <figure id="chain-figure" class="map-figure">
@@ -111,6 +112,7 @@
           <li id="lock-legend-mail"></li>
         </ul>
         <div id="lock-map" class="table-frame"></div>
+        <p id="lock-entrances" class="lock-entrances"></p>
         <ul class="note-list">
           <li data-i18n="lockNotePassword">この模型では、パスワードを忘れることは喪失カードに入れていません。</li>
           <li data-i18n="lockNoteNumber">「スマホをなくした」では電話番号は失いません（SIMを再発行できる前提）。</li>
@@ -120,10 +122,116 @@
       <section id="panel-compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
         <h2 data-i18n="tabCompare">1手で比べる</h2>
         <p data-i18n="compareIntro">ログインか復旧の入口を1つだけ変えて、攻撃の広がりと閉め出しを前後で比べます。1手は3種類です。ログインにスマホを足す・条件を1つ付け替える・復旧の入口を1つ外す（条件が2つある入口を外すと、線は2本なくなります）。</p>
+        <h3 id="mode-heading" data-i18n="modeHeading">何に備えるか</h3>
+        <div class="mode-buttons" role="group" aria-labelledby="mode-heading">
+          <button id="mode-leak" type="button" data-key="mode:leak" aria-pressed="false" data-i18n="modeLeak">漏えい</button>
+          <button id="mode-simswap" type="button" data-key="mode:simswap" aria-pressed="false" data-i18n="modeSimswap">SIMスワップ</button>
+          <button id="mode-mail" type="button" data-key="mode:mail" aria-pressed="false" data-i18n="modeMail">メールの乗っ取り</button>
+          <button id="mode-desk" type="button" data-key="mode:desk" aria-pressed="false" data-i18n="modeDesk">窓口のなりすまし</button>
+          <button id="mode-all" type="button" data-key="mode:all" aria-pressed="true" data-i18n="modeAll">4枚の合計</button>
+          <button id="mode-lockout" type="button" data-key="mode:lockout" aria-pressed="false" data-i18n="modeLockout">閉め出しを減らす</button>
+        </div>
+        <h3 id="candidates-heading" data-i18n="candidatesHeading">おすすめとほかの候補</h3>
+        <div id="candidates" class="candidates" role="group" aria-labelledby="candidates-heading"></div>
+        <div id="candidates-status" role="status" aria-live="polite"><p id="candidates-none" class="candidates-none" hidden></p></div>
+        <details id="ranking" class="ranking">
+          <summary data-i18n="rankingSummary">並べ方</summary>
+          <p id="ranking-text"></p>
+        </details>
+        <div class="choose">
+          <label for="choose-move" data-i18n="chooseLabel">1手を自分で選ぶ</label>
+          <select id="choose-move"></select>
+        </div>
+        <p id="no-move" class="no-move" data-i18n="noMove" hidden>上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。</p>
+        <div id="compare-result" class="compare-result">
+          <h3 id="compare-heading" class="compare-heading" tabindex="-1"></h3>
+          <div id="compare-summary" class="compare-summary" role="status" aria-live="polite"></div>
+          <div id="attack-area" class="table-frame"></div>
+          <details id="attack-names" class="attack-names">
+            <summary data-i18n="attackNames">攻撃の名前を見る</summary>
+            <div id="attack-names-table" class="table-frame"></div>
+          </details>
+          <h3 data-i18n="lockOneHeading">閉め出し（1つ失う）</h3>
+          <ul id="lock-one" class="sentence-list"></ul>
+          <h3 data-i18n="lockTwoHeading">2つ同時に失う</h3>
+          <ul id="lock-two" class="sentence-list"></ul>
+          <details id="lock-changes" class="lock-changes">
+            <summary data-i18n="beforeAfterTable">閉め出しの表の前後を見る</summary>
+            <ul class="legend-list">
+              <li data-i18n="lockLegendPhone">スマホ＝スマホをなくした</li>
+              <li data-i18n="lockLegendNumber">番号＝電話番号を手放した</li>
+              <li id="lock-changes-mail"></li>
+              <li data-i18n="legendPaper">紙＝紙の回復コードをなくした</li>
+            </ul>
+            <div id="lock-changes-table" class="table-frame"></div>
+          </details>
+          <div id="move-notes" class="move-notes"></div>
+          <h3 data-i18n="sameHeading">同じ入口のほかの手と比べる</h3>
+          <div id="same-table" class="table-frame"></div>
+          <p id="same-note" class="note" hidden></p>
+          <button id="back-to-compare" class="back-to-compare" type="button" data-key="back-to-compare" data-i18n="backToCompare">比べた結果へ戻る</button>
+          <details id="after-map" class="after-map">
+            <summary id="after-map-summary" data-i18n="afterMap">手のあとの地図を見る</summary>
+            <div class="phase-buttons" role="group" aria-labelledby="after-map-summary">
+              <button id="phase-before" type="button" data-key="phase:before" aria-pressed="false" data-i18n="mapBefore">手の前</button>
+              <button id="phase-after" type="button" data-key="phase:after" aria-pressed="true" data-i18n="mapAfter">手のあと</button>
+            </div>
+            <p id="map-card" class="map-card"></p>
+            <figure id="after-figure" class="map-figure">
+              <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
+            </figure>
+            <p class="map-legend" data-i18n="mapLegend">●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
+            <div id="after-map-table" class="table-frame"></div>
+          </details>
+        </div>
       </section>
       <section id="panel-rules" class="panel" role="tabpanel" aria-labelledby="tab-rules" tabindex="0" hidden>
         <h2 data-i18n="rulesHeading">規則表（単純化した模型）</h2>
         <p data-i18n="rulesIntro">この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。</p>
+        <div class="table-frame">
+          <table id="rules-table" class="rules-table">
+            <caption data-i18n="rulesCaption">模型の規則</caption>
+            <thead><tr><th scope="col" class="rules-no"><span aria-hidden="true">#</span><span class="visually-hidden" data-i18n="rulesColNo">番号</span></th><th scope="col" data-i18n="rulesColRule">規則</th></tr></thead>
+            <tbody>
+              <tr><th scope="row" class="rules-no">1</th><td data-i18n="rule1">アカウントには入口がある。ログインの入口と、復旧（再設定）の入口がある</td></tr>
+              <tr><th scope="row" class="rules-no">2</th>
+                <td><span data-i18n="rule2">1つの入口の条件は「かつ」。全部そろえば開く（例：パスワード＋SMSのコード）</span>
+                  <span class="rule-example" data-i18n="rule2Example">例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。線をすべて「または」として数えると、ここで倒れたことになってしまいます。</span></td></tr>
+              <tr><th scope="row" class="rules-no">3</th><td data-i18n="rule3">入口どうしは「または」。どれか1つ開けば入れる</td></tr>
+              <tr><th scope="row" class="rules-no">4</th>
+                <td data-i18n="rule4">攻撃者はカードが渡すものから始め、開いたメールも次の条件に使う。新しく開くものがなくなるまで続ける。1回の見直しで開く分を1段と数える</td></tr>
+              <tr><th scope="row" class="rules-no">5</th>
+                <td data-i18n="rule5">パスワードは系統（色と英字）で表す。同じ系統なら、どのアカウントでも同じものとみなす（少し変えた派生を含む）。漏えいのカードは、漏れたサービスがいまログインに使っている系統が、IDと組でそのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、同じ系統を使う入口ではパスワードの条件がそろう</td></tr>
+              <tr><th scope="row" class="rules-no">6</th><td data-i18n="rule6">SMSの条件は電話番号で満たす。攻撃者が持つのはSIMスワップのカードのときだけ</td></tr>
+              <tr><th scope="row" class="rules-no">7</th><td data-i18n="rule7">電話の窓口は個人情報で通る。書類での本人確認（身分証・郵送）を破るカードはない</td></tr>
+              <tr><th scope="row" class="rules-no">8</th><td data-i18n="rule8">パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある</td></tr>
+              <tr><th scope="row" class="rules-no">9</th>
+                <td data-i18n="rule9">閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消」と表し、閉め出しには数えない。パスワードを忘れることは扱わない</td></tr>
+              <tr><th scope="row" class="rules-no">10</th><td data-i18n="rule10">時間・確率・通知・不審なログインの検知は扱わない</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="symbol-table" class="table-frame"></div>
+        <h3 data-i18n="notesHeading">注記</h3>
+        <ul id="rules-notes" class="note-list rules-notes"></ul>
+        <details id="not-in-model" class="not-in-model">
+          <summary data-i18n="notInModel">この模型に入れていないもの</summary>
+          <ul class="plain-list">
+            <li data-i18n="notInModel1">パスワードの強さ</li>
+            <li data-i18n="notInModel2">攻撃の確率・手間・時間</li>
+            <li data-i18n="notInModel3">不審なログインの検知と通知</li>
+            <li data-i18n="notInModel4">同期パスキーをクラウドの回復で取り出す経路</li>
+            <li data-i18n="notInModel5">端末の感染</li>
+            <li data-i18n="notInModel6">書類の偽造</li>
+            <li data-i18n="notInModel7">パスワードを忘れること</li>
+            <li data-i18n="notInModel8">SSOとパスワード管理ソフト</li>
+            <li data-i18n="notInModel9">乗っ取ったあとに攻撃者が回復先を書き換えること</li>
+            <li data-i18n="notInModel10">漏れたパスワードがハッシュで守られていて解けない場合</li>
+          </ul>
+        </details>
+        <h3 id="paper-heading" class="paper-heading" tabindex="-1" data-i18n="paperHeading">紙に書いて当てはめる</h3>
+        <p id="paper-intro" data-i18n="paperFormIntro">自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。</p>
+        <button id="print-button" class="print-button" type="button" aria-describedby="paper-intro" data-i18n="printButton">印刷する（3人の地図と空欄の用紙）</button>
       </section>
     </fieldset>
   </main>
@@ -183,9 +291,33 @@
         <dt data-i18n="termHoldings">手元</dt>
         <dd data-i18n="termHoldingsMeaning">本人が直接持つもの</dd>
       </dl>
+      <h3 id="lessons-heading" data-i18n="lessonsHeading">座学</h3>
+      <div id="lessons" class="lessons">
+        <details id="lesson-1" class="lesson"><summary></summary>
+          <div id="lesson-1-body" class="lesson-body"></div></details>
+        <details id="lesson-2" class="lesson"><summary></summary>
+          <div id="lesson-2-body" class="lesson-body"></div></details>
+        <details id="lesson-3" class="lesson"><summary></summary>
+          <div id="lesson-3-body" class="lesson-body"></div></details>
+        <details id="lesson-4" class="lesson"><summary></summary>
+          <div id="lesson-4-body" class="lesson-body"></div></details>
+        <details id="lesson-5" class="lesson"><summary></summary>
+          <div id="lesson-5-body" class="lesson-body"></div></details>
+        <details id="lesson-6" class="lesson"><summary></summary>
+          <div id="lesson-6-body" class="lesson-body"></div></details>
+        <details id="lesson-7" class="lesson"><summary></summary>
+          <div id="lesson-7-body" class="lesson-body"></div></details>
+        <details id="lesson-8" class="lesson"><summary></summary>
+          <div id="lesson-8-body" class="lesson-body"></div></details>
+        <details id="lesson-9" class="lesson"><summary></summary>
+          <div id="lesson-9-body" class="lesson-body"></div></details>
+        <details id="lesson-10" class="lesson"><summary></summary>
+          <div id="lesson-10-body" class="lesson-body"></div></details>
+      </div>
       <h3 data-i18n="helpAboutHeading">この教材について</h3>
       <p data-i18n="helpAbout">学習用の教材です。本物のアカウントの構成は入れません（入れる欄もありません）。保存するのは言語と明暗の設定だけです。この画面から外へ何かを送る機能はありません。出典のリンクは、押したときだけ別タブで開きます。</p>
     </div>
   </dialog>
+  <section id="print-sheet" class="print-sheet"></section>
 </body>
 </html>

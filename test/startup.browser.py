@@ -120,6 +120,25 @@ PREFERENCE_SPY = """(() => {
     return original.call(this, key, value);
   };
 })();"""
+# In print media: what is printed when the application is not there (the printed sheets are then empty). The colors of every
+# text that is printed (each text node that is rendered), and the pressed buttons (the person and the card chosen) with their
+# text color and their background
+PRINTED = """() => {
+  const shown = el => !!el && el.getClientRects().length > 0;
+  const color = sel => getComputedStyle(document.querySelector(sel)).color;
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const texts = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.data.trim() && shown(node.parentElement)) texts.push(getComputedStyle(node.parentElement).color);
+  }
+  return {heading: shown(document.querySelector('h1')), intro: shown(document.querySelector('.intro')),
+    chain: shown(document.querySelector('#panel-chain')), sheet: document.querySelector('#print-sheet').children.length,
+    colors: ['h1 span', '.intro', '#person-heading', '#person-counts', '#person-worker', '#panel-chain h2'].map(color),
+    textNodes: texts.length, textColors: Array.from(new Set(texts)),
+    pressed: ['#person-worker', '#card-leak'].map(sel => (el => [sel, el.getAttribute('aria-pressed'),
+      getComputedStyle(el).color, getComputedStyle(el).backgroundColor])(document.querySelector(sel)))};
+}"""
 PREFERENCES = """() => ({theme: document.documentElement.dataset.theme, language: document.documentElement.lang,
   savedTheme: localStorage.getItem('account-domino-mapper.theme'), savedLanguage: localStorage.getItem('account-domino-mapper.language'),
   writes: window.__writes})"""
@@ -305,6 +324,21 @@ def run_case(playwright, url, spec, output):
             page.wait_for_timeout(300)
             unavailable = snap("unavailable")
             pending_contract(page, unavailable, language, spec["width"])
+            # Printing without the application shows the page's own text, black on white even when the theme is dark (the
+            # printed sheets stay empty; hiding everything else would print a blank page)
+            page.emulate_media(media="print")
+            printed = page.evaluate(PRINTED)
+            page.emulate_media(media="null")
+            check(printed["heading"] and printed["intro"] and printed["chain"] and printed["sheet"] == 0,
+                  ("print without the application shows the page's text", printed))
+            check(set(printed["colors"]) == {"rgb(0, 0, 0)"}, ("print without the application is black", printed["colors"]))
+            # Every printed text, not only the named ones (the page's own text is printed: dozens of text nodes)
+            check(printed["textNodes"] >= 20 and printed["textColors"] == ["rgb(0, 0, 0)"],
+                  ("every printed text is black without the application", printed["textNodes"], printed["textColors"]))
+            # A pressed button prints black on white as well, so that its name stays readable when backgrounds are printed
+            check(all(pressed == "true" and text == "rgb(0, 0, 0)" and back == "rgb(255, 255, 255)"
+                      for _, pressed, text, back in printed["pressed"]), ("a pressed button prints black on white", printed["pressed"]))
+            result["printed"] = printed
             if spec.get("disabled"):
                 check(page.locator("noscript").count() == 1, "the noscript message")
                 page.locator("#startup-help > summary").click()

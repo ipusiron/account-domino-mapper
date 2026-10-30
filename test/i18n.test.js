@@ -155,6 +155,13 @@ test('H: data-i18n, data-i18n-aria and data-label keep separate roles', () => {
   for (const m of html.matchAll(/<[a-z]+\b[^>]*\baria-label="[^"]*"[^>]*>/g)) assert.match(m[0], /\bdata-i18n-aria="/, m[0]);
 });
 
+test('H: rule 5 says that a breach card stands for a password family leaked as-is, in plain text', () => {
+  assert.ok(M.ja.rule5.includes('そのまま（平文で）出回った'), M.ja.rule5);
+  assert.ok(M.en.rule5.includes('leaked as-is'), M.en.rule5);
+  // The rules table of index.html carries rule 5 (its first text is the Japanese one; render() puts the current language)
+  assert.match(html, /<td data-i18n="rule5">[^<]*そのまま（平文で）出回った[^<]*<\/td>/);
+});
+
 test('H: no half-width space between Japanese and Latin letters or digits in Japanese values', () => {
   const ja = '[\\u3040-\\u30ff\\u3400-\\u4dbf\\u4e00-\\u9fff]';
   const pattern = new RegExp(`${ja} [A-Za-z0-9]|[A-Za-z0-9] ${ja}`);

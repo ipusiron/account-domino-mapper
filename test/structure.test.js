@@ -137,19 +137,22 @@ const REAL_NAMES = [...REAL_CASE_SENSITIVE.map((n) => word(n, '')), ...REAL_EN.m
 const messageValues = () => ['ja', 'en'].flatMap((lang) => Object.entries(M[lang]).map(([key, value]) => [lang + '.' + key, value]));
 const htmlText = html.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
 
-test('H: no forbidden wording in messages.js and the data labels (the bibliography keys lessonRef… are the only exception)', () => {
-  let allowed = 0;
+test('H: no forbidden wording in messages.js and the data labels (the bibliography keys lessonRef… are the only exception)', (t) => {
+  const allowed = [];
   const sources = [...messageValues(), ...dataLabels()];
   assert.ok(sources.length > 500);
+  assert.ok(sources.filter(([where]) => /\.lesson\d/.test(where)).length >= 100, 'the lessons are checked too');
   for (const [where, value] of sources) {
     if (/\.lessonRef/.test(where)) {
-      if (FORBIDDEN_JA.some((re) => re.test(value)) || FORBIDDEN_EN.some((re) => re.test(value))) allowed++;
+      for (const re of [...FORBIDDEN_JA, ...FORBIDDEN_EN]) if (re.test(value)) allowed.push(where + ' ' + re.source);
       continue;
     }
     for (const re of FORBIDDEN_JA) assert.doesNotMatch(value, re, where);
     for (const re of FORBIDDEN_EN) assert.doesNotMatch(value, re, where);
   }
-  assert.equal(allowed, 0, 'no bibliography entry needs an exception yet');
+  // The words found in the bibliography (titles as published), the only place where they are allowed: none at present
+  t.diagnostic(`forbidden words in the bibliography (lessonRef…): ${allowed.length} ${JSON.stringify(allowed)}`);
+  assert.deepEqual(allowed, []);
   for (const source of [read('messages.js'), html]) for (const w of HISTORY_WORDS) assert.ok(!source.includes(w), w);
 });
 
@@ -164,13 +167,48 @@ test('H: the screen says アカウント, not 口座 (only 証券口座 and 銀�
   for (const [where, value] of dataLabels()) assert.ok(!value.includes('口座'), where);
 });
 
-test('H: no real service, company or product names in messages.js or the data (bibliography keys lessonRef… excepted)', () => {
+test('H: no real service, company or product names in messages.js or the data (bibliography keys lessonRef… excepted)', (t) => {
   const data = allDataStrings(DATA.personas);
   assert.ok(data.length > 300);
   for (const [where, value] of [...messageValues().filter(([where]) => !/\.lessonRef/.test(where)), ...data]) {
     for (const re of REAL_NAMES) assert.doesNotMatch(value, re, where);
   }
   for (const re of REAL_NAMES) assert.doesNotMatch(htmlText, re, 'index.html');
+  // The names found in the bibliography (the authors' and publishers' names of the sources), the only place where they are allowed
+  const found = [];
+  for (const [where, value] of messageValues().filter(([where]) => /\.lessonRef/.test(where))) {
+    for (const name of [...REAL_CASE_SENSITIVE, ...REAL_EN, ...REAL_JA]) {
+      const re = REAL_JA.includes(name) ? literal(name) : word(name, REAL_CASE_SENSITIVE.includes(name) ? '' : 'i');
+      if (re.test(value)) found.push(where + ': ' + name);
+    }
+  }
+  t.diagnostic(`real names in the bibliography (lessonRef…): ${found.length} ${JSON.stringify(found)}`);
+  assert.deepEqual([...new Set(found.map((f) => f.split(': ')[1]))].sort(),
+    ['Amazon', 'Apple', 'Honan', 'Japan Post', 'Olshtein', 'Palo Alto', 'Unit 42', 'Wired', '日本郵政'].sort());
+});
+
+test('H: links made by app.js open in a new tab without opener or referrer, like the links of index.html', () => {
+  const app = read('app.js');
+  const anchors = [...app.matchAll(/E\('a',[^)]*\)/g)].map((m) => m[0]);
+  assert.ok(anchors.length >= 1);
+  for (const anchor of anchors) assert.match(anchor, /target: '_blank', rel: 'noopener noreferrer'/, anchor);
+  assert.doesNotMatch(app, /window\.open\(|\.opener\b|createElement\(\s*['"]a['"]/);
+  // The links of the lessons: HTTPS addresses kept in domino-view.js (no address is written in messages.js)
+  assert.doesNotMatch(read('messages.js'), /https?:\/\//);
+  const view = require('../domino-view.js');
+  for (const href of [...Object.values(view.lessonRefs), ...view.relatedTools.map((tool) => tool.href)]) assert.match(href, /^https:\/\//);
+});
+
+test('H: the help has, in order, the first steps, the controls, the 22 terms, the ten lessons and the note on this learning aid', () => {
+  const body = html.match(/<div class="help-body"[^>]*>([\s\S]*?)<\/div>\s*<\/dialog>/)[1];
+  const order = [...body.matchAll(/data-i18n="(help\w+|lessonsHeading)"|<dl id="help-terms"|<div id="lessons"/g)].map((m) => m[1] || m[0]);
+  assert.deepEqual(order, ['helpFirst', 'helpFirstText', 'helpKeysHeading', 'helpKeys', 'helpTermsHeading', '<dl id="help-terms"',
+    'lessonsHeading', '<div id="lessons"', 'helpAboutHeading', 'helpAbout']);
+  // Ten <details>, each with a summary (its title is written by app.js in the current language) and a body filled by app.js
+  const lesson = /<details id="lesson-(\d+)" class="lesson"><summary><\/summary>\s*<div id="lesson-(\d+)-body" class="lesson-body"><\/div><\/details>/g;
+  const lessons = [...body.matchAll(lesson)];
+  assert.deepEqual(lessons.map((m) => [m[1], m[2]]), Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)]));
+  assert.match(html, /<h3 id="lessons-heading" data-i18n="lessonsHeading">座学<\/h3>/);
 });
 
 test('H: the header has no decorative Day line, and the footer has the GitHub link only', () => {

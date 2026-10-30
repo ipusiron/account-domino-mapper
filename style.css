@@ -176,17 +176,41 @@ dialog::backdrop { background: #101a2ab0; }
 }
 .help-header h2 { margin: 0; }
 .help-header button { flex: none; }
-.help-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 1rem 1rem; overflow-wrap: anywhere; }
+/* position: relative keeps the visually hidden texts of the lessons inside the scrolling help text, so the dialog itself never
+   scrolls (its title and close button stay in view) */
+.help-body { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 1rem 1rem; overflow-wrap: anywhere; }
 .help-body:focus-visible { outline-offset: -3px; }
 .glossary { margin: .8rem 0 1.2rem; }
 .glossary dt { margin-top: .7rem; font-weight: 700; color: var(--accent); }
 .glossary dd { margin: .15rem 0 0; }
+/* The ten lessons: tables of counts or short marks keep their columns; tables of sentences or names stack below 720px.
+   break-word (not anywhere) keeps each column at least as wide as its longest English word, so a word is split only when
+   it cannot fit at all. A source or tool link is a 44px target of its own */
+.lessons { margin: .5rem 0 1.2rem; }
+.lesson-body p { margin: .5rem 0; }
+.lesson-table th, .lesson-table td { font-size: .875rem; overflow-wrap: break-word; }
+.lesson-table .cell-line { display: block; }
+.lesson-table .cell-line + .cell-line { margin-top: .2rem; }
+.lesson-grid th, .lesson-grid td { padding: .3rem .25rem; }
+.lesson-grid td { text-align: center; }
+/* The short card names of lesson 3 (two to six characters) stay on one line */
+.lesson-backdoors tbody th { white-space: nowrap; }
+.lesson-sources-label { font-size: .875rem; font-weight: 700; }
+.lesson-sources { margin: .2rem 0 0; padding-left: 1.2rem; font-size: .875rem; }
+.lesson-link { display: inline-flex; align-items: center; min-height: 44px; }
 
-/* Tables (no horizontal page scroll: long words wrap inside the cells) */
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+/* Tables (no horizontal page scroll). A Japanese word stays whole in every table: a line breaks only at a <wbr> put by
+   app.js, at a space or after punctuation. A column is never narrower than its longest word (break-word, not anywhere,
+   which would let a column shrink to one character); a word longer than its cell still breaks as the last resort */
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; word-break: keep-all; }
 caption { padding: .35rem 0; text-align: left; font-weight: 700; }
-th, td { padding: .4rem; border: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+th, td { padding: .4rem; border: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: break-word; }
 th { background: var(--bg); }
+/* A piece between two line breaks that holds ＋＝／→ (or × in the printed lockout cells), kept on one line by app.js:
+   keep-all does not hold these marks, and no line may start with one of them */
+.joined { white-space: nowrap; }
+/* The heading inside a cell of a stacked table, shown only below 720px (thead shows it on wide screens) */
+.responsive-table .cell-label { display: none; }
 .table-frame { min-width: 0; margin: .5rem 0; }
 .note, .note-list, .legend-list { font-size: .875rem; }
 .note { color: var(--muted); }
@@ -211,7 +235,13 @@ th { background: var(--bg); }
 .step-controls { margin: .75rem 0 .5rem; }
 .step-controls button[aria-disabled="true"] { opacity: .55; cursor: default; }
 .step-line { margin: .5rem 0 0; }
+.step-hint { margin: .3rem 0 0; color: var(--muted); font-size: .875rem; }
 .step-summary { margin: .5rem 0; font-weight: 700; }
+/* The step line, the summary, the lines of the detail box and the entrances under the lockout table keep a Japanese word
+   whole like the tables: a line breaks only at a <wbr> put by app.js, at a space or after punctuation (a word longer than
+   the line still breaks) */
+.step-line, .step-summary, .detail-entrances li, .detail-falls, .detail-backdoor, .detail-need, .lock-entrances {
+  word-break: keep-all; overflow-wrap: anywhere; }
 .map-legend { margin: .5rem 0; color: var(--muted); font-size: .875rem; }
 .guide-button { width: 100%; margin-top: .5rem; text-align: left; }
 
@@ -236,9 +266,7 @@ th { background: var(--bg); }
 .map-band.fam-purple { fill: var(--fam-purple); }
 .map-band.fam-own { fill: var(--ink); }
 
-/* Map table: three columns on wide screens; below 720px two columns (name and entrances, then the result).
-   In both tables a Japanese word stays whole: a line breaks only at a <wbr> put by app.js, or at a space */
-.map-table, .lock-table { word-break: keep-all; }
+/* Map table: three columns on wide screens; below 720px two columns (name and entrances, then the result) */
 .map-table { table-layout: fixed; }
 .map-table .col-account { width: 34%; }
 .map-table .col-entrances { width: 33%; }
@@ -258,6 +286,8 @@ th { background: var(--bg); }
 .detail .detail-entrances { margin: .3rem 0; }
 .detail-backdoor { color: var(--fall); font-weight: 700; }
 .back-to-map { display: none; margin-top: .3rem; }
+.back-to-compare { margin-top: .3rem; }
+.lock-entrances { margin: .5rem 0; }
 
 /* Four cards at once and the lockout table: grids that never stack, even at 320px */
 .matrix { table-layout: fixed; }
@@ -270,6 +300,59 @@ th { background: var(--bg); }
 .lock-table .name-button { font-size: .875rem; }
 .lock-table tr.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
 .mark-locked { color: var(--lock); font-size: 1.2em; font-weight: 700; }
+
+/* Tab 3: modes, candidates, the chosen change and the comparison before and after it */
+.mode-buttons, .phase-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.mode-buttons button, .phase-buttons button { min-width: 0; overflow-wrap: anywhere; }
+.candidates { display: grid; grid-template-columns: minmax(0, 1fr); gap: .45rem; }
+.cand-button { display: grid; gap: .2rem; width: 100%; min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.cand-effect { font-size: .875rem; font-weight: 700; }
+.mode-buttons button[aria-pressed="true"], .phase-buttons button[aria-pressed="true"], .cand-button[aria-pressed="true"],
+.same-button[aria-pressed="true"] {
+  color: var(--on-accent); background: var(--accent); border-color: var(--accent); font-weight: 700;
+}
+.candidates-none, .no-move { margin: .5rem 0; padding: .5rem .75rem; border-left: 4px solid var(--muted); background: var(--bg); }
+/* The select takes the width of the panel (a long change sentence is cut inside it, never widening the page) */
+.choose { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; margin: .75rem 0; }
+.choose label { font-weight: 700; }
+.choose select {
+  width: 100%; min-width: 0; min-height: 44px; padding: .3rem .4rem; font-size: 1rem;
+  color: var(--ink); background: var(--paper); border: 1px solid var(--muted); border-radius: 8px;
+}
+.compare-result { margin-top: 1rem; }
+.compare-heading { margin: 1rem 0 .5rem; }
+.compare-heading:focus-visible { outline-offset: 2px; }
+.compare-summary { margin: .5rem 0; padding: .4rem .75rem; border-left: 4px solid var(--accent); background: var(--bg); font-weight: 700; }
+.compare-summary p { margin: .2rem 0; }
+.sentence-list { margin: .5rem 0; padding-left: 1.2rem; }
+.attack-table { table-layout: fixed; }
+.attack-table .attack-col-0 { width: 24%; }
+.attack-table .attack-col-1, .attack-table .attack-col-2 { width: 10%; }
+.attack-table tr.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+.attack-table tr.total > * { background: var(--bg); font-weight: 700; }
+.attack-table .narrow-only, .attack-names, .attack-legend { display: none; }
+.attack-none { font-weight: 700; }
+.lock-changes-list th, .lock-changes-list td, .same-table th, .same-table td { font-size: .875rem; }
+.same-button { width: 100%; min-width: 0; padding: .3rem .4rem; text-align: left; overflow-wrap: break-word; }
+.same-table tr.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+.map-card { margin: .5rem 0; font-weight: 700; }
+.entrance-list .changed-tag {
+  display: table; margin-top: .1rem; padding: 0 .3rem; border: 1px dashed var(--accent); color: var(--accent); font-weight: 700;
+}
+.map-svg .changed { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.map-svg .map-tag { fill: var(--accent); font-weight: 700; }
+
+/* Tab 4: the rules (a grid of two columns at every width), the symbols (stacked below 720px), the notes and paper */
+.rules-table { table-layout: fixed; }
+.rules-table .rules-no { width: 2.6rem; text-align: center; }
+.rule-example { display: block; margin-top: .4rem; color: var(--muted); font-size: .875rem; }
+.symbol-table th, .symbol-table td { font-size: .875rem; overflow-wrap: break-word; }
+.rules-notes li + li, .plain-list li + li { margin-top: .35rem; }
+.plain-list { margin: .3rem 0; padding-left: 1.2rem; }
+.paper-heading:focus-visible { outline-offset: 2px; }
+.print-button { margin: .25rem 0 .5rem; }
+/* The printed sheets are not shown on screen; print shows them alone */
+.print-sheet { display: none; }
 
 @media (max-width: 719px) {
   .tabs { gap: .15rem; padding: .2rem; }
@@ -289,6 +372,13 @@ th { background: var(--bg); }
   .lock-table th, .lock-table td { padding: .3rem .15rem; overflow-wrap: break-word; }
   .lock-table .name-button { padding: .2rem .3rem; overflow-wrap: break-word; }
   .lock-table.break-words th, .lock-table.break-words td, .lock-table.break-words .name-button { overflow-wrap: anywhere; }
+  /* English splits a word only where it may be hyphenated, and draws an ASCII hyphen there (the Japanese system font
+     draws its own hyphen with a gap before it). Without the hyphenation dictionary app.js adds .break-anywhere */
+  .lock-table.break-words:lang(en) th, .lock-table.break-words:lang(en) td, .lock-table.break-words:lang(en) .name-button {
+    overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; -webkit-hyphenate-character: "-"; hyphenate-character: "-";
+  }
+  .lock-table.break-words.break-anywhere th, .lock-table.break-words.break-anywhere td,
+  .lock-table.break-words.break-anywhere .name-button { overflow-wrap: anywhere; }
   .back-to-map { display: inline-flex; align-items: center; }
   /* Four cards at once: the table takes the full width of its box, and each card column only the width of its heading */
   .four-cards > .table-frame { margin-inline: -.6rem; }
@@ -296,6 +386,26 @@ th { background: var(--bg); }
   .matrix { table-layout: auto; }
   .matrix .matrix-card { width: auto; }
   .matrix thead th { white-space: nowrap; overflow-wrap: normal; }
+  /* Tab 3: the select takes the full width; the attack table is a grid of counts (the names go to its details box);
+     the lockout table before and after and the same-entrance table stack, each cell with its heading */
+  /* A card or mode name such as 窓口のなりすまし stays on one line in a 320px column (the same size in tab 1 and tab 3) */
+  .card-buttons button, .mode-buttons button { padding-inline: .3rem; font-size: .875rem; }
+  .attack-table { table-layout: auto; }
+  .attack-table .attack-col-0, .attack-table .attack-col-1, .attack-table .attack-col-2 { width: auto; }
+  .attack-table th, .attack-table td { padding: .3rem .2rem; font-size: .875rem; overflow-wrap: break-word; }
+  .attack-table td { white-space: nowrap; }
+  .attack-table .wide-only { display: none; }
+  .attack-table .narrow-only { display: inline; }
+  .attack-names, .attack-legend { display: block; }
+  .after-map > .table-frame { margin-inline: -.6rem; }
+  .after-map caption { padding-inline: .6rem; }
+  .responsive-table thead { display: none; }
+  .responsive-table tr { display: block; margin: .6rem 0; border: 1px solid var(--line); }
+  .responsive-table td, .responsive-table th[scope="row"] {
+    display: grid; grid-template-columns: minmax(min-content, 1fr) minmax(0, 1.5fr); gap: .4rem; border: 0;
+  }
+  .responsive-table .cell-label { display: block; font-weight: 600; }
+  .responsive-table .empty-cell { display: none; }
 }
 @media (min-width: 720px) {
   .masthead { display: grid; grid-template-columns: 142px minmax(0, 1fr) 142px; gap: 1rem; }
@@ -305,7 +415,49 @@ th { background: var(--bg); }
   .tabs button { font-size: 1rem; }
   .highlights { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .card-buttons, .step-controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mode-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .phase-buttons { grid-template-columns: repeat(2, minmax(0, 12rem)); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+/* Print: A4 with 12mm margins, one page per person and the blank sheet. The colors are written here directly, not with the
+   color variables, so that a page shown dark still prints black text on white paper */
+@page { size: A4; margin: 12mm; }
+@media print {
+  html, body { color: #000; background: #fff; }
+  body { min-height: 0; background-image: none; }
+  /* Once the page is ready, the printed sheets alone are printed. Before that, or without JavaScript, the sheets are empty
+     and the text of the page itself is printed, black on white whatever the theme */
+  :root:not([data-app-ready="true"]) {
+    --ink: #000; --muted: #000; --accent: #000; --fall: #000; --lock: #000; --focus: #000; --on-accent: #000;
+    --bg: #fff; --paper: #fff; --line: #000; --grid: #fff; --shadow: #fff;
+  }
+  /* A pressed button (the person and the card chosen) keeps black text on white too, also when backgrounds are printed */
+  :root:not([data-app-ready="true"]) [aria-pressed="true"] { background: #fff; }
+  :root[data-app-ready="true"] body > :not(#print-sheet) { display: none !important; }
+  #print-sheet { display: block; margin: 0; font-size: 10.5pt; line-height: 1.3; }
+  #print-sheet, #print-sheet * { color: #000; background: #fff; border-color: #000; box-shadow: none; }
+  .print-page { break-after: page; }
+  .print-page:last-child { break-after: auto; }
+  .print-page h2 { margin: 0 0 1mm; font-size: 13pt; line-height: 1.25; }
+  .print-page p { margin: 0 0 1.5mm; }
+  #print-sheet table { margin: 0 0 2mm; font-size: 9.5pt; line-height: 1.2; table-layout: auto; }
+  #print-sheet caption { padding: 0 0 .5mm; font-weight: 700; }
+  #print-sheet th, #print-sheet td { padding: .5mm 1mm; border: 1px solid #000; vertical-align: top; overflow-wrap: break-word; }
+  #print-sheet thead th { font-weight: 700; }
+  .print-map .print-group { text-align: center; }
+  .print-map .print-attack { white-space: nowrap; text-align: center; }
+  .print-map .print-loss { text-align: center; }
+  /* Each symbol stays on one line (the column widens for "Personal details" or "●1 · × · gone · ★"), which keeps the
+     legends short enough for the blank sheet to stay on page 4 even with a wider system font */
+  .print-legend th[scope="row"] { width: 7.5em; white-space: nowrap; font-weight: 700; }
+  .print-abbr { display: flex; flex-wrap: wrap; gap: 0 6mm; margin: 0 0 2.5mm; padding: 0; list-style: none; font-size: 9.5pt; }
+  .print-keep { margin: 0 0 2mm; padding: 1mm 2mm; border: 1px solid #000; }
+  .print-keep p { margin: 0 0 .5mm; }
+  .print-keep .print-keep-title { font-weight: 700; }
+  .print-dates { white-space: pre-wrap; }
+  .print-how { margin: 0 0 2mm; padding-left: 5mm; }
+  .print-form-table td { height: 7mm; }
+  .print-form-table .form-no, .print-form-table .form-important, .print-form-table .form-role { width: 1%; white-space: nowrap; }
 }

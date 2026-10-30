@@ -107,16 +107,18 @@
   // result＝pv.cards[card] か afterMap の値（rank・via・backdoor を持つもの）
   const maxRank = (result) => Math.max(0, ...Object.values(result.rank));
 
+  // 攻撃者の手元に加わったものの名前（資格情報はデータのラベル、個人情報は短い札、1手で増えたものは1手の文の名前、アカウントは短い名前）
+  function heldName(p, nm, id, D, lang) {
+    const c = p.credentials.find((x) => x.id === id);
+    if (!c) return nm.short[id];
+    if (c.type === 'info') return D.tagInfo;
+    return ownerOf(id) ? nm.req[id] : c.label[lang];
+  }
   // 渡すものの札（漏えい＝系統のデータのラベル、SIMスワップ＝電話番号のデータのラベル、メールの乗っ取り＝メールの短い名前、窓口＝「個人情報」）
   function givesShort(p, cardId, M, lang) {
     const D = dictionary(M, lang), nm = names(p, M, lang);
     const gives = Core.cardGives(p, p.cards.find((c) => c.id === cardId));
-    return gives.map((id) => {
-      const c = p.credentials.find((x) => x.id === id);
-      if (!c) return nm.short[id];
-      if (c.type === 'info') return D.tagInfo;
-      return ownerOf(id) ? nm.req[id] : c.label[lang];
-    }).join(D.sepList);
+    return gives.map((id) => heldName(p, nm, id, D, lang)).join(D.sepList);
   }
   // カードの説明の1行：データのカードのラベル＋渡すもの（漏えいは計算した系統と、漏れたサービスの短い名前）
   function cardLine(p, cardId, M, lang) {
@@ -189,7 +191,7 @@
           sr: step < last ? D.srNotYet : D.srNone };
       }
       return { id: s.id, important: !!s.important, name: nm.full[s.id], short: nm.short[s.id],
-        entrances: s.methods.map((m) => entranceText(nm, m, D)), cell };
+        entrances: s.methods.map((m) => entranceText(nm, m, D)), methods: s.methods.map((m) => m.id), cell };
     });
   }
 
@@ -270,6 +272,32 @@
       columns: table.columns.map((l) => ({ id: l, head: nm.lossColumn[l] })),
       rows: p.services.map((s) => ({ id: s.id, important: !!s.important, name: nm.full[s.id],
         cells: table.columns.map((l) => ({ loss: l, ...lockCell(table.cells[l][s.id], nm, D) })) })),
+    };
+  }
+  // 閉め出しの表の下の1行：選んだアカウントの入口（地図の表の入口の欄と同じ書き方）。×の理由を、このタブで読めるようにする
+  function lockEntrances(p, accountId, M, lang) {
+    const D = dictionary(M, lang), nm = names(p, M, lang);
+    const s = p.services.find((x) => x.id === accountId);
+    return fill(D.lockEntrances, { account: nm.full[accountId], entrances: s.methods.map((m) => entranceText(nm, m, D)).join(D.sepLines) });
+  }
+  // 閉め出しの表の前後：セル（mark・plus）が前後で変わったアカウントだけ。列＝喪失カード3枚×前・後
+  function lockChanges(p, pv, moveId, M, lang) {
+    const D = dictionary(M, lang);
+    const mv = moveOf(pv, moveId);
+    const before = lockTable(p, pv.lossTable, M, lang), after = lockTable(p, mv.lossTable, M, lang);
+    const same = (a, b) => a.mark === b.mark && a.plus.join('+') === b.plus.join('+');
+    const changed = p.services.filter((s) => pv.lossTable.columns.some((l) => !same(pv.lossTable.cells[l][s.id], mv.lossTable.cells[l][s.id])));
+    const phases = [['before', D.attackColBefore], ['after', D.attackColAfter]];
+    return {
+      caption: before.caption,
+      legendMail: before.legendMail,
+      columns: before.columns.flatMap((c) => phases.map(([phase, word]) => ({ loss: c.id, phase,
+        head: fill(D.lockColPhase, { loss: c.head, phase: word }) }))),
+      rows: changed.map((s) => {
+        const b = before.rows.find((r) => r.id === s.id), a = after.rows.find((r) => r.id === s.id);
+        return { id: s.id, important: b.important, name: b.name,
+          cells: b.cells.flatMap((cell, i) => [{ ...cell, phase: 'before' }, { ...a.cells[i], phase: 'after' }]) };
+      }),
     };
   }
 
@@ -417,8 +445,11 @@
       return { id, move, saved, newly, lock: lock.length ? lock.join(D.sepList) : D.cellNone,
         pair: pair.length ? pair.join(D.sepList) : D.cellNone };
     });
+    // 外す手の注記を表の下に：表に「外す」の行があり、選んだ手が外す手でないとき（外す手を選んでいれば、上の注記に同じ文が出る）。
+    // 「外す」の行の閉め出しが「－」でも、パスワードを忘れたときの戻り道はなくなるため
+    const removeNote = first.kind !== 'remove' && ids.some((id) => moveOf(pv, id).kind === 'remove') ? D.noteRemove : null;
     return { heading: fill(D.sameEntrance, { account: nm.full[first.service], method: methodText(p, first, M, lang), n: ids.length }),
-      rows };
+      rows, removeNote };
   }
 
   // 手のあとの地図：手のあとの人物 q で cardGives(q, card) と段・開けた入口・裏口をその場で計算する（personaVectors は使わない）
@@ -453,6 +484,18 @@
     if (mv.kind === 'add') return fill(D.moveAdd, values);
     if (mv.kind === 'remove') return fill(D.moveRemove, values);
     return fill(D.moveReplace, { ...values, from: reqName(p, mv.from, M, lang), to: reqName(p, mv.to, M, lang) });
+  }
+  // 「1手を自分で選ぶ」の選択肢の文：1手の文から頭の「{account}：」を除いたもの
+  function moveChoice(p, mv, M, lang) {
+    const title = moveTitle(p, mv, M, lang), head = names(p, M, lang).full[mv.service];
+    return (title.startsWith(head) ? title.slice(head.length) : title).replace(/^(?:：|:\s*)/, '');
+  }
+  // 選択肢の組：アカウントごと（データの順、label＝全名）に、その人の全手（列挙の順）
+  function moveOptions(p, pv, M, lang) {
+    const nm = names(p, M, lang);
+    return p.services.map((s) => ({ account: s.id, label: nm.full[s.id],
+      moves: pv.moves.filter((mv) => mv.service === s.id).map((mv) => ({ id: mv.id, text: moveChoice(p, mv, M, lang) })) }))
+      .filter((g) => g.moves.length);
   }
   function accountsText(nm, ids, D) {
     return ids.length >= 4 ? fill(D.accountsMany, { first: nm.short[ids[0]], n: ids.length })
@@ -539,7 +582,8 @@
     if (changesNothing(mv)) notes.push(D.noteNoChange);
     return notes;
   }
-  // 攻撃（カード4枚）の表の行と、合計（延べ）の行。表の行の名前は全名（要約の行は短い名前）
+  // 攻撃（カード4枚）の表の行と、合計（延べ）の行。表の行の名前は全名（要約の行は短い名前）。
+  // 選んだカード（selected）の印は、モードのカードの行にだけ付ける（4枚の合計と閉め出しを減らすのモードでは、どの行にも付けない）
   function attackRows(p, pv, mv, mode, M, lang) {
     const D = dictionary(M, lang), nm = names(p, M, lang);
     const rows = p.cards.map((c) => {
@@ -550,7 +594,7 @@
         newlyNames: exposed.map((s) => nm.full[s]) };
     });
     const sum = (k) => rows.reduce((t, r) => t + r[k], 0);
-    rows.push({ card: 'all', label: D.attackTotal, selected: mode === 'all', before: sum('before'), after: sum('after'),
+    rows.push({ card: 'all', label: D.attackTotal, selected: false, before: sum('before'), after: sum('after'),
       saved: sum('saved'), newly: sum('newly'), savedNames: [], newlyNames: [] });
     return rows;
   }
@@ -571,6 +615,274 @@
       lossTwo: two.length ? two : [D.pairNone],
       notes: moveNotes(p, mv, M, lang),
     };
+  }
+
+  // ===== タブ4：記号の一覧と、印刷する3人の表 =====
+  // 記号の一覧の行と、値のある列の数（ロ／復の行は線の種類まで、●1の行は何を表すかまで。あとの列は空欄＝null）
+  const SYMBOL_ROWS = Object.freeze([['Family', 5], ['Phone', 5], ['Sms', 5], ['Info', 5], ['Doc', 5], ['Paper', 5], ['Mail', 5], ['Role', 3],
+    ['Mark', 2]]);
+  const SYMBOL_COLUMNS = ['Name', 'Meaning', 'Line', 'Attack', 'Loss'];
+  function symbolTable(M, lang) {
+    const D = dictionary(M, lang);
+    return {
+      caption: D.symbolCaption,
+      columns: ['symbolColSymbol', 'symbolColMeaning', 'symbolColLine', 'symbolColAttack', 'symbolColLoss'].map((key) => D[key]),
+      rows: SYMBOL_ROWS.map(([row, filled]) => ({ id: row, cells: SYMBOL_COLUMNS.map((col, i) => (i < filled ? D['sym' + row + col] : null)) })),
+    };
+  }
+  const STORY_KEYS = { worker: 'storyWorker', parent: 'storyParent', student: 'storyStudent' };
+  // 印刷する人物の表（1人1表）：列＝アカウント・入口・攻撃カード4枚・喪失カード3枚。入口は記号（ロ：赤A／復：SMS）、
+  // 攻撃の列は最後の段の●段（裏口なら印を添える）か－、喪失の列は閉め出しの表と同じ○・○（＋…で×）・×・消
+  function printTable(p, pv, M, lang) {
+    const D = dictionary(M, lang), nm = names(p, M, lang);
+    const lt = lockTable(p, pv.lossTable, M, lang);
+    const attackCell = (cardId, accountId) => {
+      const result = pv.cards[cardId], rank = result.rank[accountId];
+      if (rank === undefined) return D.cellNone;
+      const cell = '●' + rank;
+      return result.backdoor.includes(accountId) ? fill(D.printCellBackdoor, { cell, bd: D.printBackdoor }) : cell;
+    };
+    return {
+      title: fill(D.printTitle, { person: nm.person }),
+      story: D[STORY_KEYS[p.id]],
+      columns: [D.printColAccount, D.printColEntrances, ...p.cards.map((c) => D[{ leak: 'printColLeak', simswap: 'printColSimswap',
+        mail: 'printColMail', desk: 'printColDesk' }[c.id]]), ...lt.columns.map((c) => ({ device: D.printColPhone, number: D.printColNumber,
+        mail: fill(D.printColMailLoss, { mailHead: c.head }) }[c.id]))],
+      rows: p.services.map((s, i) => ({
+        id: s.id, important: !!s.important, name: nm.full[s.id],
+        entrances: s.methods.map((m) => fill(D.printEntrance, { role: D[m.role === 'login' ? 'symbolLog' : 'symbolRec'],
+          req: requirementTags(nm, m, D) })).join(D.sepLines),
+        attack: p.cards.map((c) => attackCell(c.id, s.id)),
+        loss: lt.rows[i].cells.map((cell) => cell.text),
+      })),
+    };
+  }
+
+  // ===== 座学（ヘルプの中の10節）：段落・表・注記の並びと出典。表の数は計算部とデータから作る（手で書かない） =====
+  // 出典のリンク先。書誌の文は messages.js の lessonRef…（実在の名前を書いてよいのはそこだけ）。論文は DOI を https://doi.org/ で書く
+  const LESSON_REFS = Object.freeze({
+    Hammann2019: 'https://doi.org/10.1145/3319535.3354193',
+    Dowling1984: 'https://doi.org/10.1016/0743-1066(84)90014-1',
+    Das2014: 'https://doi.org/10.14722/ndss.2014.23357',
+    Jpcert: 'https://www.jpcert.or.jp/pr/stop-password.html',
+    SoumuSite: 'https://www.soumu.go.jp/main_sosiki/cybersecurity/kokumin/security/end_user/general/01/',
+    JapanPost: 'https://files.japanpost.jp/assets/34d9d11432734cfaa759e78fe395b688/8ca4b69b953146bda1823819d3c1f5a3/20261019_01.pdf',
+    Nist: 'https://doi.org/10.6028/NIST.SP.800-63B-4',
+    Li2018: 'https://doi.org/10.1109/INFOCOM.2018.8486017',
+    Klivan2023: 'https://doi.org/10.1145/3576915.3623180',
+    Honan2012: 'https://www.wired.com/2012/08/apple-amazon-mat-honan-hacking/',
+    Lee2020: 'https://www.usenix.org/conference/soups2020/presentation/lee',
+    NaraPolice: 'https://www.police.pref.nara.jp/cmsfiles/contents/0000006/6309/cybernews_R5_4.pdf',
+    SoumuMobile: 'https://www.soumu.go.jp/tokushusagi/id-check/',
+    Ncsc2025: 'https://www.ncsc.gov.uk/blog-post/incidents-impacting-retailers',
+    Jsda2025: 'https://www.jsda.or.jp/about/hatten/inv_alerts/alearts04/files/20251015_internetgl.pdf',
+    FsaGuidelines: 'https://www.fsa.go.jp/news/r7/shouken/20251015/20251015.html',
+    FsaDialogue: 'https://www.fsa.go.jp/common/ronten/202507/07.pdf',
+    Unit42: 'https://unit42.paloaltonetworks.com/passwordless-authentication-security-risks/',
+    Chi2022: 'https://doi.org/10.1145/3491102.3502125',
+    Buttner2024: 'https://doi.org/10.5220/0012319000003648',
+  });
+  // 関連ツール（座学10の表と、規則表の注記4・座学8のリンク）。名前は toolDay…、何を学ぶかは lesson10Day…
+  const RELATED_TOOLS = Object.freeze([
+    ['day083', 'https://ipusiron.github.io/intrusion-path-mapper/'],
+    ['day001', 'https://ipusiron.github.io/password-checker/'],
+    ['day019', 'https://ipusiron.github.io/passcloud/'],
+    ['day060', 'https://ipusiron.github.io/reverse-bruteforce-demo/'],
+    ['day064', 'https://ipusiron.github.io/patternlock-security-trainer/'],
+    ['day088', 'https://ipusiron.github.io/pin-threat-simulator/'],
+    ['day124', 'https://ipusiron.github.io/scatter-seeds/'],
+    ['day125', 'https://ipusiron.github.io/overlay-qr-shares/'],
+  ].map(([id, href]) => {
+    const day = 'Day' + id.slice(3);
+    return Object.freeze({ id, href, name: 'tool' + day, learn: 'lesson10' + day });
+  }));
+  // 座学10節：段落（p）・表（table）・注記（note）・凡例（legend）・関連ツールへのリンクを含む段落（links）の並びと、出典（LESSON_REFS の名前）
+  const LESSONS = Object.freeze([
+    { n: 1, blocks: [['p', 'lesson1Text1'], ['p', 'lesson1Text2'], ['p', 'lesson1Text3'], ['table', 'flow'], ['p', 'lesson1Text4'],
+      ['table', 'andOr']], refs: ['Hammann2019', 'Dowling1984'] },
+    { n: 2, blocks: [['p', 'lesson2Text1'], ['p', 'lesson2Text2'], ['p', 'lesson2Text3'], ['p', 'lesson2Text4'], ['table', 'families']],
+      refs: ['Das2014', 'Jpcert', 'SoumuSite', 'JapanPost', 'Nist'] },
+    { n: 3, blocks: [['p', 'lesson3Text1'], ['p', 'lesson3Text2'], ['p', 'lesson3Text3'], ['p', 'lesson3Text4'], ['table', 'backdoors'],
+      ['legend', 'fourCardsLegend']], refs: ['Li2018', 'Klivan2023', 'Honan2012', 'Hammann2019'] },
+    { n: 4, blocks: [['p', 'lesson4Text1'], ['p', 'lesson4Text2'], ['p', 'lesson4Text3'], ['p', 'lesson4Text4'], ['table', 'simswap']],
+      refs: ['Lee2020', 'Nist', 'NaraPolice', 'SoumuMobile'] },
+    { n: 5, blocks: [['p', 'lesson5Text1'], ['p', 'lesson5Text2'], ['p', 'lesson5Text3'], ['table', 'desk']], refs: ['Ncsc2025', 'Nist'] },
+    { n: 6, blocks: [['p', 'lesson6Text1'], ['p', 'lesson6Text2'], ['p', 'lesson6Text3'], ['table', 'brokerage'], ['note', 'noteBrokerage'],
+      ['note', 'noteBrokerageStudent']], refs: ['Jsda2025', 'FsaGuidelines', 'FsaDialogue', 'Nist', 'Unit42'] },
+    { n: 7, blocks: [['p', 'lesson7Text1'], ['p', 'lesson7Text2'], ['p', 'lesson7Text3'], ['p', 'lesson7Text4'], ['table', 'lockout']],
+      refs: ['Hammann2019', 'Chi2022', 'Buttner2024'] },
+    { n: 8, blocks: [['p', 'lesson8Text1'], ['table', 'removeReplace'], ['p', 'lesson8Text2'], ['links', 'lesson8Text3']],
+      refs: ['Nist', 'Chi2022'] },
+    { n: 9, blocks: [['p', 'lesson9Text1'], ['p', 'lesson9Text2'], ['table', 'cycle'], ['p', 'lesson9Text3'], ['p', 'lesson9Text4']],
+      refs: ['Hammann2019', 'Chi2022'] },
+    { n: 10, blocks: [['p', 'lesson10Text1'], ['p', 'lesson10Text2'], ['table', 'tools']], refs: [] },
+  ].map((lesson) => Object.freeze({ ...lesson, blocks: Object.freeze(lesson.blocks), refs: Object.freeze(lesson.refs) })));
+  // 座学1の2つの場面（人物・カード・アカウント）と、座学6の口座（3人とも同じ id）
+  const LESSON_SCENES = Object.freeze({ flow: ['worker', 'leak', 'sns'], andOr: ['worker', 'simswap', 'bank'], brokerage: 'sec' });
+  // 座学8の5行（同じ入口を外す手と、紙か書類へ付け替える手。付け替える手のない入口は null）
+  const LESSON8_ROWS = Object.freeze([
+    ['worker', 'remove:sec.recMailSms', 'replace:sec.recMailSms:phone>paper:sec'],
+    ['worker', 'remove:mailMain.recSms', 'replace:mailMain.recSms:phone>paper:mailMain'],
+    ['parent', 'remove:bank.recSms', 'replace:bank.recSms:phone>idcheck'],
+    ['student', 'remove:sec.recMail', 'replace:sec.recMail:mailFree>paper:sec'],
+    ['student', 'remove:mailUni.recDesk', null],
+  ].map(Object.freeze));
+  const CARD_SHORT_KEYS = { leak: 'fourCardsColLeak', simswap: 'fourCardsColSimswap', mail: 'fourCardsColMail', desk: 'fourCardsColDesk' };
+
+  // 表の形：{ caption, heads, rows, grid }。grid＝数や短い記号だけの表（狭い画面でも縦積みにしない）。そのほかは狭い画面で縦積み。
+  // セル＝文字列、{ text, sr }（記号と読み上げ）、{ lines }（複数の行）、{ href, text }（別タブのリンク）、{ name, important }、{ text, sr, mark }（閉め出しの印）
+  // 座学1の表1：1つのアカウントが1枚のカードで倒れるまでの段ごとに、新しく加わったものと、そのアカウントの入口ごとの条件
+  function lessonFlow(p, pv, cardId, accountId, M, lang) {
+    const D = dictionary(M, lang), nm = names(p, M, lang);
+    const result = pv.cards[cardId], s = p.services.find((x) => x.id === accountId);
+    const fall = result.rank[accountId];
+    if (fall === undefined) throw new Error('the account does not fall to the card: ' + accountId);
+    const ids = Object.keys(result.rank);
+    const rows = [];
+    for (let step = 0; step <= fall; step++) {
+      const held = new Set(ids.filter((id) => result.rank[id] <= step));
+      rows.push([fill(D.lessonStep, { step }),
+        ids.filter((id) => result.rank[id] === step).map((id) => heldName(p, nm, id, D, lang)).join(D.sepList),
+        ...s.methods.map((m) => {
+          const missing = m.requires.filter((r) => !held.has(r));
+          return missing.length ? fill(D.lessonMissing, { items: missing.map((r) => nm.tag[r]).join(D.sepList) }) : D.lessonMet;
+        }),
+        step === fall ? fill(D.srFallen, { rank: fall, via: viaName(p, nm, result.via[accountId], null, D, lang) }) : D.srNotYet]);
+    }
+    return { caption: fill(D.lesson1FlowCaption, { person: nm.person, account: nm.short[accountId], card: nm.card[cardId] }),
+      heads: [D.lesson1ColStep, D.lesson1ColAdded, ...s.methods.map((m) => entranceText(nm, m, D)), D.lessonColResult], rows, grid: false };
+  }
+  // 座学1の表2：カードが渡すものを条件に含む入口を、かつ・またはで数えたときと、すべての線を「または」として数えたとき（素朴な BFS）
+  function lessonAndOr(p, cardId, accountId, M, lang) {
+    const D = dictionary(M, lang), nm = names(p, M, lang);
+    const g = Core.personaGraph(p), gives = Core.cardGives(p, p.cards.find((c) => c.id === cardId));
+    const R = Core.reach(g, gives), N = Core.naiveBfs(g, gives);
+    const methods = p.services.find((x) => x.id === accountId).methods.filter((m) => m.requires.some((r) => gives.includes(r)));
+    const tags = (ids) => ids.map((r) => nm.tag[r]).join(D.sepList);
+    const strict = (m) => {
+      const missing = m.requires.filter((r) => !R.has(r));
+      return missing.length ? fill(D.lessonMissing, { items: tags(missing) }) : D.lessonMet;
+    };
+    const naive = (m) => {
+      const held = m.requires.filter((r) => N.has(r));
+      return held.length ? fill(D.lesson1OpensWith, { items: tags(held) }) : fill(D.lessonMissing, { items: tags(m.requires) });
+    };
+    return { caption: fill(D.lesson1AndOrCaption, { person: nm.person, account: nm.full[accountId], card: nm.card[cardId] }),
+      heads: [D.lesson1ColCounting, ...methods.map((m) => entranceText(nm, m, D)), D.lessonColResult],
+      rows: [[D.lesson1CountAndOr, ...methods.map(strict), R.has(accountId) ? D.lessonFalls : D.srNone],
+        [D.lesson1CountAllOr, ...methods.map(naive), N.has(accountId) ? D.lessonFalls : D.srNone]], grid: false };
+  }
+  // 座学2：3人のパスワードの系統ごとに、その系統を条件に持つアカウント（データの順）
+  function lessonFamilies(people, M, lang) {
+    const D = dictionary(M, lang);
+    const rows = [];
+    for (const { p } of people) {
+      const nm = names(p, M, lang);
+      for (const c of p.credentials.filter((x) => x.type === 'pw')) {
+        const users = p.services.filter((s) => s.methods.some((m) => m.requires.includes(c.id)));
+        rows.push([nm.person, nm.tag[c.id], String(users.length), users.map((s) => nm.short[s.id]).join(D.sepList)]);
+      }
+    }
+    return { caption: D.lesson2Caption, heads: [D.lessonColPerson, D.lesson2ColFamily, D.lesson2ColCount, D.lesson2ColAccounts], rows, grid: false };
+  }
+  // 座学3：カード（行）×3人（列）の裏口の数（vectors の cards.<card>.backdoor）
+  function lessonBackdoors(people, M, lang) {
+    const D = dictionary(M, lang);
+    return { caption: D.lesson3Caption, heads: [D.attackColCard, ...people.map(({ p }) => names(p, M, lang).person)],
+      rows: people[0].p.cards.map((c) => [{ text: D[CARD_SHORT_KEYS[c.id]], sr: D[CARD_KEYS[c.id]] },
+        ...people.map(({ pv }) => String(pv.cards[c.id].backdoor.length))]), grid: true };
+  }
+  // 座学4・5：1枚のカードで、3人それぞれ倒れるアカウントの数と、そのうちの裏口の数
+  function lessonCardResult(people, cardId, captionKey, M, lang) {
+    const D = dictionary(M, lang);
+    return { caption: D[captionKey], heads: [D.lessonColPerson, D.lessonColFallen, D.lessonColBackdoor],
+      rows: people.map(({ p, pv }) => [names(p, M, lang).person, String(pv.cards[cardId].services.length),
+        String(pv.cards[cardId].backdoor.length)]), grid: true };
+  }
+  // 座学6：3人の証券の入口と、倒すのに要るカード（vectors の cardBase。1枚で倒れるカードと、そろうと倒れる組）
+  function lessonBrokerage(people, accountId, M, lang) {
+    const D = dictionary(M, lang);
+    return { caption: D.lesson6Caption, heads: [D.lessonColPerson, D.colEntrances, D.lesson6ColOne, D.lesson6ColCombo],
+      rows: people.map(({ p, pv }) => {
+        const nm = names(p, M, lang), bases = pv.cardBase[accountId];
+        const one = bases.filter((b) => b.length === 1).map((b) => nm.card[b[0]]);
+        const combos = bases.filter((b) => b.length > 1).map((b) => b.map((c) => nm.card[c]).join(D.sepAnd));
+        return [nm.person, p.services.find((x) => x.id === accountId).methods.map((m) => entranceText(nm, m, D)).join(D.sepLines),
+          one.length ? one.join(D.sepList) : D.lessonNone, combos.length ? combos.join(D.sepCombos) : D.lessonNone];
+      }), grid: false };
+  }
+  // 座学7：3人の閉め出しの表のうち、×か「あと1つ失うと×」のセルを持つアカウントの行（セルはタブ2と同じ）
+  function lessonLockout(people, M, lang) {
+    const D = dictionary(M, lang);
+    const rows = [];
+    for (const { p, pv } of people) {
+      const nm = names(p, M, lang);
+      for (const row of lockTable(p, pv.lossTable, M, lang).rows) {
+        if (!row.cells.some((c) => c.mark === 'locked' || c.mark === 'plus')) continue;
+        rows.push([nm.person, { name: row.name, important: row.important }, ...row.cells.map((c) => ({ text: c.text, sr: c.sr, mark: c.mark }))]);
+      }
+    }
+    return { caption: D.lesson7Caption, heads: [D.lessonColPerson, D.colAccount, D.lockColPhone, D.lockColNumber, D.lesson7ColMail], rows,
+      grid: false };
+  }
+  // 座学8：同じ入口を外す手と付け替える手の要約（タブ3の要約の文と同じ。付け替える手には札で前後を添える）
+  function lessonRemoveReplace(people, M, lang) {
+    const D = dictionary(M, lang);
+    return { caption: D.lesson8Caption, heads: [D.lesson8ColEntrance, D.lesson8ColRemove, D.lesson8ColReplace],
+      rows: LESSON8_ROWS.map(([pid, removeId, replaceId]) => {
+        const { p, pv } = people.find((x) => x.p.id === pid), nm = names(p, M, lang);
+        const remove = moveOf(pv, removeId);
+        const summary = (id) => sentences(p, pv, id, M, lang).summary;
+        const replace = replaceId ? moveOf(pv, replaceId) : null;
+        return [fill(D.lesson8Entrance, { person: nm.person, account: nm.full[remove.service], method: methodText(p, remove, M, lang) }),
+          { lines: summary(removeId) },
+          replace ? { lines: [fill(D.sameReplace, { from: tagOf(p, replace.from, M, lang), to: tagOf(p, replace.to, M, lang) }),
+            ...summary(replaceId)] } : D.lesson8NoReplace];
+      }), grid: false };
+  }
+  // 座学9：輪の例（論文の形式。2つのメールが互いを回復先にする）。失ったものごとに、到達の補集合と定義18の最小不動点で入れないメール
+  function lessonCycle(M, lang) {
+    const D = dictionary(M, lang);
+    const g = Core.graphFrom(Core.PAPER.cycle);
+    const name = { pwA: D.lesson9PwA, pwB: D.lesson9PwB, mailA: D.lesson9MailA, mailB: D.lesson9MailB };
+    const holdings = g.nodes.filter((v) => !g.byHead.has(v)), accounts = g.nodes.filter((v) => g.byHead.has(v));
+    const list = (ids) => (ids.length ? ids.map((id) => name[id]).join(D.sepList) : D.lessonNone);
+    return { caption: D.lesson9Caption, heads: [D.lesson9ColLost, D.lesson9ColComplement, D.lesson9ColDef18],
+      rows: [holdings.slice(0, 1), holdings].map((lost) => {
+        const R = Core.userReach(g, holdings, lost), L = Core.lockoutDef18(g, lost);
+        return [list(lost), list(accounts.filter((v) => !R.has(v))), list(accounts.filter((v) => L.has(v)))];
+      }), grid: true };
+  }
+  // 座学10：関連ツール（名前は別タブのリンク）
+  function lessonTools(M, lang) {
+    const D = dictionary(M, lang);
+    return { caption: D.lesson10Caption, heads: [D.lesson10ColTool, D.lesson10ColLearn],
+      rows: RELATED_TOOLS.map((tool) => [{ href: tool.href, text: D[tool.name] }, D[tool.learn]]), grid: false };
+  }
+  // 座学の表。people＝3人の [{ p, pv }]（データの順。pv＝Core.personaVectors(p)）
+  function lessonTable(kind, people, M, lang) {
+    const scene = (key) => {
+      const [pid, cardId, accountId] = LESSON_SCENES[key];
+      return { ...people.find((x) => x.p.id === pid), cardId, accountId };
+    };
+    if (kind === 'flow') {
+      const { p, pv, cardId, accountId } = scene('flow');
+      return lessonFlow(p, pv, cardId, accountId, M, lang);
+    }
+    if (kind === 'andOr') {
+      const { p, cardId, accountId } = scene('andOr');
+      return lessonAndOr(p, cardId, accountId, M, lang);
+    }
+    if (kind === 'families') return lessonFamilies(people, M, lang);
+    if (kind === 'backdoors') return lessonBackdoors(people, M, lang);
+    if (kind === 'simswap') return lessonCardResult(people, 'simswap', 'lesson4Caption', M, lang);
+    if (kind === 'desk') return lessonCardResult(people, 'desk', 'lesson5Caption', M, lang);
+    if (kind === 'brokerage') return lessonBrokerage(people, LESSON_SCENES.brokerage, M, lang);
+    if (kind === 'lockout') return lessonLockout(people, M, lang);
+    if (kind === 'removeReplace') return lessonRemoveReplace(people, M, lang);
+    if (kind === 'cycle') return lessonCycle(M, lang);
+    if (kind === 'tools') return lessonTools(M, lang);
+    throw new Error('unknown lesson table ' + kind);
   }
 
   // ===== 見どころ9つ（画面にはいまの人物の3つを出す。押すと状態を変え、移る先へフォーカスを移す） =====
@@ -966,8 +1278,9 @@
 
   return Object.freeze({
     fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, mapCaption, mapRows, needText,
-    detail, fourCards, lockCell, lockTable, candidates, effect, effectText, rankingNote, sameEntrance, sameRows, afterMap, moveTitle,
-    attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle, layout, textWidth, wrapText,
-    wrapRow, mailDepths,
+    detail, fourCards, lockCell, lockTable, lockEntrances, lockChanges, candidates, effect, effectText, rankingNote, sameEntrance, sameRows, afterMap,
+    moveTitle, moveChoice, moveOptions, attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle,
+    layout, textWidth, wrapText, wrapRow, mailDepths, symbolTable, printTable,
+    lessons: LESSONS, lessonRefs: LESSON_REFS, relatedTools: RELATED_TOOLS, lessonScenes: LESSON_SCENES, lesson8Rows: LESSON8_ROWS, lessonTable,
   });
 }));

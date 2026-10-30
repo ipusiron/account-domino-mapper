@@ -128,6 +128,7 @@
       stepStatusZero: "段0：カードが渡したもの（{gives}）",
       stepStatusWithSummary: "{status}。{summary}",
       reducedPlay: "動きを減らす設定のため、最後の段を表示しました。1段ずつ見るときは「最初から」を押してから「次の段 ▶」を押します。",
+      stepHint: "「最初から」を押すと、段0から1段ずつ追えます。",
       mapLegend: "●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行",
       mapCaption: "{person}の地図（{card}・段{step}）",
       colAccount: "アカウント",
@@ -232,6 +233,7 @@
       lockNotePassword: "この模型では、パスワードを忘れることは喪失カードに入れていません。",
       lockNoteNumber: "「スマホをなくした」では電話番号は失いません（SIMを再発行できる前提）。",
       lockNoteSync: "「スマホをなくした」の値は、認証アプリやパスキーを、ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。",
+      lockEntrances: "{account}の入口：{entrances}",
       // One change: effects, sentences and notes
       effectSaved: "守れる{n}",
       effectSavedImp: "守れる{n}（★{imp}）",
@@ -288,10 +290,346 @@
       samePairMove: "{A}と{B}→{C}と{D}",
       samePairNew: "新たに：{A}と{B}",
       samePairUnlocked: "解ける：{A}と{B}",
-      notePaper: "この模型には紙を攻撃者に渡すカードがないので、紙へ付け替える手で攻撃の面が悪くなることはありません。実際には置き場所が新しい入口になり、打ち込む場面では偽サイトに強くありません。閉め出しの面では、紙を一緒になくしたときの組が残ります。",
+      notePaper: "この模型には紙を攻撃者に渡すカードがないので、紙へ付け替える手で攻撃の面が悪くなることはありません。実際には置き場所が新しい入口になり、打ち込む場面では偽サイトに強くありません。閉め出しの面では、紙をほかのものと一緒になくすと入れなくなることがあります。",
       noteRemove: "外す手の閉め出しは、喪失カード（スマホ・番号・メール）で数えています。パスワードを忘れることは模型に入れていないので、パスワードでログインするアカウントでは、外しても閉め出しが増えないように見えます。実際には、パスワードを忘れたときに戻る道がなくなります。",
       noteOwnFamily: "漏れたサービスのパスワードを独自にすると、漏えいのカードが渡すのはその新しい系統だけになり、ほかの使い回し先へ広がりません。",
       noteNoChange: "この手では、カード1枚ずつの攻撃も、閉め出しも変わりません。",
+      // Tab 3: try one change
+      modeHeading: "何に備えるか",
+      modeLeak: "漏えい",
+      modeSimswap: "SIMスワップ",
+      modeMail: "メールの乗っ取り",
+      modeDesk: "窓口のなりすまし",
+      modeAll: "4枚の合計",
+      modeLockout: "閉め出しを減らす",
+      candidatesHeading: "おすすめとほかの候補",
+      rankingSummary: "並べ方",
+      chooseLabel: "1手を自分で選ぶ",
+      choosePlaceholder: "（1手を選ぶ）",
+      noMove: "上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。",
+      attackCaption: "攻撃（カード4枚）",
+      attackColCard: "カード",
+      attackColBefore: "前",
+      attackColAfter: "後",
+      attackColSaved: "守れた",
+      attackColNewly: "新たに倒れる",
+      attackMode: "選んだカード",
+      attackNames: "攻撃の名前を見る",
+      lockOneHeading: "閉め出し（1つ失う）",
+      lockTwoHeading: "2つ同時に失う",
+      beforeAfterTable: "閉め出しの表の前後を見る",
+      lockColPhase: "{loss}（{phase}）",
+      legendPaper: "紙＝紙の回復コードをなくした",
+      sameHeading: "同じ入口のほかの手と比べる",
+      sameColMove: "手",
+      sameColSaved: "守れた（延べ）",
+      sameColNewly: "新たに倒れる（延べ）",
+      sameColLock: "閉め出し（1つ）",
+      sameColPair: "2つ同時",
+      backToCompare: "比べた結果へ戻る",
+      afterMap: "手のあとの地図を見る",
+      mapBefore: "手の前",
+      mapAfter: "手のあと",
+      mapCard: "地図のカード：{card}（最後の段）",
+      srLockMark: "閉め出し",
+      // Tab 4: the rules, the symbols, the notes, what the model leaves out, and paper
+      rulesCaption: "模型の規則",
+      rulesColNo: "番号",
+      rulesColRule: "規則",
+      rule1: "アカウントには入口がある。ログインの入口と、復旧（再設定）の入口がある",
+      rule2: "1つの入口の条件は「かつ」。全部そろえば開く（例：パスワード＋SMSのコード）",
+      rule3: "入口どうしは「または」。どれか1つ開けば入れる",
+      rule4: "攻撃者はカードが渡すものから始め、開いたメールも次の条件に使う。新しく開くものがなくなるまで続ける。1回の見直しで開く分を1段と数える",
+      rule5: "パスワードは系統（色と英字）で表す。同じ系統なら、どのアカウントでも同じものとみなす（少し変えた派生を含む）。"
+        + "漏えいのカードは、漏れたサービスがいまログインに使っている系統が、IDと組でそのまま（平文で）出回った場合を表す。"
+        + "そのときは、パスワードが長くても、同じ系統を使う入口ではパスワードの条件がそろう",
+      rule6: "SMSの条件は電話番号で満たす。攻撃者が持つのはSIMスワップのカードのときだけ",
+      rule7: "電話の窓口は個人情報で通る。書類での本人確認（身分証・郵送）を破るカードはない",
+      rule8: "パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある",
+      rule9: "閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。"
+        + "消えたメールそのものは「消」と表し、閉め出しには数えない。パスワードを忘れることは扱わない",
+      rule10: "時間・確率・通知・不審なログインの検知は扱わない",
+      rule2Example: "例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。"
+        + "線をすべて「または」として数えると、ここで倒れたことになってしまいます。",
+      symbolCaption: "記号の一覧",
+      symbolColSymbol: "記号",
+      symbolColMeaning: "何を表すか",
+      symbolColLine: "線の種類",
+      symbolColAttack: "攻撃者が手にするカード",
+      symbolColLoss: "本人がなくすカード",
+      symFamilyName: "赤Aなど",
+      symFamilyMeaning: "パスワードの系統",
+      symFamilyLine: "パスワードの系統",
+      symFamilyAttack: "漏えい（漏れたサービスの系統）",
+      symFamilyLoss: "（扱わない）",
+      symPhoneName: "スマホ",
+      symPhoneMeaning: "認証アプリ・パスキー",
+      symPhoneLine: "多要素",
+      symPhoneAttack: "（なし。端末の感染は模型の外）",
+      symPhoneLoss: "スマホをなくした",
+      symSmsName: "SMS",
+      symSmsMeaning: "電話番号に届くコード",
+      symSmsLine: "SMS",
+      symSmsAttack: "SIMスワップ",
+      symSmsLoss: "電話番号を手放した",
+      symInfoName: "個人情報",
+      symInfoMeaning: "電話の窓口で答える情報",
+      symInfoLine: "窓口",
+      symInfoAttack: "窓口のなりすまし",
+      symInfoLoss: "（なくさない扱い）",
+      symDocName: "書類",
+      symDocMeaning: "身分証・郵送での本人確認",
+      symDocLine: "窓口",
+      symDocAttack: "（なし。偽造は模型の外）",
+      symDocLoss: "（なくさない扱い）",
+      symPaperName: "紙",
+      symPaperMeaning: "紙の回復コード（1手で増える）",
+      symPaperLine: "紙の回復コード",
+      symPaperAttack: "（なし）",
+      symPaperLoss: "紙をなくした（2つ同時の行と、手のあとの表の「＋紙で×」だけ）",
+      symMailName: "メールの名前",
+      symMailMeaning: "メールのアカウント",
+      symMailLine: "メール",
+      symMailAttack: "メールの乗っ取り（人ごとに1つ＝会社員は古いメール、親はプロバイダーのメール、学生は大学のメール）",
+      symMailLoss: "メールが消えた（同じく人ごとに1つ）",
+      symRoleName: "ロ／復、＋",
+      symRoleMeaning: "ログインの入口（カタカナのロ）／復旧の入口、かつ（図と印刷で使う。画面の表では「ログイン」「復旧」と書く）",
+      symRoleLine: "実線／破線",
+      symMarkName: "●1・×・消・★",
+      symMarkMeaning: "段1で倒れた・閉め出し・そのメール自体が消えた・重要",
+      notesHeading: "注記",
+      notePasskey: "パスキーと認証アプリはスマホの中の鍵として扱います。同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
+        + "端末の感染で乗っ取る経路は、この模型に入れていません。この模型にはスマホを攻撃者に渡すカードがないので、スマホを足す手で攻撃の面が悪くなることはありません。{sync}",
+      notePaperRules: "紙の回復コードは本人の手元にだけあります。{paper}紙を分けて保管するなら{day124}・{day125}へ。",
+      toolDay124: "Day124 Scatter Seeds",
+      toolDay125: "Day125 Overlay QR Shares",
+      notInModel: "この模型に入れていないもの",
+      notInModel1: "パスワードの強さ",
+      notInModel2: "攻撃の確率・手間・時間",
+      notInModel3: "不審なログインの検知と通知",
+      notInModel4: "同期パスキーをクラウドの回復で取り出す経路",
+      notInModel5: "端末の感染",
+      notInModel6: "書類の偽造",
+      notInModel7: "パスワードを忘れること",
+      notInModel8: "SSOとパスワード管理ソフト",
+      notInModel9: "乗っ取ったあとに攻撃者が回復先を書き換えること",
+      notInModel10: "漏れたパスワードがハッシュで守られていて解けない場合",
+      paperHeading: "紙に書いて当てはめる",
+      paperFormIntro: "自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。",
+      printButton: "印刷する（3人の地図と空欄の用紙）",
+      // The printed sheets: three maps and the blank sheet
+      printTitle: "{person}の地図（架空の人物）",
+      printDisclaimer: "この地図は、架空の人物を単純化した規則で数えた結果です。実際のサービスは、不審なログインの検知や通知も持っています。"
+        + "書類の確認を破る手口と、パスワードを忘れることは数えていません。",
+      printColAccount: "アカウント",
+      printColEntrances: "入口",
+      printColLeak: "漏えい",
+      printColSimswap: "SIM",
+      printColMail: "メール乗っ取り",
+      printColDesk: "窓口",
+      printColPhone: "スマホ",
+      printColNumber: "番号",
+      printColMailLoss: "{mailHead}",
+      printGroupAttack: "攻撃カード",
+      printGroupLoss: "失ったとき",
+      printEntrance: "{role}：{req}",
+      printBackdoor: "裏",
+      printCellBackdoor: "{cell}{bd}",
+      printLegendSim: "SIM＝SIMスワップ",
+      printLegendDesk: "窓口＝窓口のなりすまし",
+      printLegendBackdoor: "裏＝裏口",
+      printLegendNone: "－＝倒れない",
+      printLegendOk: "○＝入れる",
+      printLegendPlus: "○（＋番号で×）＝番号も失うと入れない",
+      formTitle: "わたしの地図（記号で書く用紙）",
+      formKeepTitle: "保管注意（弱点の地図）",
+      formKeepText: "この用紙には、どのアカウントがどの線で開くかという弱点の地図を書きます。パスワードそのものは書かず、系統の記号（色と英字）だけを書きます。"
+        + "写真に撮ったり、クラウドやメッセージで送ったりしないでください。人目に触れない場所に保管し、要らなくなったら細かく破いて捨ててください。",
+      formDates: "書いた日：＿＿＿＿　保管する場所：＿＿＿＿＿＿　見直す日：＿＿＿＿",
+      formHow1: "アカウントの名前は略してよい（例：メールA、銀行）。",
+      formHow2: "パスワードは書かない。同じパスワード（少し変えたものを含む）には同じ記号を付ける（赤Aなど）。",
+      formHow3: "入口ごとに1行。ロ＝ログイン（カタカナのロ）、復＝復旧。条件が2つ以上なら＋でつなぐ（例：赤A＋SMS）。",
+      formHow4: "書き終えたら、多くのアカウントの復旧の先になっているメールを探し、電話番号1本に頼る入口を数える。",
+      formColNo: "No.",
+      formColAccount: "アカウント（略称）",
+      formColImportant: "★",
+      formColRole: "ロ／復",
+      formColReq: "条件（記号）",
+      formColNotes: "メモ",
+      // Help: the ten lessons (paragraphs, table headings and the bibliography; the numbers in the tables are computed)
+      lessonsHeading: "座学",
+      lessonSources: "出典",
+      lessonColPerson: "人物",
+      lessonColResult: "結果",
+      lessonColFallen: "倒れる",
+      lessonColBackdoor: "うち裏口",
+      lessonStep: "段{step}",
+      lessonMissing: "足りない：{items}",
+      lessonMet: "そろった",
+      lessonFalls: "倒れる",
+      lessonNone: "なし",
+      lesson1Title: "1. アカウントの地図と「かつ・または」",
+      lesson1Text1: "この教材の地図は、Hammannらの論文（CCS 2019）のアカウントアクセスグラフにならっています。1つの入口の条件は「かつ」で、すべてそろったときだけ開きます。"
+        + "入口どうしは「または」で、どれか1つが開けばアカウントに入れます。論文の図では、同じ色の線が「かつ」、違う色の線が「または」です。",
+      lesson1Text2: "攻撃者が入れるアカウントは、カードが渡したものから始めて、条件がそろった入口のアカウントを足していき、新しく開くものがなくなったところで決まります"
+        + "（論文の定義3の最小不動点）。入口ごとにそろっていない条件の数を数えておき、0になった入口のアカウントを足していけば、線の数に比例する手間で求まります"
+        + "（DowlingとGallierのHorn節の方法）。",
+      lesson1Text3: "1つ目の表は、会社員のSNSが漏えいのカードで倒れるまでです。ログインの入口は赤AとSMSの「かつ」なので、赤Aだけではそろいません。"
+        + "メインのメールが倒れると、復旧の入口（登録メールで再設定）の条件がそろい、次の段でSNSが倒れます。",
+      lesson1Text4: "2つ目の表は、規則2の例です。会社員のネット銀行の再設定は、SMSと個人情報の「かつ」です。SIMスワップのカード1枚では個人情報がないので、"
+        + "ネット銀行は倒れません。線をすべて「または」として数えると、ここで倒れたことになってしまいます。",
+      lesson1FlowCaption: "{person}の{account}と{card}のカード",
+      lesson1ColStep: "段",
+      lesson1ColAdded: "新しく加わったもの",
+      lesson1AndOrCaption: "{person}の{account}と{card}のカード1枚",
+      lesson1ColCounting: "数え方",
+      lesson1CountAndOr: "かつ・または（この教材）",
+      lesson1CountAllOr: "すべての線を「または」として数える",
+      lesson1OpensWith: "{items}だけで開く",
+      lesson2Title: "2. 使い回しとリスト型攻撃",
+      lesson2Text1: "よそで漏れたIDとパスワードの組がそのまま出回れば、長いパスワードでも、使い回した先の入口ではパスワードの条件がそろいます"
+        + "（SMSなどほかの条件もある入口は、それだけでは開きません）。漏えいのカードはこの場合を表します（規則5）。"
+        + "NIST SP 800-63B-4（§3.1.1.2）は、パスワードをソルト付きのハッシュで保存するよう求めています。ハッシュを手に入れた攻撃者の、推測1回ごとの手間を"
+        + "増やすためです。漏れたのが平文の組か、正しく作られたハッシュかで、長いパスワードの意味が変わります。この模型は前者だけを数えます。",
+      lesson2Text2: "同じパスワードを複数のサイトで使っていた人は43〜51%と見積もられました（Dasら、NDSS 2014。2006〜2012年の漏えいデータで43%、大学での調査で51%）。"
+        + "いまの日本の利用者の割合ではありません。",
+      lesson2Text3: "2026年10月、国内のポイントサイトで、よそで漏れたIDとパスワードの組によって不正にログインされた可能性のあるアカウントが249件あると公表されました。"
+        + "JPCERT/CCと総務省も、パスワードを使い回さないよう呼びかけています。",
+      lesson2Text4: "表は、3人のパスワードの系統ごとに、その系統を条件に持つアカウントを数えたものです。",
+      lesson2Caption: "パスワードの系統ごとの使い回し（3人）",
+      lesson2ColFamily: "系統",
+      lesson2ColCount: "アカウントの数",
+      lesson2ColAccounts: "使っているアカウント",
+      lesson3Title: "3. 復旧の線は入口にもなる（裏口）",
+      lesson3Text1: "復旧の線は本人が戻る道ですが、攻撃者の入口にもなります。この教材では、カードで倒れたアカウントのうち、復旧の入口をすべて外すと倒れないものを"
+        + "「裏口」と呼びます。2段先の復旧の線で倒れるものも裏口です（Hammannらの例22）。開けた入口がログインでも、その条件のメールが復旧の線で倒れていれば"
+        + "裏口になります（学生の動画のサブスクのログインを、フリーメールに届くコードへ付け替えた手のあと）。",
+      lesson3Text2: "研究でも、登録メールが入口になることが確かめられています。2018年の研究（Liら）では、アクセスの多い上位500のうち、アカウントを作れて回復の手順のある"
+        + "239サイトの81.1%で、登録メールに入れればアカウントを奪えました。金融のサイトは別でした。Klivanらは2022年に、ドイツ語と英語の71サイトで、パスワードを"
+        + "知る持ち主が第2要素を失ったとして回復を試しました。37サイトで入り直せ、そのうち26はメールで足りました（銀行・投資など、身分証や有料の契約が要るサイトは"
+        + "対象外）。",
+      lesson3Text3: "2012年の米国の記者の事例では、通販→端末メーカーのアカウント→メール→SNSと倒れました。窓口が、登録メール・請求先住所・カード下4桁で"
+        + "仮パスワードを出したためです（2012年当時の手順）。",
+      lesson3Text4: "復旧の情報は本人を助ける面もあります。線の先が強ければ戻り道になり、弱ければ入口になります。表は、3人の4枚のカードで倒れたアカウントのうち、"
+        + "裏口の数です。",
+      lesson3Caption: "裏口の数（3人×4枚のカード）",
+      lesson4Title: "4. SMSとSIMスワップ",
+      lesson4Text1: "SIMスワップは、電話番号を別のSIMへ移させて、SMSで届くコードを受け取る手口です。Leeらは2019年に米国のプリペイド5社を調べ、簡単な問いでSIMの切り替えが"
+        + "通ったと報告しました。SMSで第2要素も再設定もまかなう設定では、SIMスワップだけで乗っ取れました（当時、調べた145サイト中17）。この教材のSIMスワップの"
+        + "カードは、起きた場合を描く模型です。日本の携帯会社の再発行の本人確認の現状は、確かめていません。",
+      lesson4Text2: "NIST SP 800-63B-4は、電話網での認証（ログインの第2要素）を「制限付き」としています。回復では、SMSで届くコードも方法の1つとして認めています"
+        + "（有効期間は10分以内。AAL2では別の要素と組にします）。米国連邦政府の情報システム向けの指針で、日本の事業者の義務ではありません。",
+      lesson4Text3: "日本では、奈良県警が、偽造した免許証などでSIMを再発行させる手口を広報しています（件数は書かれていません）。総務省は、令和9年4月から携帯電話やSIMの"
+        + "契約時等にICチップの読み取りによる確認が必要になると案内しています。既存の番号のSIMの再発行が対象に入るかは、そのページには書かれていません。",
+      lesson4Text4: "表は、3人のSIMスワップのカードの結果です。",
+      lesson4Caption: "SIMスワップのカードの結果（3人）",
+      lesson5Title: "5. 窓口（ヘルプデスク）",
+      lesson5Text1: "電話の窓口は、個人情報に答えられれば通る入口として描いています。NCSCは2025年5月、小売業の事件について、ヘルプデスクでのパスワードと多要素のリセットを"
+        + "狙う社会工学が議論されていることに触れ、リセット手順の見直しを勧めました。対象は企業の社内ヘルプデスクです。",
+      lesson5Text2: "NIST SP 800-63B-4（§4.2.1）の回復の方法の4分類に、秘密の質問は入っていません。4分類以外の方法は、リスク分析にもとづいて文書化するよう求めています。"
+        + "書類の偽造は模型の外です（注記3）。",
+      lesson5Text3: "表は、3人の窓口のなりすましのカードの結果です。学生の地図には電話の窓口がないので、何も倒れません。",
+      lesson5Caption: "窓口のなりすましのカードの結果（3人）",
+      lesson6Title: "6. パスキーと証券口座",
+      lesson6Text1: "2025年10月15日から、日本証券業協会の自主規制のガイドラインと金融庁の監督指針が、ログイン・出金・出金先の変更などに、フィッシングに強い多要素認証"
+        + "（パスキーなど）の実装と必須化（初期設定）を求めました。どちらも法令ではありません。金融庁は原則2026年6月末までの実施を求めました。機器を持たない顧客への"
+        + "代替の多要素認証も認めています。",
+      lesson6Text2: "パスキーは偽サイトに入力させる手口に強い方法です。ただし同期型のパスキーの強さは、クラウドのアカウントとその回復の線の強さに依存します"
+        + "（NIST SP 800-63B-4の付録Bの表5）。セキュリティ企業の研究チームは2026年8月、端末が感染していれば同期パスキーでも乗っ取りの経路があると報告しました。"
+        + "特定のOSとブラウザーの組み合わせのパスワード管理機能で、端末に不正なプログラムがすでにいることを前提に実証されたもので、暗号が破られたわけではありません。",
+      lesson6Text3: "架空のネット証券は、ログインにパスキーが必須で、パスキーを再登録する復旧の線が残る設定です。各社の手順は写していません。表は、3人の証券の入口と、"
+        + "倒すのに要るカードです。",
+      lesson6Caption: "証券の入口と倒すのに要るカード（3人）",
+      lesson6ColOne: "1枚で倒れるカード",
+      lesson6ColCombo: "そろうと倒れる組",
+      lesson7Title: "7. 閉め出し",
+      lesson7Text1: "攻撃者は、1つの入口の条件をすべてそろえれば入れます。本人は、入口それぞれから、必要なものを1つずつ失うと閉め出されます（Hammannらの§5）。"
+        + "この教材は、失ったものを外したあと、手元に残ったもので同じ規則で入れないアカウントを閉め出しと数えます（規則9）。",
+      lesson7Text2: "2020年に20人を面接した研究（CHI 2022）では、全員が自分のアカウントのつながりを一部しか把握していませんでした。電話番号を変えて30日、機種を変えて"
+        + "2カ月閉め出された例が語られています。",
+      lesson7Text3: "2023年1月に、大手2社のどちらか一方のアカウントについて、米国とドイツの居住者ほぼ半数ずつの185人に設定を尋ねた研究では、"
+        + "27人が、1つを失うだけで入れなくなるおそれのある設定で、失うものはほとんどがメインのスマホでした。",
+      lesson7Text4: "表は、3人の閉め出しの表のうち、×か「あと1つ失うと×」のあるアカウントです。",
+      lesson7Caption: "閉め出しの表の×と「あと1つ」（3人）",
+      lesson7ColMail: "メール（人ごとに1つ）",
+      lesson8Title: "8. 外すか、付け替えるか（紙の回復コード）",
+      lesson8Text1: "復旧の線を外すと、攻撃の入口が減る代わりに、本人の戻り道も減ります。表は、同じ入口を外す手と、紙か書類へ付け替える手を並べたものです。外す手では、"
+        + "1つ失っただけの閉め出しが増えることがあります。紙へ付け替える手では、閉め出しがなくなるとは限りません。入れなくなる2つの組み合わせが移ることも、"
+        + "新たにできることもあります（「スマホと紙を一緒になくすと入れない」）。",
+      lesson8Text2: "NIST SP 800-63B-4（米国の指針）は、保存型の回復コードについて、64ビット以上の乱数で作ること、使ったら無効にして新しいものを出すこと、差し替えたら"
+        + "通知することを求めています（§4.2.1.1）。印刷や手書きでオフラインに置くことは説明として書かれており、要件ではありません。回復コードは「持っているもの」の"
+        + "典型で、偽サイトに強くありません（§3.1.2）。AAL2の回復には、種類の違う回復コード2つか、回復コード1つと単一要素の認証の組を求めています（§4.2.2.2）。",
+      lesson8Text3: "紙は、保管している間はネット越しに盗まれにくい一方で、置き場所が新しい入口になります。CHI 2022の参加者の1人は、書き出したコードを家族が見られることを"
+        + "心配していました。紙を分けて保管するなら{day124}・{day125}へ。",
+      lesson8Caption: "外す手と付け替える手（3人の5つの入口）",
+      lesson8ColEntrance: "入口",
+      lesson8ColRemove: "外す",
+      lesson8ColReplace: "紙・書類へ付け替える",
+      lesson8Entrance: "{person}：{account}の{method}",
+      lesson8NoReplace: "付け替える先はない",
+      lesson9Title: "9. 模型の約束と研究の形式",
+      lesson9Text1: "この教材の閉め出しは、到達の補集合で数えます。失ったものを外し、手元に残ったものから同じ規則で入れないアカウントが閉め出しです。これは論文の"
+        + "定義18の規則の最大不動点と同じになります（本人が、入る線のない資格情報をすべて持っているとき。この教材ではいつもそうです）。定義18を最小不動点の"
+        + "まま計算すると、復旧が輪になったときに閉め出しを見落とします。",
+      lesson9Text2: "この例は論文の形式（パスワードも失いうる）での比べ方で、画面の喪失カードとは別です。",
+      lesson9Text3: "2020年に20人を面接した研究（CHI 2022）では、2つのメールが互いの回復先になっている輪が3つ見つかっています。",
+      lesson9Text4: "裏口の印は、Hammannらの定義26を点数なしの二値にしたものです（このカードで倒れたアカウントのうち、復旧の入口をまとめて外したグラフでは倒れないものが"
+        + "裏口）。1手の比較は、入口や条件を1つずつ変えて前後を比べる形にしました。論文の点数とaccess setの全列挙は持ちません。",
+      lesson9Caption: "輪の例で入れないメール（メールAとメールBが互いを予備にする）",
+      lesson9ColLost: "失ったもの",
+      lesson9ColComplement: "到達の補集合（この教材）",
+      lesson9ColDef18: "定義18の最小不動点",
+      lesson9PwA: "パスワードa",
+      lesson9PwB: "パスワードb",
+      lesson9MailA: "メールA",
+      lesson9MailB: "メールB",
+      lesson10Title: "10. 関連ツールと点検画面との関係",
+      lesson10Text1: "Day083 Intrusion Path Mapperでも、アカウントをノードにして「メールが乗っ取られたらどこまで届くか」を見られます。ただしDay083の経路は1本の道筋で、"
+        + "成功確率は各ノードの値の積です。本ツールは、2つの鍵がそろったときだけ開く「かつ」（多要素）、1つのパスワードが複数のアカウントを同時に開く使い回し、"
+        + "復旧の線、本人の閉め出しを、決まった規則で扱います。",
+      lesson10Text2: "パスワード管理ソフトの点検機能や各社のセキュリティ診断は、1件ずつの点検を得意とします。この教材はそれを置き換えるものではなく、アカウントのつながりを"
+        + "見るための補助です。",
+      lesson10Caption: "関連ツール",
+      lesson10ColTool: "ツール",
+      lesson10ColLearn: "何を学ぶか",
+      lesson10Day083: "侵入の経路を、1本の道筋と成功確率で見る",
+      lesson10Day001: "パスワードの強さ（この教材は、同じ系統なら長さを問わない）",
+      lesson10Day019: "使い回しを、集団の重複率で見る",
+      lesson10Day060: "パスワードスプレー（この教材は、その別の側＝よそで漏れた組の使い回しを扱う）",
+      lesson10Day064: "端末のロック（パターン）",
+      lesson10Day088: "端末のロック（PIN）",
+      lesson10Day124: "紙の保管（秘密分散）",
+      lesson10Day125: "紙の保管（視覚暗号）",
+      toolDay083: "Day083 Intrusion Path Mapper",
+      toolDay001: "Day001 Password Checker",
+      toolDay019: "Day019 PassCloud",
+      toolDay060: "Day060 Reverse Brute-force Demo",
+      toolDay064: "Day064 PatternLock Security Trainer",
+      toolDay088: "Day088 PIN Threat Simulator",
+      // Bibliography (the only place for the names of real companies and services; English titles stay as published)
+      lessonRefHammann2019: "Hammann, Radomirović, Sasse, Basin, \"User Account Access Graphs\", CCS 2019, pp. 1405–1422",
+      lessonRefDowling1984: "Dowling, Gallier, \"Linear-time algorithms for testing the satisfiability of propositional Horn formulae\", "
+        + "The Journal of Logic Programming 1(3), pp. 267–284, 1984",
+      lessonRefDas2014: "Das, Bonneau, Caesar, Borisov, Wang, \"The Tangled Web of Password Reuse\", NDSS 2014",
+      lessonRefJpcert: "JPCERT/CC「STOP! パスワード使い回し!」",
+      lessonRefSoumuSite: "総務省「国民のためのサイバーセキュリティサイト」",
+      lessonRefJapanPost: "日本郵政「第三者による不正利用および会員情報漏えいの可能性について」2026-10-19",
+      lessonRefNist: "NIST SP 800-63B-4, \"Digital Identity Guidelines: Authentication and Authenticator Management\", July 2025",
+      lessonRefLi2018: "Li, Wang, Sun, \"Email as a Master Key: Analyzing Account Recovery in the Wild\", IEEE INFOCOM 2018, pp. 1646–1654",
+      lessonRefKlivan2023: "Klivan, Höltervennhoff, Huaman, Krause, Simko, Acar, Fahl, \"'We've Disabled MFA for You': An Evaluation of the Security "
+        + "and Usability of Multi-Factor Authentication Recovery Deployments\", CCS 2023, pp. 3138–3152",
+      lessonRefHonan2012: "Honan, \"How Apple and Amazon Security Flaws Led to My Epic Hacking\", Wired, 2012-08-06",
+      lessonRefLee2020: "Lee, Kaiser, Mayer, Narayanan, \"An Empirical Study of Wireless Carrier Authentication for SIM Swaps\", SOUPS 2020, pp. 61–79",
+      lessonRefNaraPolice: "奈良県警察本部サイバー犯罪対策課「サイバーニュース 令和5年度第4号」",
+      lessonRefSoumuMobile: "総務省「携帯電話の本人確認ルール」",
+      lessonRefNcsc2025: "NCSC, \"Incidents impacting retailers – recommendations from the NCSC\", 2025-05-04",
+      lessonRefJsda2025: "日本証券業協会「インターネット取引における不正アクセス等防止に向けたガイドライン」（2025-10-15 施行）",
+      lessonRefFsaGuidelines: "金融庁「金融商品取引業者等向けの総合的な監督指針」（2025-10-15 適用の改正）",
+      lessonRefFsaDialogue: "金融庁「業界団体との意見交換会において金融庁が提起した主な論点」（2025-07-15 開催、日本証券業協会）",
+      lessonRefUnit42: "Olshtein, \"Pass the Passkey: A Novel Attack Surface in Passwordless Authentication\", Palo Alto Networks Unit 42, 2026-08-03",
+      lessonRefChi2022: "Hammann, Crabb, Radomirović, Sasse, Basin, \"'I'm Surprised So Much Is Connected': A Study on Users' Online Accounts\", CHI 2022",
+      lessonRefButtner2024: "Büttner, Gruschka, \"Evaluating the Influence of Multi-Factor Authentication and Recovery Settings on the Security and "
+        + "Accessibility of User Accounts\", ICISSP 2024, pp. 691–700",
     },
     en: {
       themeToggle: "Switch light and dark",
@@ -419,7 +757,7 @@
         + "and recovery at a desk takes time. Real identity-check procedures are not described.",
       stepFirst: "Start over",
       stepNext: "Next step ▶",
-      stepLast: "Last step",
+      stepLast: "Skip to end",
       play: "▶ Play",
       stop: "■ Stop",
       stepSummary: "With this card alone, {n} of {total} accounts fall (★{imp}).",
@@ -432,6 +770,7 @@
       stepStatusZero: "Step 0 (given by the card): {gives}",
       stepStatusWithSummary: "{status}. {summary}",
       reducedPlay: "Reduced motion is on, so the last step is shown. To go one step at a time, press “Start over”, then “Next step ▶”.",
+      stepHint: "Press “Start over” to follow the chain one step at a time from step 0.",
       mapLegend: "●n = the step it falls at · backdoor = would not fall to this card without the recovery entrances · this step = fell at this step",
       mapCaption: "Map: {person} ({card}, step {step})",
       colAccount: "Account",
@@ -539,6 +878,7 @@
       lockNotePassword: "Forgetting a password is not one of the loss cards in this model.",
       lockNoteNumber: "“Lost the phone” keeps the phone number (assuming the SIM can be reissued).",
       lockNoteSync: "The “Lost the phone” values assume the authenticator app and passkeys are not synced or backed up to another device or the cloud.",
+      lockEntrances: "{account}: {entrances}",
       // One change: effects, sentences and notes
       effectSaved: "Saves: {n}",
       effectSavedImp: "Saves: {n} (★{imp})",
@@ -601,13 +941,386 @@
       samePairUnlocked: "Unlocked: {A} and {B}",
       notePaper: "No card here hands the paper codes to the attacker, so moving a line to paper codes never makes the attack side worse. In reality, "
         + "where you keep them becomes a new entrance, and they are not phishing-resistant when you type them in. On the lockout side, "
-        + "losing the paper together with something else can still lock you out.",
+        + "losing the paper codes together with something else can lock you out.",
       noteRemove: "Lockout for a removal is counted with the loss cards (phone, number, email). Forgetting a password is not in the model, "
         + "so for accounts that log in with a password, removing a recovery entrance can look as if it adds no lockout. In reality, "
         + "you lose your way back in if you forget the password.",
       noteOwnFamily: "If the breached service gets a family of its own, the breach card gives only that new family, "
         + "and the leak no longer spreads to the accounts that reused the old one.",
       noteNoChange: "This change affects neither any single card's attack nor the lockout.",
+      // Tab 3: try one change
+      modeHeading: "Prepare for",
+      modeLeak: "Breach",
+      modeSimswap: "SIM swap",
+      modeMail: "Email takeover",
+      modeDesk: "Help-desk impersonation",
+      modeAll: "All four cards",
+      modeLockout: "Fewer lockouts",
+      candidatesHeading: "Suggested change and alternatives",
+      rankingSummary: "How changes are ranked",
+      chooseLabel: "Choose a change yourself",
+      choosePlaceholder: "(choose a change)",
+      noMove: "Pick a change from the suggestions above or from “Choose a change yourself” to compare before and after.",
+      attackCaption: "Attack (four cards)",
+      attackColCard: "Card",
+      attackColBefore: "Before",
+      attackColAfter: "After",
+      attackColSaved: "Saved",
+      attackColNewly: "Newly fallen",
+      attackMode: "selected card",
+      attackNames: "See the account names",
+      lockOneHeading: "Lockout (one loss)",
+      lockTwoHeading: "Losing two at once",
+      beforeAfterTable: "See the lockout table before and after",
+      lockColPhase: "{loss} ({phase})",
+      legendPaper: "Paper codes = Lost the paper recovery codes",
+      sameHeading: "Compare other changes to the same entrance",
+      sameColMove: "Change",
+      sameColSaved: "Saved (sum over 4 cards)",
+      sameColNewly: "Newly fallen (sum over 4 cards)",
+      sameColLock: "Lockout (one loss)",
+      sameColPair: "Two at once",
+      backToCompare: "Back to the comparison",
+      afterMap: "See the map after the change",
+      mapBefore: "Before",
+      mapAfter: "After",
+      mapCard: "Card on the map: {card} (last step)",
+      srLockMark: "locked out",
+      // Tab 4: the rules, the symbols, the notes, what the model leaves out, and paper
+      rulesCaption: "Rules of the model",
+      rulesColNo: "Number",
+      rulesColRule: "Rule",
+      rule1: "An account has entrances: log-in entrances and recovery (reset) entrances",
+      rule2: "All requirements of one entrance must be met (AND), e.g. password + SMS code",
+      rule3: "Any one entrance is enough (OR)",
+      rule4: "The attacker starts from what the card gives and uses every opened email for further entrances, until nothing new opens. "
+        + "Each round of newly opened accounts is one step",
+      rule5: "Passwords are families (color + letter). The same family counts as the same secret everywhere, small variations included. "
+        + "A breach card stands for the case where the family that the breached service now uses to log in has leaked as-is (in plain text), "
+        + "together with the ID; then the password requirement is met on every entrance that uses that family, however long the password is",
+      rule6: "An SMS requirement is met by the phone number; the attacker holds it only with the SIM-swap card",
+      rule7: "A phone help desk accepts personal details; no card defeats a document check (photo ID, postal mail)",
+      rule8: "Passkeys and authenticator apps are treated as keys inside the phone; paper recovery codes exist only in the owner's hands",
+      rule9: "Lockout: after removing what the owner lost (one thing, or two at once), the accounts they cannot reach by the same rules from what remains. "
+        + "A vanished email itself is shown as gone and is not counted as locked out. Forgetting a password is not modeled",
+      rule10: "Time, probability, notifications and detection of suspicious log-ins are not modeled",
+      rule2Example: "Example: the office worker's online bank resets with SMS + personal details. The SIM-swap card alone lacks the personal details, "
+        + "so the bank does not fall. Counting every line as OR would wrongly make it fall here.",
+      symbolCaption: "Symbols",
+      symbolColSymbol: "Symbol",
+      symbolColMeaning: "Meaning",
+      symbolColLine: "Line type",
+      symbolColAttack: "Attack card that gives it",
+      symbolColLoss: "Loss card that takes it",
+      symFamilyName: "Red A, etc.",
+      symFamilyMeaning: "Password family",
+      symFamilyLine: "Password family",
+      symFamilyAttack: "Breach (the family the breached service uses)",
+      symFamilyLoss: "(not modeled)",
+      symPhoneName: "Phone",
+      symPhoneMeaning: "Authenticator app, passkey",
+      symPhoneLine: "Multi-factor",
+      symPhoneAttack: "(none; an infected device is outside the model)",
+      symPhoneLoss: "Lost the phone",
+      symSmsName: "SMS",
+      symSmsMeaning: "Code sent to the phone number",
+      symSmsLine: "SMS",
+      symSmsAttack: "SIM swap",
+      symSmsLoss: "Gave up the phone number",
+      symInfoName: "Personal details",
+      symInfoMeaning: "Answers given to a phone help desk",
+      symInfoLine: "Help desk",
+      symInfoAttack: "Help-desk impersonation",
+      symInfoLoss: "(treated as never lost)",
+      symDocName: "Documents",
+      symDocMeaning: "Identity check with photo ID or postal mail",
+      symDocLine: "Help desk",
+      symDocAttack: "(none; forgery is outside the model)",
+      symDocLoss: "(treated as never lost)",
+      symPaperName: "Paper codes",
+      symPaperMeaning: "Paper recovery codes (added by a change)",
+      symPaperLine: "Paper recovery codes",
+      symPaperAttack: "(none)",
+      symPaperLoss: "Lost the paper recovery codes (only in two-at-once lines and “× if the paper codes go too” in the after-change table)",
+      symMailName: "Email name",
+      symMailMeaning: "An email account",
+      symMailLine: "Email",
+      symMailAttack: "Email takeover (one per person: the old email, the ISP email, the university email)",
+      symMailLoss: "Email gone (one per person, likewise)",
+      symRoleName: "Log / Rec, +",
+      symRoleMeaning: "Log-in entrance / recovery entrance, AND (diagram and printed sheets only; tables use the words)",
+      symRoleLine: "Solid / dashed",
+      symMarkName: "●1 · × · gone · ★",
+      symMarkMeaning: "Fell at step 1 · locked out · the email itself is gone · important",
+      notesHeading: "Notes",
+      notePasskey: "Passkeys and authenticator apps are treated as keys inside the phone. Retrieving synced passkeys through cloud-account recovery, "
+        + "and takeover through an infected device, are outside this model. No card here hands the phone to the attacker, "
+        + "so adding the phone never makes the attack side worse. {sync}",
+      notePaperRules: "Paper recovery codes exist only in the owner's hands. {paper} To keep them split across places, see {day124} and {day125}.",
+      toolDay124: "Day124 Scatter Seeds",
+      toolDay125: "Day125 Overlay QR Shares",
+      notInModel: "Not in this model",
+      notInModel1: "Password strength",
+      notInModel2: "Attack probability, effort and time",
+      notInModel3: "Detection of suspicious log-ins and notifications",
+      notInModel4: "Retrieving synced passkeys through cloud recovery",
+      notInModel5: "Infected devices",
+      notInModel6: "Forged documents",
+      notInModel7: "Forgetting a password",
+      notInModel8: "Single sign-on and password managers",
+      notInModel9: "An attacker changing recovery details after a takeover",
+      notInModel10: "Leaks where the passwords are protected by hashing and cannot be cracked",
+      paperHeading: "Apply it on paper",
+      paperFormIntro: "Your own setup is never entered on this page. Print the blank sheet and fill it in with symbols, without passwords. "
+        + "The sheet has a “Keep safe (map of weak points)” box.",
+      printButton: "Print (three maps and a blank sheet)",
+      // The printed sheets: three maps and the blank sheet
+      printTitle: "Map: {person} (fictional)",
+      printDisclaimer: "This map counts a fictional person's accounts with simplified rules. "
+        + "Real services also detect suspicious log-ins and send notifications. Forged documents and forgotten passwords are not counted.",
+      printColAccount: "Account",
+      printColEntrances: "Entrances",
+      printColLeak: "Breach",
+      printColSimswap: "SIM",
+      printColMail: "Email takeover",
+      printColDesk: "Desk",
+      printColPhone: "Phone",
+      printColNumber: "Number",
+      printColMailLoss: "{mailHead}",
+      printGroupAttack: "Attack cards",
+      printGroupLoss: "When lost",
+      printEntrance: "{role}: {req}",
+      printBackdoor: "bd",
+      printCellBackdoor: "{cell} {bd}",
+      printLegendSim: "SIM = SIM swap",
+      printLegendDesk: "Desk = Help-desk impersonation",
+      printLegendBackdoor: "bd = backdoor",
+      printLegendNone: "– = does not fall",
+      printLegendOk: "○ = can get in",
+      printLegendPlus: "○ (× if the number goes too) = losing the number too locks you out",
+      formTitle: "My map (fill in with symbols)",
+      formKeepTitle: "Keep safe (map of weak points)",
+      formKeepText: "This sheet maps which lines open which accounts. Do not write passwords; write only family symbols (color + letter). "
+        + "Do not photograph it or send it through cloud storage or messages. Keep it out of sight, and shred it when you no longer need it.",
+      formDates: "Date written: ________   Kept at: ____________   Review on: ________",
+      formHow1: "Account names may be shortened (e.g. Mail A, Bank).",
+      formHow2: "Do not write passwords. Give the same symbol to the same password, including slight variations (Red A and so on).",
+      formHow3: "One line per entrance. Log = log-in, Rec = recovery. Join two or more requirements with + (e.g. Red A + SMS).",
+      formHow4: "When finished, find the email that many accounts use for recovery, and count the entrances that rely on a single phone number.",
+      formColNo: "No.",
+      formColAccount: "Account (short)",
+      formColImportant: "★",
+      formColRole: "Log/Rec",
+      formColReq: "Requirements (symbols)",
+      formColNotes: "Notes",
+      // Help: the ten lessons (paragraphs, table headings and the bibliography; the numbers in the tables are computed)
+      lessonsHeading: "Lessons",
+      lessonSources: "Sources",
+      lessonColPerson: "Person",
+      lessonColResult: "Result",
+      lessonColFallen: "Fallen",
+      lessonColBackdoor: "Backdoors",
+      lessonStep: "Step {step}",
+      lessonMissing: "Missing: {items}",
+      lessonMet: "All met",
+      lessonFalls: "Falls",
+      lessonNone: "None",
+      lesson1Title: "1. The account map and AND / OR",
+      lesson1Text1: "The map follows the account access graphs of Hammann et al. (CCS 2019). The requirements of one entrance are joined by AND: "
+        + "the entrance opens only when all of them are met. Entrances are joined by OR: the account opens when any one of them does. "
+        + "In the paper's figures, lines of the same color mean AND and lines of different colors mean OR.",
+      lesson1Text2: "The accounts the attacker can get into are found by starting from what the card gives, adding each account with an entrance whose "
+        + "requirements are all met, and stopping when nothing new opens (the least fixed point of Definition 3 in the paper). Counting the unmet "
+        + "requirements of each entrance and adding its account when the count reaches zero takes time proportional to the number of lines "
+        + "(the Horn-clause method of Dowling and Gallier).",
+      lesson1Text3: "The first table follows the office worker's social media account under the breach card. Its log-in entrance needs Red A and SMS "
+        + "together, so Red A alone does not open it. Once the main email falls, the requirement of the recovery entrance (reset via registered email) "
+        + "is met, and the account falls at the next step.",
+      lesson1Text4: "The second table is the example of rule 2. The office worker's online bank resets with SMS + personal details. The SIM-swap card "
+        + "alone lacks the personal details, so the bank does not fall. Counting every line as OR would wrongly make it fall here.",
+      lesson1FlowCaption: "{person}: {account} (card: {card})",
+      lesson1ColStep: "Step",
+      lesson1ColAdded: "Newly held",
+      lesson1AndOrCaption: "{person}: {account} (card: {card} alone)",
+      lesson1ColCounting: "Counting",
+      lesson1CountAndOr: "AND / OR (this tool)",
+      lesson1CountAllOr: "Every line counted as OR",
+      lesson1OpensWith: "Opens with {items} alone",
+      lesson2Title: "2. Password reuse and credential stuffing",
+      lesson2Text1: "If an ID and password pair leaked elsewhere circulates as-is, the password requirement is met on every entrance that uses that "
+        + "password, however long it is (an entrance that also needs something else, such as an SMS code, does not open with the password alone). "
+        + "The breach card stands for this case (rule 5). NIST SP 800-63B-4 (§3.1.1.2) requires passwords to be stored salted and hashed, "
+        + "so that an attacker who obtains the hash must spend effort on every guess. Whether a plain-text pair or a properly made hash leaked "
+        + "changes what a long password is worth; this model counts only the former.",
+      lesson2Text2: "An estimated 43–51% of users reused the same password on several sites (Das et al., NDSS 2014: 43% in leak data from 2006–2012, "
+        + "51% in a university survey). These figures are not the share of users in Japan today.",
+      lesson2Text3: "In October 2026, a points site in Japan announced that there were 249 accounts that may have been logged into without "
+        + "authorization using ID and password pairs leaked elsewhere. JPCERT/CC and the Ministry of Internal Affairs and Communications also "
+        + "advise against reusing passwords.",
+      lesson2Text4: "The table counts, for each password family of the three people, the accounts that have it as a requirement.",
+      lesson2Caption: "Reuse per password family (three people)",
+      lesson2ColFamily: "Family",
+      lesson2ColCount: "Accounts",
+      lesson2ColAccounts: "Used by",
+      lesson3Title: "3. A recovery line is also a way in (backdoors)",
+      lesson3Text1: "A recovery line is the owner's way back, and it is also a way in for an attacker. This teaching aid calls an account a backdoor "
+        + "when it falls to a card but would not fall if every recovery entrance were removed. An account that falls through a recovery line two "
+        + "steps away is also a backdoor (Example 22 of Hammann et al.). An account opened through log-in is a backdoor too when the email its "
+        + "log-in needs fell through a recovery line (the student's video subscription after its log-in is moved to a code sent to the free email).",
+      lesson3Text2: "Studies have found registered emails working as a way in. A 2018 study (Li et al.) found that getting into the registered email "
+        + "was enough to take over accounts on 81.1% of 239 sites (sites among the 500 most visited where an account could be made and that had "
+        + "a recovery procedure); financial sites were different. In 2022, Klivan et al. tried recovery on 71 German- and English-language sites "
+        + "as owners who knew the password but had lost the second factor: 37 of 71 sites let them back in, 26 of them by email alone "
+        + "(banking and investment sites, which need an ID document or a paid contract, were excluded).",
+      lesson3Text3: "In a 2012 case of a US journalist, an online shop, a device maker's account, email and social media fell one after another: "
+        + "a help desk issued a temporary password in exchange for the registered email, the billing address and the last four digits of a card "
+        + "(the procedures of 2012).",
+      lesson3Text4: "Recovery details also help the owner: a line that leads to something strong is a way back, and one that leads to something weak "
+        + "is a way in. The table shows, for each card and person, how many of the fallen accounts are backdoors.",
+      lesson3Caption: "Backdoors (three people × four cards)",
+      lesson4Title: "4. SMS and SIM swaps",
+      lesson4Text1: "In a SIM swap, the phone number is moved to another SIM, and the codes sent by SMS go to the attacker. Lee et al. examined "
+        + "five US prepaid carriers in 2019 and reported that simple questions were enough to switch the SIM. Where SMS served as both the second "
+        + "factor and the reset, a SIM swap alone was enough to take over the account (17 of the 145 sites examined at the time). The SIM-swap card "
+        + "here models what happens when a swap succeeds; how Japanese carriers check identity before reissuing a SIM has not been confirmed.",
+      lesson4Text2: "NIST SP 800-63B-4 treats authentication over the phone network (a log-in second factor) as “restricted”. For recovery, it "
+        + "accepts codes sent by SMS as one of the methods (valid for 10 minutes or less; combined with another factor at AAL2). It is a US federal "
+        + "guideline, not an obligation for Japanese companies.",
+      lesson4Text3: "In Japan, the Nara Prefectural Police have described SIMs being reissued with forged driver's licenses or similar documents "
+        + "(no case counts given). The Ministry of Internal Affairs and Communications says that from April 2027, contracts for mobile phones "
+        + "and SIMs will need an identity check that reads "
+        + "the IC chip; the page does not say whether reissuing a SIM for an existing number is included.",
+      lesson4Text4: "The table shows the result of the SIM-swap card for the three people.",
+      lesson4Caption: "The SIM-swap card (three people)",
+      lesson5Title: "5. Help desks",
+      lesson5Text1: "A phone help desk is drawn as an entrance that opens for anyone who can answer with the personal details. In May 2025, "
+        + "writing about incidents at retailers, NCSC noted that help-desk social engineering aimed at password and multi-factor resets was "
+        + "being discussed, and recommended reviewing reset procedures (for organizations' internal help desks).",
+      lesson5Text2: "The four kinds of recovery in NIST SP 800-63B-4 (§4.2.1) do not include security questions; any other method must be based on "
+        + "a risk analysis and documented. Forged documents are outside the model (note 3).",
+      lesson5Text3: "The table shows the result of the help-desk impersonation card for the three people. The student's map has no phone help desk, "
+        + "so nothing falls.",
+      lesson5Caption: "The help-desk impersonation card (three people)",
+      lesson6Title: "6. Passkeys and brokerage accounts",
+      lesson6Text1: "From October 15, 2025, a self-regulatory guideline of the Japan Securities Dealers Association and the supervisory guidelines "
+        + "of the Financial Services Agency (FSA) asked brokerages, in the words of the FSA's English translation, to implement "
+        + "“multifactor authentication resilient to phishing attacks” (such as passkeys) for log-in, withdrawals and changes of the withdrawal "
+        + "account, and to “make it essential (set as initial setting)”. Neither is a law. "
+        + "The FSA asked for this to be done, in principle, by the end of June 2026. Alternative multifactor authentication is accepted for "
+        + "customers without the devices.",
+      lesson6Text2: "Passkeys are resistant to phishing, the trick of getting people to type their log-in details into a fake site. "
+        + "A synced passkey, however, is only as strong as the cloud account it syncs through "
+        + "and that account's recovery lines (NIST SP 800-63B-4, Appendix B, Table 5). In August 2026, a security company's research team reported "
+        + "a way to take over accounts with synced passkeys when the device is infected. It was shown on the password manager of one operating "
+        + "system and browser combination, with malware already on the device, and the cryptography was not broken.",
+      lesson6Text3: "The fictional online brokerage requires a passkey to log in and keeps a recovery line that re-registers the passkey; "
+        + "no company's procedure is copied. The table shows each person's brokerage entrances and the cards it falls to.",
+      lesson6Caption: "The brokerage: entrances and the cards it falls to (three people)",
+      lesson6ColOne: "Falls to one card",
+      lesson6ColCombo: "Falls to a combination",
+      lesson7Title: "7. Lockout",
+      lesson7Text1: "An attacker gets in by meeting every requirement of one entrance. The owner is locked out by losing one needed thing for each "
+        + "entrance (Hammann et al., §5). This teaching aid counts as locked out the accounts the owner cannot reach by the same rules with what "
+        + "remains after the loss (rule 9).",
+      lesson7Text2: "In a study based on interviews with 20 people in 2020 (CHI 2022), every participant had only a partial picture of how their accounts "
+        + "were connected. Participants told of being locked out for 30 days after changing their phone number and for two months after "
+        + "changing their phone.",
+      lesson7Text3: "A study that asked 185 users of either of two major providers' accounts (about half living in the US, half in Germany) about "
+        + "their settings in January 2023 found that 27 of them could be locked out by losing a single thing, nearly always their main phone.",
+      lesson7Text4: "The table lists the accounts whose lockout table has × or “one more loss locks you out” for the three people.",
+      lesson7Caption: "Lockout cells with × or one more loss (three people)",
+      lesson7ColMail: "Email (one per person)",
+      lesson8Title: "8. Remove or replace (paper recovery codes)",
+      lesson8Text1: "Removing a recovery line takes away a way in, and also a way back for the owner. The table sets removing an entrance beside "
+        + "replacing it with paper codes or a document check. A removal can add a lockout for a single loss. Moving a line to paper codes does "
+        + "not necessarily rule out lockout: the pair of losses that locks you out may move, or a new pair may appear (losing the phone and "
+        + "the paper codes together locks you out).",
+      lesson8Text2: "NIST SP 800-63B-4, a US guideline, requires saved recovery codes to be random with at least 64 bits, to be invalidated once used "
+        + "with new ones issued, and to trigger a notification when replaced (§4.2.1.1). Keeping them offline, printed or written down, is "
+        + "described there but is not a requirement. A recovery code is a typical “something you have” and is not phishing-resistant (§3.1.2). "
+        + "For recovery at AAL2, NIST asks for two recovery codes of different kinds, or one recovery code together with a single-factor "
+        + "authenticator (§4.2.2.2).",
+      lesson8Text3: "Paper codes are hard to steal over the network while they are in storage, but where you keep them becomes a new entrance. "
+        + "One participant in the CHI 2022 study worried that family members could see recovery codes written down. To keep them split across places, "
+        + "see {day124} and {day125}.",
+      lesson8Caption: "Removing and replacing (five entrances of the three people)",
+      lesson8ColEntrance: "Entrance",
+      lesson8ColRemove: "Remove",
+      lesson8ColReplace: "Replace with paper codes or a document check",
+      lesson8Entrance: "{person}: {account}, {method}",
+      lesson8NoReplace: "Nothing to replace it with",
+      lesson9Title: "9. The model and the research formalism",
+      lesson9Text1: "This teaching aid counts lockout as the complement of reach: after removing what was lost, the accounts the owner cannot reach "
+        + "by the same rules from what remains are locked out. This equals the greatest fixed point of the rules of Definition 18 in the paper "
+        + "when the owner holds every credential that no line leads into, which is always the case here. Computing Definition 18 as a least "
+        + "fixed point misses lockouts when recovery forms a cycle.",
+      lesson9Text2: "This example compares the two in the paper's formalism (where passwords can also be lost); it is separate from the loss "
+        + "cards on the screen.",
+      lesson9Text3: "In a study based on interviews with 20 people in 2020 (CHI 2022), three cycles were found in which two emails were each other's "
+        + "recovery address.",
+      lesson9Text4: "The backdoor mark is Definition 26 of Hammann et al. made yes-or-no, without scores (among the accounts that fall to the "
+        + "card, those that do not fall in the graph with all recovery entrances removed are backdoors). The comparison of one change sets "
+        + "before and after side by side, changing one entrance or requirement at a time. The paper's scores and the full listing of access "
+        + "sets are not included.",
+      lesson9Caption: "Locked-out emails in a cycle (emails A and B back each other up)",
+      lesson9ColLost: "Lost",
+      lesson9ColComplement: "Complement of reach (this tool)",
+      lesson9ColDef18: "Least fixed point of Definition 18",
+      lesson9PwA: "password a",
+      lesson9PwB: "password b",
+      lesson9MailA: "Email A",
+      lesson9MailB: "Email B",
+      lesson10Title: "10. Related tools and checkup screens",
+      lesson10Text1: "Day083 Intrusion Path Mapper can also show, with accounts as nodes, how far a hijacked email account reaches. Its paths are "
+        + "single chains, though, and their success probability is a product of per-node values. This tool applies fixed rules to an account "
+        + "that opens only when two keys are both present (multi-factor), one password opening several accounts at once (reuse), recovery lines, "
+        + "and the owner being locked out.",
+      lesson10Text2: "The checkup features of password managers and the security checkups of individual services are good at checking accounts "
+        + "one by one. This teaching aid does not replace them; it is an aid for seeing how accounts are connected.",
+      lesson10Caption: "Related tools",
+      lesson10ColTool: "Tool",
+      lesson10ColLearn: "What it teaches",
+      lesson10Day083: "Intrusion paths as single chains with success probabilities",
+      lesson10Day001: "Password strength (this tool ignores length within a family)",
+      lesson10Day019: "Reuse seen as the overlap rate in a group",
+      lesson10Day060: "Password spraying (this tool covers the other side: reuse of pairs leaked elsewhere)",
+      lesson10Day064: "Device locks (patterns)",
+      lesson10Day088: "Device locks (PINs)",
+      lesson10Day124: "Keeping paper codes (secret sharing)",
+      lesson10Day125: "Keeping paper codes (visual cryptography)",
+      toolDay083: "Day083 Intrusion Path Mapper",
+      toolDay001: "Day001 Password Checker",
+      toolDay019: "Day019 PassCloud",
+      toolDay060: "Day060 Reverse Brute-force Demo",
+      toolDay064: "Day064 PatternLock Security Trainer",
+      toolDay088: "Day088 PIN Threat Simulator",
+      // Bibliography (the only place for the names of real companies and services; Japanese titles are given in English)
+      lessonRefHammann2019: "Hammann, Radomirović, Sasse, Basin, \"User Account Access Graphs\", CCS 2019, pp. 1405–1422",
+      lessonRefDowling1984: "Dowling, Gallier, \"Linear-time algorithms for testing the satisfiability of propositional Horn formulae\", "
+        + "The Journal of Logic Programming 1(3), pp. 267–284, 1984",
+      lessonRefDas2014: "Das, Bonneau, Caesar, Borisov, Wang, \"The Tangled Web of Password Reuse\", NDSS 2014",
+      lessonRefJpcert: "JPCERT/CC, \"STOP! Password reuse!\" (in Japanese)",
+      lessonRefSoumuSite: "Ministry of Internal Affairs and Communications (MIC), \"Cybersecurity Site for the Public\" (in Japanese)",
+      lessonRefJapanPost: "Japan Post Holdings, \"Unauthorized use by third parties and possible leak of member information\" (in Japanese), 2026-10-19",
+      lessonRefNist: "NIST SP 800-63B-4, \"Digital Identity Guidelines: Authentication and Authenticator Management\", July 2025",
+      lessonRefLi2018: "Li, Wang, Sun, \"Email as a Master Key: Analyzing Account Recovery in the Wild\", IEEE INFOCOM 2018, pp. 1646–1654",
+      lessonRefKlivan2023: "Klivan, Höltervennhoff, Huaman, Krause, Simko, Acar, Fahl, \"'We've Disabled MFA for You': An Evaluation of the Security "
+        + "and Usability of Multi-Factor Authentication Recovery Deployments\", CCS 2023, pp. 3138–3152",
+      lessonRefHonan2012: "Honan, \"How Apple and Amazon Security Flaws Led to My Epic Hacking\", Wired, 2012-08-06",
+      lessonRefLee2020: "Lee, Kaiser, Mayer, Narayanan, \"An Empirical Study of Wireless Carrier Authentication for SIM Swaps\", SOUPS 2020, pp. 61–79",
+      lessonRefNaraPolice: "Nara Prefectural Police, Cybercrime Division, \"Cyber News FY2023 No. 4\" (in Japanese)",
+      lessonRefSoumuMobile: "MIC, \"Identity verification rules for mobile phones\" (in Japanese)",
+      lessonRefNcsc2025: "NCSC, \"Incidents impacting retailers – recommendations from the NCSC\", 2025-05-04",
+      lessonRefJsda2025: "Japan Securities Dealers Association (JSDA), \"Guidelines for Prevention of Unauthorized Access, etc. in Internet "
+        + "Transactions\" (in Japanese), effective 2025-10-15",
+      lessonRefFsaGuidelines: "Financial Services Agency (FSA), \"Comprehensive Guidelines for Supervision of Financial Instruments Business "
+        + "Operators, etc.\" (in Japanese), amended 2025-10-15",
+      lessonRefFsaDialogue: "Financial Services Agency (FSA), \"Main Topics Raised by the Financial Services Agency (FSA) at a Dialogue Meeting "
+        + "with the Industry Association\" (in Japanese), held 2025-07-15 with the Japan Securities Dealers Association (JSDA)",
+      lessonRefUnit42: "Olshtein, \"Pass the Passkey: A Novel Attack Surface in Passwordless Authentication\", Palo Alto Networks Unit 42, 2026-08-03",
+      lessonRefChi2022: "Hammann, Crabb, Radomirović, Sasse, Basin, \"'I'm Surprised So Much Is Connected': A Study on Users' Online Accounts\", CHI 2022",
+      lessonRefButtner2024: "Büttner, Gruschka, \"Evaluating the Influence of Multi-Factor Authentication and Recovery Settings on the Security and "
+        + "Accessibility of User Accounts\", ICISSP 2024, pp. 691–700",
     },
   };
 }));
