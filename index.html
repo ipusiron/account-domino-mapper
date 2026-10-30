@@ -52,21 +52,70 @@
       <p id="person-status" class="visually-hidden" role="status" aria-live="polite"></p>
       <nav class="tabs" role="tablist" aria-label="学ぶ順番" data-i18n-aria="tablist">
         <button id="tab-chain" role="tab" type="button" aria-controls="panel-chain"
-          aria-selected="true" tabindex="0" data-i18n="tabChain">連鎖を追う</button>
+          aria-selected="true" tabindex="0" data-i18n="tabChain">連鎖を<wbr>追う</button>
         <button id="tab-lockout" role="tab" type="button" aria-controls="panel-lockout"
           aria-selected="false" tabindex="-1" data-i18n="tabLockout">閉め出し</button>
         <button id="tab-compare" role="tab" type="button" aria-controls="panel-compare"
-          aria-selected="false" tabindex="-1" data-i18n="tabCompare">1手で比べる</button>
+          aria-selected="false" tabindex="-1" data-i18n="tabCompare">1手で<wbr>比べる</button>
         <button id="tab-rules" role="tab" type="button" aria-controls="panel-rules"
           aria-selected="false" tabindex="-1" data-i18n="tabRules">規則表</button>
       </nav>
       <section id="panel-chain" class="panel" role="tabpanel" aria-labelledby="tab-chain" tabindex="0">
         <h2 data-i18n="tabChain">連鎖を追う</h2>
         <p data-i18n="chainIntro">攻撃カードを1枚選ぶと、攻撃者がそこから入れるアカウントを段ごとに数えます。攻撃者が入れるようになることを「倒れる」と呼びます。段0はカードが渡したもの、段1はそれだけで入口が開くアカウント、段2はさらにその先です。</p>
+        <p id="start-here" class="start-here" data-i18n="startHere">はじめに：「見どころ」の1つ目を押し、「次の段 ▶」で1段ずつ進めます。</p>
+        <p id="story" class="story"></p>
+        <h3 id="highlights-heading" data-i18n="highlightsHeading">見どころ</h3>
+        <div id="highlights" class="highlights" role="group" aria-labelledby="highlights-heading"></div>
+        <h3 id="cards-heading" data-i18n="cardsHeading">攻撃カード</h3>
+        <div class="card-buttons" role="group" aria-labelledby="cards-heading">
+          <button id="card-leak" type="button" data-key="card:leak" aria-pressed="true" data-i18n="cardLeak">漏えい</button>
+          <button id="card-simswap" type="button" data-key="card:simswap" aria-pressed="false" data-i18n="cardSimswap">SIMスワップ</button>
+          <button id="card-mail" type="button" data-key="card:mail" aria-pressed="false" data-i18n="cardMail">メールの乗っ取り</button>
+          <button id="card-desk" type="button" data-key="card:desk" aria-pressed="false" data-i18n="cardDesk">窓口のなりすまし</button>
+        </div>
+        <p id="card-line" class="card-line"></p>
+        <div class="step-controls">
+          <button id="step-first" type="button" data-key="step:first">最初から</button>
+          <button id="step-next" type="button" data-key="step:next">次の段 ▶</button>
+          <button id="step-last" type="button" data-key="step:last">最後まで</button>
+          <button id="step-play" type="button" data-key="step:play" aria-pressed="false">▶ 再生</button>
+        </div>
+        <p id="step-line" class="step-line"></p>
+        <p id="step-summary" class="step-summary"></p>
+        <p id="step-status" class="visually-hidden" role="status" aria-live="polite"></p>
+        <figure id="chain-figure" class="map-figure">
+          <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
+        </figure>
+        <p class="map-legend" data-i18n="mapLegend">●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
+        <div id="chain-map" class="table-frame"></div>
+        <div id="detail" class="detail" hidden>
+          <h3 id="detail-heading" tabindex="-1"></h3>
+          <div id="detail-body"></div>
+          <button id="back-to-map" class="back-to-map" type="button" data-key="back-to-map" data-i18n="backToMap">地図の表へ戻る</button>
+        </div>
+        <details id="four-cards" class="four-cards" hidden>
+          <summary data-i18n="fourCards">4枚のカードをまとめて見る</summary>
+          <p class="map-legend" data-i18n="fourCardsLegend">SIM＝SIMスワップ、メール＝メールの乗っ取り、窓口＝窓口のなりすまし</p>
+          <div id="four-cards-table" class="table-frame"></div>
+        </details>
+        <p id="card-note" class="note" hidden></p>
+        <button id="print-guide" class="guide-button" type="button" data-key="print-guide" data-i18n="printGuide">自分の構成に当てはめるときは、画面には入れず、規則表のタブから空欄の用紙を印刷して記号で書きます。</button>
       </section>
       <section id="panel-lockout" class="panel" role="tabpanel" aria-labelledby="tab-lockout" tabindex="0" hidden>
         <h2 data-i18n="tabLockout">閉め出し</h2>
         <p data-i18n="lockIntro">本人がスマホ・電話番号・メールのどれかを失ったとき、手元に残ったもので入れるかを並べます。○の横の「＋番号で×」は、それも一緒に失うと入れなくなる、という意味です。</p>
+        <ul class="legend-list">
+          <li data-i18n="lockLegendPhone">スマホ＝スマホをなくした</li>
+          <li data-i18n="lockLegendNumber">番号＝電話番号を手放した</li>
+          <li id="lock-legend-mail"></li>
+        </ul>
+        <div id="lock-map" class="table-frame"></div>
+        <ul class="note-list">
+          <li data-i18n="lockNotePassword">この模型では、パスワードを忘れることは喪失カードに入れていません。</li>
+          <li data-i18n="lockNoteNumber">「スマホをなくした」では電話番号は失いません（SIMを再発行できる前提）。</li>
+          <li data-i18n="lockNoteSync">「スマホをなくした」の値は、認証アプリやパスキーを、ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。</li>
+        </ul>
       </section>
       <section id="panel-compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
         <h2 data-i18n="tabCompare">1手で比べる</h2>

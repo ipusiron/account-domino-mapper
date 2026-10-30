@@ -12,6 +12,12 @@
   --focus: #1d6b5a;
   --shadow: #d9d6cc;
   --on-accent: #fffdf7;
+  --fam-red: #b03a2e;
+  --fam-blue: #2a63a8;
+  --fam-gray: #5a6573;
+  --fam-yellow: #7a6100;
+  --fam-green: #2c7549;
+  --fam-purple: #76489a;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -27,6 +33,12 @@
   --focus: #7fd4bd;
   --shadow: #091523;
   --on-accent: #172940;
+  --fam-red: #ff9e93;
+  --fam-blue: #8fbcf2;
+  --fam-gray: #b8c4d1;
+  --fam-yellow: #f0cf5a;
+  --fam-green: #8fd9a8;
+  --fam-purple: #d3b0f2;
 }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -105,9 +117,11 @@ h1 span, h2, h3 { color: var(--accent); }
 /* Tabs and panels */
 .tabs, .panel { background: var(--paper); border: 1px solid var(--line); box-shadow: 3px 3px 0 var(--shadow); }
 .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .2rem; padding: .3rem; }
+/* A tab name breaks only at a <wbr> between its words (Japanese: in index.html, and where app.js draws the name),
+   or at a space (English). keep-all is for the browsers without word-break: auto-phrase */
 .tabs button {
   border: 0; min-width: 0; padding: .3rem .15rem; font-size: .875rem; line-height: 1.4;
-  word-break: auto-phrase; overflow-wrap: anywhere;
+  word-break: keep-all; word-break: auto-phrase; overflow-wrap: anywhere;
 }
 .tabs button[aria-selected="true"] { color: var(--accent); border-bottom: 3px solid var(--accent); font-weight: 700; }
 .panel { padding: .65rem; margin: 1rem 0; min-width: 0; overflow-wrap: anywhere; }
@@ -168,8 +182,120 @@ dialog::backdrop { background: #101a2ab0; }
 .glossary dt { margin-top: .7rem; font-weight: 700; color: var(--accent); }
 .glossary dd { margin: .15rem 0 0; }
 
+/* Tables (no horizontal page scroll: long words wrap inside the cells) */
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+caption { padding: .35rem 0; text-align: left; font-weight: 700; }
+th, td { padding: .4rem; border: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+th { background: var(--bg); }
+.table-frame { min-width: 0; margin: .5rem 0; }
+.note, .note-list, .legend-list { font-size: .875rem; }
+.note { color: var(--muted); }
+.legend-list, .note-list { margin: .5rem 0; padding-left: 1.2rem; }
+
+/* Tab 1: story, highlights, attack cards and steps */
+.start-here { margin: .75rem 0; padding: .5rem .75rem; border-left: 4px solid var(--accent); background: var(--bg); }
+.story { margin: .75rem 0; }
+.highlights { display: grid; grid-template-columns: minmax(0, 1fr); gap: .45rem; }
+.highlight-item { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.highlight-button { flex: 1 1 auto; min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.start-tag {
+  flex: none; padding: .1rem .45rem; border: 2px solid var(--accent); border-radius: 999px;
+  color: var(--accent); font-size: .875rem; font-weight: 700;
+}
+.card-buttons, .step-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.card-buttons button, .step-controls button { min-width: 0; overflow-wrap: anywhere; }
+.card-buttons button[aria-pressed="true"], .step-controls button[aria-pressed="true"], .name-button[aria-pressed="true"] {
+  color: var(--on-accent); background: var(--accent); border-color: var(--accent); font-weight: 700;
+}
+.card-line { margin: .5rem 0 .75rem; }
+.step-controls { margin: .75rem 0 .5rem; }
+.step-controls button[aria-disabled="true"] { opacity: .55; cursor: default; }
+.step-line { margin: .5rem 0 0; }
+.step-summary { margin: .5rem 0; font-weight: 700; }
+.map-legend { margin: .5rem 0; color: var(--muted); font-size: .875rem; }
+.guide-button { width: 100%; margin-top: .5rem; text-align: left; }
+
+/* Diagram: drawn at its natural size (14px text); the figure scrolls inside itself when narrower than the diagram */
+.map-figure { margin: .75rem 0; padding: 0; border: 1px solid var(--line); overflow-x: auto; background: var(--paper); }
+.map-figure figcaption { padding: .4rem .5rem; color: var(--muted); font-size: .875rem; }
+.map-svg { display: block; }
+.map-svg text { font-family: system-ui, sans-serif; font-size: 14px; fill: var(--ink); }
+.map-svg .map-head { font-weight: 700; }
+.map-line { fill: none; stroke: var(--muted); stroke-width: 1.2; transition: stroke 300ms; }
+.map-line.recovery { stroke-dasharray: 6 4; }
+.map-line.hot { stroke: var(--fall); stroke-width: 2.6; }
+.map-box, .map-card { fill: var(--paper); stroke: var(--muted); stroke-width: 1; transition: stroke 300ms, stroke-width 300ms; }
+.map-box.fallen, .map-card.fallen { stroke: var(--fall); stroke-width: 3; }
+.map-divider { stroke: var(--line); stroke-width: 1; }
+.map-svg .map-mark { fill: var(--fall); font-weight: 700; }
+.map-band.fam-red { fill: var(--fam-red); }
+.map-band.fam-blue { fill: var(--fam-blue); }
+.map-band.fam-gray { fill: var(--fam-gray); }
+.map-band.fam-yellow { fill: var(--fam-yellow); }
+.map-band.fam-green { fill: var(--fam-green); }
+.map-band.fam-purple { fill: var(--fam-purple); }
+.map-band.fam-own { fill: var(--ink); }
+
+/* Map table: three columns on wide screens; below 720px two columns (name and entrances, then the result).
+   In both tables a Japanese word stays whole: a line breaks only at a <wbr> put by app.js, or at a space */
+.map-table, .lock-table { word-break: keep-all; }
+.map-table { table-layout: fixed; }
+.map-table .col-account { width: 34%; }
+.map-table .col-entrances { width: 33%; }
+.name-button { width: 100%; min-width: 0; padding: .3rem .4rem; text-align: left; line-height: 1.35; overflow-wrap: anywhere; }
+.entrance-list { margin: 0; padding: 0; list-style: none; font-size: .875rem; }
+.entrance-list li + li { margin-top: .15rem; }
+.entrances-inline { display: none; margin-top: .3rem; }
+.map-table tr.this-step > * { background: var(--bg); }
+.map-table tr.this-step > th { box-shadow: inset 5px 0 0 var(--fall); }
+.map-table tr.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+.result-cell.fallen { color: var(--fall); font-weight: 700; }
+.backdoor-label, .this-step-label { display: inline-block; margin-left: .35rem; font-weight: 700; }
+.this-step-label { padding: 0 .3rem; border: 1px solid var(--fall); color: var(--fall); font-size: .875rem; }
+.detail { margin: 1rem 0; padding: .65rem .75rem; border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--paper); }
+.detail h3 { margin: 0 0 .4rem; }
+.detail p { margin: .4rem 0; }
+.detail .detail-entrances { margin: .3rem 0; }
+.detail-backdoor { color: var(--fall); font-weight: 700; }
+.back-to-map { display: none; margin-top: .3rem; }
+
+/* Four cards at once and the lockout table: grids that never stack, even at 320px */
+.matrix { table-layout: fixed; }
+.matrix th, .matrix td { padding: .3rem .1rem; font-size: .875rem; text-align: center; }
+.matrix .matrix-card { width: 3rem; }
+.matrix th[scope="row"] { padding-left: .3rem; text-align: left; word-break: keep-all; }
+.lock-table { table-layout: fixed; }
+.lock-table .lock-account { width: 28%; }
+.lock-table th, .lock-table td { padding: .3rem; font-size: .875rem; }
+.lock-table .name-button { font-size: .875rem; }
+.lock-table tr.selected { outline: 3px solid var(--accent); outline-offset: -3px; }
+.mark-locked { color: var(--lock); font-size: 1.2em; font-weight: 700; }
+
 @media (max-width: 719px) {
   .tabs { gap: .15rem; padding: .2rem; }
+  .map-figure { display: none; }
+  /* Map table: the entrances go under the name, with less space around the lines */
+  .map-table .col-account { width: 56%; }
+  .map-table .col-entrances, .map-table .entrances-cell { display: none; }
+  .map-table th, .map-table td { padding: .3rem .25rem; }
+  .map-table .name-button { padding: .2rem .4rem; font-size: .875rem; }
+  .map-table .entrances-inline { display: block; margin-top: .1rem; line-height: 1.4; }
+  .map-table .entrances-inline li + li { margin-top: 0; }
+  .map-table .result-cell { font-size: .875rem; }
+  /* Lockout table: each column is as wide as its longest word, so that no word is split; when the panel is too
+     narrow even for that, app.js adds .break-words and the cells may break inside a word instead of running out */
+  .lock-table { table-layout: auto; }
+  .lock-table .lock-account { width: auto; }
+  .lock-table th, .lock-table td { padding: .3rem .15rem; overflow-wrap: break-word; }
+  .lock-table .name-button { padding: .2rem .3rem; overflow-wrap: break-word; }
+  .lock-table.break-words th, .lock-table.break-words td, .lock-table.break-words .name-button { overflow-wrap: anywhere; }
+  .back-to-map { display: inline-flex; align-items: center; }
+  /* Four cards at once: the table takes the full width of its box, and each card column only the width of its heading */
+  .four-cards > .table-frame { margin-inline: -.6rem; }
+  .four-cards caption { padding-inline: .6rem; }
+  .matrix { table-layout: auto; }
+  .matrix .matrix-card { width: auto; }
+  .matrix thead th { white-space: nowrap; overflow-wrap: normal; }
 }
 @media (min-width: 720px) {
   .masthead { display: grid; grid-template-columns: 142px minmax(0, 1fr) 142px; gap: 1rem; }
@@ -177,6 +303,8 @@ dialog::backdrop { background: #101a2ab0; }
   .header-tools { grid-column: 3; align-self: start; }
   .panel, .person-band { padding: 1.1rem; }
   .tabs button { font-size: 1rem; }
+  .highlights { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card-buttons, .step-controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

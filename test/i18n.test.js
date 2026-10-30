@@ -107,9 +107,12 @@ test('H: index.html uses existing keys, and its first text equals the Japanese d
   const keys = [...html.matchAll(/\bdata-i18n(?:-aria)?="([^"]+)"/g)].map((m) => m[1]);
   assert.ok(keys.length > 50);
   for (const key of keys) assert.ok(Object.hasOwn(M.ja, key), key);
-  const tags = [...html.matchAll(/<(?<tag>[a-z][a-z0-9]*)\b[^>]*\bdata-i18n="(?<key>[^"]+)"[^>]*>(?<text>[^<]*)<\/\k<tag>>/g)];
+  // A static text may carry <wbr> (where a tab name may break between its words); it adds no character.
+  const tags = [...html.matchAll(/<(?<tag>[a-z][a-z0-9]*)\b[^>]*\bdata-i18n="(?<key>[^"]+)"[^>]*>(?<text>(?:[^<]|<wbr>)*)<\/\k<tag>>/g)];
   assert.equal(tags.length, [...html.matchAll(/\bdata-i18n="/g)].length, 'every translated element has static text');
-  for (const { groups } of tags) assert.equal(decode(groups.text), M.ja[groups.key], 'first Japanese text: ' + groups.key);
+  for (const { groups } of tags) {
+    assert.equal(decode(groups.text.replaceAll('<wbr>', '')), M.ja[groups.key], 'first Japanese text: ' + groups.key);
+  }
   // aria-labels start in Japanese; the two startup groups carry both languages until the application is ready.
   const labelled = [...html.matchAll(/<[a-z]+\b[^>]*\bdata-i18n-aria="([^"]+)"[^>]*>/g)];
   assert.ok(labelled.length >= 6);
