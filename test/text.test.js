@@ -328,9 +328,10 @@ test('G: the step line under the step buttons: what the card gives at step 0, th
 
 // The ranking notes of the screen text of the spec, word for word: rankingCards (the four cards and their sum) and
 // rankingLockout (fewer lockouts), Japanese then English
+// (the Japanese counts summed over the four cards are named with the mode's name 4枚の合計, as on the buttons)
 const RANKING = {
   cards: ['閉め出しを1つでも増やす手は後ろに並べます。そのうえで、差し引きで守れる★（重要）の数（多い順）→差し引きで守れる数（多い順）→閉め出しの増減（少ない順）→'
-    + '4枚のカードで新たに倒れる数（延べ、少ない順）の順です。差し引きは、守れた数から、同じカード（4枚の合計では4枚）で新たに倒れた数を引いた数です。'
+    + '4枚のカードで新たに倒れる数の合計（少ない順）の順です。差し引きは、守れた数から、同じカード（4枚の合計では4枚）で新たに倒れた数を引いた数です。'
     + 'ボタンの「守れる」は引く前の数で、新たに倒れる数があればボタンに別に出します。同点なら足す→付け替え→外すの順です。閉め出しは1つの喪失で数え、'
     + '2つ同時は並べ方に入れていません。',
   'Changes that add any lockout go last. The rest are ranked by ★ (important) accounts saved on balance (more first), then accounts saved '
@@ -338,7 +339,7 @@ const RANKING = {
     + 'first). On balance means saved minus newly falling to the same card (all four for the total); the “Saves” on each button is before '
     + 'subtraction, and any newly falling accounts are shown separately. Ties go add → replace → remove. Lockouts are counted for single '
     + 'losses; two-at-once losses are not used for ranking.'],
-  lockout: ['閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数（延べ、少ない順）→差し引きで守れる★の数（4枚の延べ、多い順）→差し引きで守れる数（4枚の延べ、'
+  lockout: ['閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数の合計（少ない順）→差し引きで守れる★の数（4枚の合計、多い順）→差し引きで守れる数（4枚の合計、'
     + '多い順）の順です。同点なら足す→付け替え→外すの順です。',
   'Ranked by the change in lockouts (largest decrease first), then accounts newly falling, summed over the four cards (fewer first), then ★ '
     + 'accounts saved on balance, then accounts saved on balance, both summed over the four cards (more first). Ties go add → replace → remove.'],
@@ -502,26 +503,30 @@ test('G: the screen text of tab 3 is the text of the spec', () => {
     ['modeLeak', '漏えい', 'Breach'], ['modeSimswap', 'SIMスワップ', 'SIM swap'], ['modeMail', 'メールの乗っ取り', 'Email takeover'],
     ['modeDesk', '窓口のなりすまし', 'Help-desk impersonation'], ['modeAll', '4枚の合計', 'All four cards'],
     ['modeLockout', '閉め出しを減らす', 'Fewer lockouts'],
-    ['candidatesHeading', 'おすすめとほかの候補', 'Suggested change and alternatives'],
+    // The heading says what the list is (the top changes by the counts of this model), not a recommendation
+    ['candidatesHeading', 'この模型での上位の手', 'Top changes in this model'],
+    ['candidatesLegend', '★＝重要なアカウント。4枚の合計＝4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）',
+      '★ = important account. Sum over the four cards = counted for each of the four cards and added up (the same account can be counted '
+        + 'more than once)'],
     ['noFall', 'このカードでは倒れるアカウントがないので、守る手はありません。', 'No account falls to this card, so there is nothing to protect.'],
     ['noLockout', '{person}は、1つ失っただけで入れなくなるアカウントがありません。2つ同時の閉め出しは、1手を選ぶと1行で出ます。',
       '{person}: no account is locked out by a single loss. Two-at-once lockouts appear as one line once you pick a change.'],
     ['noSafeMove', '閉め出しを増やさずに守れる1手は、この範囲にありません。', 'No single change here protects anything without adding a lockout.'],
     ['rankingSummary', '並べ方', 'How changes are ranked'],
     ['chooseLabel', '1手を自分で選ぶ', 'Choose a change yourself'], ['choosePlaceholder', '（1手を選ぶ）', '(choose a change)'],
-    ['noMove', '上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。',
-      'Pick a change from the suggestions above or from “Choose a change yourself” to compare before and after.'],
+    // Shown only when the mode has no candidate: the guidance points to the select alone (there is nothing above to pick)
+    ['noMove', '「1手を自分で選ぶ」から手を選ぶと、前後を並べます。', 'Pick a change from “Choose a change yourself” to compare before and after.'],
     ['attackCaption', '攻撃（カード4枚）', 'Attack (four cards)'],
     ['attackColCard', 'カード', 'Card'], ['attackColBefore', '前', 'Before'], ['attackColAfter', '後', 'After'],
     ['attackColSaved', '守れた', 'Saved'], ['attackColNewly', '新たに倒れる', 'Newly fallen'],
-    ['attackTotal', '合計（延べ）', 'Total'], ['attackMode', '選んだカード', 'selected card'],
+    ['attackTotal', '4枚の合計', 'Total'], ['attackMode', '選んだカード', 'selected card'],
     ['attackNames', '攻撃の名前を見る', 'See the account names'],
     ['lockOneHeading', '閉め出し（1つ失う）', 'Lockout (one loss)'], ['lockTwoHeading', '2つ同時に失う', 'Losing two at once'],
     ['beforeAfterTable', '閉め出しの表の前後を見る', 'See the lockout table before and after'],
     ['legendPaper', '紙＝紙の回復コードをなくした', 'Paper codes = Lost the paper recovery codes'],
     ['sameHeading', '同じ入口のほかの手と比べる', 'Compare other changes to the same entrance'],
-    ['sameColMove', '手', 'Change'], ['sameColSaved', '守れた（延べ）', 'Saved (sum over 4 cards)'],
-    ['sameColNewly', '新たに倒れる（延べ）', 'Newly fallen (sum over 4 cards)'], ['sameColLock', '閉め出し（1つ）', 'Lockout (one loss)'],
+    ['sameColMove', '手', 'Change'], ['sameColSaved', '守れた（4枚の合計）', 'Saved (sum over 4 cards)'],
+    ['sameColNewly', '新たに倒れる（4枚の合計）', 'Newly fallen (sum over 4 cards)'], ['sameColLock', '閉め出し（1つ）', 'Lockout (one loss)'],
     ['sameColPair', '2つ同時', 'Two at once'],
     ['backToCompare', '比べた結果へ戻る', 'Back to the comparison'],
     ['afterMap', '手のあとの地図を見る', 'See the map after the change'],
@@ -539,8 +544,56 @@ test('G: the step hint, the step buttons and the entrances under the lockout tab
     ['stepFirst', '最初から', 'Start over'], ['stepNext', '次の段 ▶', 'Next step ▶'], ['stepLast', '最後まで', 'Skip to end'],
     ['stepHint', '「最初から」を押すと、段0から1段ずつ追えます。', 'Press “Start over” to follow the chain one step at a time from step 0.'],
     ['lockEntrances', '{account}の入口：{entrances}', '{account}: {entrances}'],
+    // On that line the SMS requirement names the phone number, the column the line explains
+    ['lockTagPhone', 'SMS（電話番号）', 'SMS (phone number)'],
   ];
   for (const [key, ja, en] of rows) assert.deepEqual([M.ja[key], M.en[key]], [ja, en], key);
+});
+
+test('G: ★ and the counts summed over the four cards are explained in visible words, and the screen names that sum as the mode does', () => {
+  // The legend above the map table (tab 1 and the map after a change) starts with ★; the rest is the legend of the spec
+  assert.equal(M.ja.mapLegend, '★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行');
+  assert.equal(M.en.mapLegend, '★ = important account · ●n = the step it falls at · backdoor = would not fall to this card without the recovery '
+    + 'entrances · this step = fell at this step');
+  // The line above the candidates of tab 3 defines ★ and the sum with the term of the help (termSum and its meaning)
+  for (const lang of ['ja', 'en']) {
+    const T = M[lang], define = lang === 'ja' ? '＝' : ' = ';
+    assert.ok(T.candidatesLegend.startsWith('★' + define), lang);
+    const meaning = T.termSumMeaning[0].toLowerCase() + T.termSumMeaning.slice(1);
+    assert.ok(T.candidatesLegend.endsWith(T.termSum + define + (lang === 'ja' ? T.termSumMeaning : meaning)), lang + ': ' + T.candidatesLegend);
+  }
+  // Japanese: the help term is the mode's name, and every count summed over the four cards on the screen says （4枚の合計）;
+  // no value says 延べ any more
+  assert.equal(M.ja.termSum, M.ja.modeAll);
+  for (const key of ['effectSavedAll', 'effectSavedAllImp', 'effectExposed', 'sameColSaved', 'sameColNewly']) {
+    assert.ok(M.ja[key].includes('（' + M.ja.modeAll + '）'), key + ': ' + M.ja[key]);
+  }
+  assert.equal(M.ja.attackTotal, M.ja.modeAll);
+  for (const [key, value] of Object.entries(M.ja)) assert.doesNotMatch(value, /延べ/, key);
+  // The known effect of W2 (the office worker's suggestion for the sum of the four cards)
+  assert.equal(V.effectText(persona('worker'), pv('worker'), 'replace:mailMain.recMail:mailOld>paper:mailMain', 'all', M, 'ja'),
+    '守れる（4枚の合計）12（★2）');
+});
+
+test('G: the first steps of the help go from the office worker\'s breach to the parent\'s lockout (×), then one change', () => {
+  assert.equal(M.ja.helpFirstText, '最初は「連鎖を追う」で会社員の漏えいを1段ずつ進めます。次に人物を高齢の親に替えて、見どころの「電話番号を手放すと、'
+    + '銀行に入れない」を押し、「閉め出し」の表の×を見ます。最後に「1手で比べる」で同じ人の1手を試してください。');
+  assert.equal(M.en.helpFirstText, 'Start with “Follow the chain” and step through the office worker\'s breach one step at a time. Next, switch '
+    + 'the person to the older parent, press the highlight “Give up the number, and you are locked out of the bank” and see the × in the '
+    + '“Lockout” table. Finally, use “Try one change” for the same person.');
+  // The route names the tabs and the parent's highlight as the screen names them, and that highlight opens the lockout tab
+  // on the parent's bank, which is locked out after giving up the number (×)
+  const p2 = V.highlights.find((h) => h.id === 'P2');
+  assert.deepEqual([p2.person, p2.state.tab, p2.state.account], ['parent', 'lockout', 'bank']);
+  assert.equal(pv('parent').lossTable.cells.number.bank.mark, 'locked');
+  for (const lang of ['ja', 'en']) {
+    const T = M[lang], quote = (text) => (lang === 'ja' ? '「' + text + '」' : '“' + text + '”');
+    for (const text of [T.tabChain, T.tabLockout, T.tabCompare, V.highlightTitle(p2, pv('parent'), M, lang)]) {
+      assert.ok(T.helpFirstText.includes(quote(text)), lang + ': ' + text);
+    }
+    assert.ok(T.helpFirstText.indexOf(quote(T.tabChain)) < T.helpFirstText.indexOf(quote(T.tabLockout))
+      && T.helpFirstText.indexOf(quote(T.tabLockout)) < T.helpFirstText.indexOf(quote(T.tabCompare)), lang + ': the order of the tabs');
+  }
 });
 
 test('G: the numbers in the stories follow the data', () => {
@@ -597,6 +650,10 @@ const RULES_TEXT = [
   ['notInModel7', 'パスワードを忘れること', 'Forgetting a password'], ['notInModel8', 'SSOとパスワード管理ソフト', 'Single sign-on and password managers'],
   ['notInModel9', '乗っ取ったあとに攻撃者が回復先を書き換えること', 'An attacker changing recovery details after a takeover'],
   ['notInModel10', '漏れたパスワードがハッシュで守られていて解けない場合', 'Leaks where the passwords are protected by hashing and cannot be cracked'],
+  // Phishing: the model treats the codes of an authenticator app and passkeys alike as keys inside the phone, so that the
+  // resistance of passkeys to fake sites does not show in the counts. One short noun phrase like the ten items before it,
+  // without 「と、」, so that the list of README.md (joined with 、) still reads as eleven items
+  ['notInModel11', 'フィッシング（偽サイトでの入力。パスキーはこれに強い）', 'Phishing on fake sites (which passkeys resist)'],
   ['paperFormIntro', '自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。',
     'Your own setup is never entered on this page. Print the blank sheet and fill it in with symbols, without passwords. '
     + 'The sheet has a “Keep safe (map of weak points)” box.'],
@@ -654,7 +711,9 @@ const SYMBOLS = {
 const RULE_NOTES = {
   ja: ['SMSの線は、SIMスワップのカードがあるときだけ攻撃者に開きます。根拠の研究（Leeら、SOUPS 2020。携帯会社を調べたのは2019年）は'
     + '米国のプリペイド5社のもので、日本の携帯会社には当てはめません。',
-  'パスキーと認証アプリはスマホの中の鍵として扱います。同期したパスキーをクラウドのアカウントの回復で取り出す経路と、端末の感染で乗っ取る経路は、'
+  // (the second sentence: the model treats both as keys inside the phone, so the resistance of passkeys to fake sites does not show)
+  'パスキーと認証アプリはスマホの中の鍵として扱います。このため、パスキーが偽サイトに強いことは数に出ません。'
+    + '同期したパスキーをクラウドのアカウントの回復で取り出す経路と、端末の感染で乗っ取る経路は、'
     + 'この模型に入れていません。この模型にはスマホを攻撃者に渡すカードがないので、スマホを足す手で攻撃の面が悪くなることはありません。'
     + '「スマホをなくした」の値は、認証アプリやパスキーを、ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。',
   '電話の窓口は個人情報で通ります。この模型には、書類での本人確認を破るカードも、本人が書類をなくすカードもありません。'
@@ -665,7 +724,8 @@ const RULE_NOTES = {
     + '紙を分けて保管するならDay124 Scatter Seeds・Day125 Overlay QR Sharesへ。'],
   en: ['An SMS line opens for the attacker only with the SIM-swap card. The study behind it (Lee et al., SOUPS 2020; carrier tests run in 2019) '
     + 'covered five US prepaid carriers and is not applied to Japanese carriers.',
-  'Passkeys and authenticator apps are treated as keys inside the phone. Retrieving synced passkeys through cloud-account recovery, '
+  'Passkeys and authenticator apps are treated as keys inside the phone. So passkeys\' resistance to fake sites does not show in the '
+    + 'numbers. Retrieving synced passkeys through cloud-account recovery, '
     + 'and takeover through an infected device, are outside this model. No card here hands the phone to the attacker, '
     + 'so adding the phone never makes the attack side worse. The “Lost the phone” values assume the authenticator app and passkeys '
     + 'are not synced or backed up to another device or the cloud.',
@@ -687,6 +747,8 @@ const ruleNotes = (lang) => {
 
 test('G: the screen text of tab 4 and of the printed sheets is the text of the spec', () => {
   for (const [key, ja, en] of RULES_TEXT) assert.deepEqual([M.ja[key], M.en[key]], [ja, en], key);
+  // What the model leaves out: eleven items, numbered without a gap (the list of the rules tab shows them all)
+  assert.deepEqual(Object.keys(M.ja).filter((key) => /^notInModel\d+$/.test(key)), Array.from({ length: 11 }, (_, i) => 'notInModel' + (i + 1)));
   for (const lang of ['ja', 'en']) {
     const symbols = V.symbolTable(M, lang);
     assert.deepEqual(symbols.columns, ['symbolColSymbol', 'symbolColMeaning', 'symbolColLine', 'symbolColAttack', 'symbolColLoss']
@@ -806,8 +868,9 @@ const LESSON_SENTENCES = [
 ];
 // Phrases that the English text must carry (the wording given for the English lessons), lesson by lesson
 const ENGLISH_PHRASES = {
+  // The announcement is told in the passive, as the Japanese text tells it (the points site is not the one that announced it)
   2: ['249 accounts that may have been logged into without authorization', '43–51%', 'circulates as-is',
-    'the password requirement is met on every entrance'],
+    'the password requirement is met on every entrance', 'it was announced that a points site in Japan had 249 accounts'],
   3: ['81.1% of 239 sites', 'A 2018 study', '37 of 71 sites', '26 of them by email alone', 'German- and English-language sites',
     'banking and investment sites', 'were excluded', 'In 2022'],
   4: ['“restricted”', 'a US federal guideline, not an obligation for Japanese companies', 'five US prepaid carriers in 2019'],
@@ -816,10 +879,18 @@ const ENGLISH_PHRASES = {
   6: ['a self-regulatory guideline', 'supervisory guidelines', 'Neither is a law.', '“multifactor authentication resilient to phishing attacks”',
     '“make it essential (set as initial setting)”', 'the cryptography was not broken'],
   7: ['interviews with 20 people in 2020', 'A study that asked 185 users of either of two major providers\' accounts (about half living in the US, '
-    + 'half in Germany) about their settings in January 2023 found that 27 of them could be locked out by losing a single thing, nearly always '
-    + 'their main phone'],
-  8: ['does not necessarily rule out lockout'],
-  9: ['three cycles were found in which two emails were each other\'s recovery address'],
+    + 'half in Germany) about their settings in January 2023 found that 27 of them (10 for one provider plus 17 for the other) could be locked '
+    + 'out by losing a single thing, nearly always their main phone'],
+  // NIST §3.1.2 in its own shape (saved recovery codes are a typical use of look-up secrets), and the three ways of recovery
+  // at AAL2 of §4.2.2.2, a requirement (SHALL) like §4.2.1.1 before it
+  8: ['does not necessarily rule out lockout', 'Saved recovery codes are a typical use of what NIST calls look-up secrets',
+    'For recovery at AAL2, NIST requires one of these',
+    'one recovery code together with a single-factor authenticator, or repeated identity proofing for an identity-proofed account'],
+  // The two points on Definition 18 are what this teaching aid derived and checked, told apart from what the paper defines;
+  // the least fixed point misses some lockouts in a cycle, not all (a cycle where it misses none is possible)
+  9: ['three cycles were found in which two emails were each other\'s recovery address',
+    'Definition 18 in the paper defines lockout as a least fixed point', 'The next two points were derived and checked for this teaching aid',
+    'can miss lockouts when recovery forms a cycle'],
 };
 
 test('G: the lessons: the titles name the ten lessons of the spec, and the sentences the spec gives are used word for word', () => {
@@ -842,15 +913,28 @@ test('G: the lessons: the titles name the ten lessons of the spec, and the sente
     3: ['2018年の研究', '239サイトの81.1%', '2022年', 'ドイツ語と英語の71サイト', '37サイトで入り直せ', 'そのうち26はメールで足りました',
       '銀行・投資など、身分証や有料の契約が要るサイトは対象外', '2012年当時の手順'],
     4: ['米国のプリペイド5社', '2019年', '145サイト中17', '「制限付き」', '日本の事業者の義務ではありません', '件数は書かれていません', '令和9年4月'],
-    5: ['議論されていることに触れ', 'リセット手順の見直しを勧めました', '企業の社内ヘルプデスク', '秘密の質問は入っていません'],
+    5: ['議論されていることに触れ', 'リセット手順の見直しを勧めました', '企業の社内ヘルプデスク', '秘密の質問は入っていません',
+      'ソーシャルエンジニアリング（人をだまして情報や操作を引き出す手口）'],
     6: ['自主規制のガイドライン', '監督指針', 'どちらも法令ではありません', '原則2026年6月末', '代替の多要素認証も認めています', '依存します',
       '暗号が破られたわけではありません'],
     7: ['2020年に20人を面接した研究', '30日', '2カ月', '2023年1月', '185人', '27人', 'ほとんどがメインのスマホ'],
-    8: ['64ビット以上の乱数', '要件ではありません', '偽サイトに強くありません', 'AAL2', '閉め出しがなくなるとは限りません'],
+    8: ['64ビット以上の乱数', '要件ではありません', '偽サイトに強くありません', 'AAL2', '閉め出しがなくなるとは限りません',
+      '保存型の回復コードは、NISTの言うlook-up secret（「持っているもの」）の典型的な使い方で',
+      '回復コード1つと単一要素の認証の組、身元確認のやり直し（身元確認済みのアカウントの場合）のどれか'],
+    9: ['論文の定義18は、閉め出しを最小不動点として定めています', '次の2つは、この教材で導いて確かめたことです', '（下の表）',
+      '復旧が輪になったときに閉め出しを見落とすことがあります'],
   };
   for (const [n, phrases] of Object.entries(JA)) {
     for (const phrase of phrases) assert.ok(lessonText(n, 'ja').includes(phrase), 'lesson ' + n + ': ' + phrase);
   }
+  // Words not used: 社会工学 (the field of study, not the trick of deceiving people), a recovery code "typical of something you
+  // have" (NIST says saved recovery codes are a typical use of look-up secrets), and the points site as the one announcing
+  for (const [key, value] of Object.entries(M.ja)) assert.doesNotMatch(value, /社会工学|回復コードは「持っているもの」の典型/, key);
+  assert.doesNotMatch(M.en.lesson2Text3, /points site in Japan announced/);
+  assert.doesNotMatch(M.en.lesson8Text2, /A recovery code is a typical|asks for/);
+  // Definition 18 "can miss" lockouts in a cycle: never told as if it missed every one
+  assert.doesNotMatch(lessonText(9, 'ja'), /見落とします/);
+  assert.doesNotMatch(lessonText(9, 'en'), /\bmisses lockouts/);
 });
 
 test('G: the lessons avoid the overstatements the spec lists, and real names stay in the bibliography', () => {
@@ -910,11 +994,13 @@ test('G: the bibliography: Japanese sources in English on the English page, as t
 
 test('G: lesson 7 cites the study of 2023 in the words of the spec, and lesson 6 names the cards needed as the detail box does', () => {
   // The sentence of the spec for lesson 7 (in Japanese in the polite form of the lessons) and the English sentence given for
-  // it, word for word; the authors are named in the bibliography only
+  // it, word for word; the authors are named in the bibliography only. The 27 is the paper's sum of the two providers (10 and
+  // 17), shown as a sum: the sentence does not say that no one answered for both
   assert.equal(M.ja.lesson7Text3, '2023年1月に、大手2社のどちらか一方のアカウントについて、米国とドイツの居住者ほぼ半数ずつの185人に設定を尋ねた研究では、'
-    + '27人が、1つを失うだけで入れなくなるおそれのある設定で、失うものはほとんどがメインのスマホでした。');
+    + '27人（2社それぞれ10人と17人を足した数）が、1つを失うだけで入れなくなるおそれのある設定で、失うものはほとんどがメインのスマホでした。');
   assert.equal(M.en.lesson7Text3, 'A study that asked 185 users of either of two major providers\' accounts (about half living in the US, half in '
-    + 'Germany) about their settings in January 2023 found that 27 of them could be locked out by losing a single thing, nearly always their main phone.');
+    + 'Germany) about their settings in January 2023 found that 27 of them (10 for one provider plus 17 for the other) could be locked out by '
+    + 'losing a single thing, nearly always their main phone.');
   for (const lang of ['ja', 'en']) assert.doesNotMatch(lessonText(7, lang), /Büttner|Gruschka/, lang);
   assert.match(M.en.lessonRefButtner2024, /^Büttner, Gruschka, /);
   // The cards needed to make an account fall: lesson 6 uses the words of the detail box (倒すのに要るカード)

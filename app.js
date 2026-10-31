@@ -40,19 +40,19 @@
     if (!layoutCache.has(key)) layoutCache.set(key, View.layout(persona(id), null, Messages, language));
     return layoutCache.get(key);
   }
-  // Tab 3: the steps and backdoors after a change are computed with the person after it (no personaVectors here), once
-  // per person, change and card; the diagram before and after a change once per person, change and language.
-  const afterCache = new Map();
+  // Tab 3: the steps and backdoors after a change are computed with the person after it (no personaVectors here), per
+  // person, change and card; the diagram before and after a change per person, change and language. Both keep the eight
+  // entries used last only (View.recentCache: the change shown, and the few just before it when the map before and after
+  // or the language is switched): going through every change of the three people would otherwise keep one entry per
+  // change, card and language for as long as the page is open.
+  const AFTER_CACHE_SIZE = 8;
+  const afterCache = View.recentCache(AFTER_CACHE_SIZE);
   function afterFor(id, moveId, card) {
-    const key = id + '|' + moveId + '|' + card;
-    if (!afterCache.has(key)) afterCache.set(key, View.afterMap(persona(id), moveId, card));
-    return afterCache.get(key);
+    return afterCache(id + '|' + moveId + '|' + card, () => View.afterMap(persona(id), moveId, card));
   }
-  const afterLayoutCache = new Map();
+  const afterLayoutCache = View.recentCache(AFTER_CACHE_SIZE);
   function afterLayoutFor(id, moveId, language, q) {
-    const key = id + '|' + moveId + '|' + language;
-    if (!afterLayoutCache.has(key)) afterLayoutCache.set(key, View.layout(persona(id), q, Messages, language));
-    return afterLayoutCache.get(key);
+    return afterLayoutCache(id + '|' + moveId + '|' + language, () => View.layout(persona(id), q, Messages, language));
   }
 
   const state = {
@@ -115,25 +115,41 @@
   // keep-all holds only letters and numbers together, so a piece between two <wbr> that holds one of these marks goes out
   // in one nowrap span: in "番号か＋プロバイダーのメール" the ＋ is never left alone on a line of a narrow cell. The printed
   // lockout cells keep "で×）" together that way; the 390px screen has no room for that.
+  // Two labels never break inside (WHOLE), not even where the rules above allow it: （4枚の合計）, the counts summed over the
+  // four cards in tab 3 (the effects of the candidates and the headings of the same-entrance table), and SMS（電話番号）, the
+  // SMS requirement on the line under the lockout table. A 320px screen would otherwise break them as （4枚の｜合計） and
+  // SMS｜（電話番号）.
+  // The piece that holds one goes out in one nowrap span like a piece with ＋ (keep-all does not hold SMS and （ together).
   // Text without Japanese comes back as it is (English breaks at its spaces).
   const PARTICLES = 'のでをにがはとかもへや';
   const NO_LINE_START = '、。，．・：；？！ー）」』】〕ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ';
   const JOINED = '＋＝／→';
+  const WHOLE = ['（' + Messages.ja.termSum + '）', Messages.ja.lockTagPhone];
   const scriptOf = (ch) => (/[\u30a0-\u30ff]/.test(ch) ? 'katakana' : /[\u3400-\u4dbf\u4e00-\u9fff]/.test(ch) ? 'kanji'
     : /[\u3040-\u309f]/.test(ch) ? 'hiragana' : 'other');
   function phrases(text, keep = '') {
     const joined = JOINED + keep;
     const chars = [...text], out = [];
+    // inside: the places between two characters of a whole label (i: between chars[i] and chars[i + 1])
+    const inside = new Set();
+    for (const label of WHOLE) {
+      const size = [...label].length;
+      for (let at = text.indexOf(label); at >= 0; at = text.indexOf(label, at + label.length)) {
+        const start = [...text.slice(0, at)].length;
+        for (let i = start; i < start + size - 1; i++) inside.add(i);
+      }
+    }
     let piece = '';
     const flush = () => {
-      const marked = [...piece].slice(1).some((ch) => joined.includes(ch)) && !/\s/.test(piece);
+      const marked = ([...piece].slice(1).some((ch) => joined.includes(ch)) && !/\s/.test(piece))
+        || WHOLE.some((label) => piece.includes(label));
       out.push(marked ? E('span', { class: 'joined' }, piece) : piece);
       piece = '';
     };
     chars.forEach((ch, i) => {
       piece += ch;
       const next = chars[i + 1];
-      if (next === undefined || NO_LINE_START.includes(next) || joined.includes(next)) return;
+      if (next === undefined || NO_LINE_START.includes(next) || joined.includes(next) || inside.has(i)) return;
       const pair = scriptOf(ch) + '>' + scriptOf(next);
       if ((PARTICLES.includes(ch) && scriptOf(next) !== 'hiragana') || pair === 'katakana>kanji' || pair === 'kanji>katakana'
         || (next === '（' && ch !== ' ') || ch === '）' || '：＋＝／→・、'.includes(ch)) {
@@ -391,6 +407,10 @@
   }
 
   // ===== Tab 2: lockout =====
+  // The line under the lockout table names the SMS requirement with the phone number (lockTagPhone), the column the line
+  // explains; DominoView.lockEntrances gets the dictionary with that tag. Every other place keeps the tag SMS.
+  const LOCK_LINE_MESSAGES = Object.fromEntries(Object.entries(Messages).map(([language, dictionary]) =>
+    [language, { ...dictionary, tagPhone: dictionary.lockTagPhone }]));
   function renderLockout() {
     const p = persona(state.persona), pv = vectorsFor(state.persona);
     const lt = View.lockTable(p, pv.lossTable, Messages, state.language);
@@ -407,7 +427,7 @@
     $('lock-map').replaceChildren(table);
     fitLockTable();
     // Under the table: the entrances of the account chosen (a name button chooses another), so that a × can be read here
-    $('lock-entrances').replaceChildren(...phrases(View.lockEntrances(p, state.account, Messages, state.language)));
+    $('lock-entrances').replaceChildren(...phrases(View.lockEntrances(p, state.account, LOCK_LINE_MESSAGES, state.language)));
   }
   // Below 720px each column of the lockout table is as wide as its longest word. When the panel is too narrow even for
   // that (a 320px screen with some people), the cells may break inside a word instead of running out of the panel:
@@ -440,9 +460,10 @@
   }
   function renderCandidates(p, pv, found) {
     $('candidates').replaceChildren(...found.ids.map((id) => {
+      // The sentence and the effect keep each Japanese word whole like the comparison heading (<wbr> and keep-all)
       const button = E('button', { type: 'button', class: 'cand-button', 'data-key': 'cand:' + id, 'aria-pressed': String(id === state.move) },
-        E('span', { class: 'cand-title' }, View.moveTitle(p, moveOf(pv, id), Messages, state.language)),
-        E('span', { class: 'cand-effect' }, marked(View.effectText(p, pv, id, state.mode, Messages, state.language))));
+        E('span', { class: 'cand-title' }, words(View.moveTitle(p, moveOf(pv, id), Messages, state.language))),
+        E('span', { class: 'cand-effect' }, words(marked(View.effectText(p, pv, id, state.mode, Messages, state.language)))));
       button.addEventListener('click', () => selectMove(id));
       return button;
     }));
@@ -552,17 +573,20 @@
   let summaryChosen = false;
   function renderComparison(p, pv) {
     const s = View.sentences(p, pv, state.move, Messages, state.language, state.mode);
-    $('compare-heading').textContent = s.title;
+    // The heading and the lines of the summary keep each Japanese word whole like the step line (a <wbr> of phrases() and
+    // keep-all in style.css; a word longer than the line still breaks anywhere)
+    $('compare-heading').replaceChildren(...words(s.title));
     const summary = $('compare-summary');
     const drawn = [state.persona, state.language, state.move].join('|');
     if (summaryChosen || drawn !== summaryDrawn || [...summary.children].map((line) => line.textContent).join('\n') !== s.summary.join('\n')) {
-      summary.replaceChildren(...s.summary.map((line) => E('p', {}, line)));
+      summary.replaceChildren(...s.summary.map((line) => E('p', {}, words(line))));
       summaryDrawn = drawn;
     }
     summaryChosen = false;
     renderAttack(s.attack, s.summary[0]);
-    $('lock-one').replaceChildren(...s.lossOne.map((line) => E('li', {}, line)));
-    $('lock-two').replaceChildren(...s.lossTwo.map((line) => E('li', {}, line)));
+    // The lines under "Lockout (one loss)" and "Losing two at once" are those of the summary: their words stay whole as well
+    $('lock-one').replaceChildren(...s.lossOne.map((line) => E('li', {}, words(line))));
+    $('lock-two').replaceChildren(...s.lossTwo.map((line) => E('li', {}, words(line))));
     renderLockChanges(p, pv);
     $('move-notes').replaceChildren(...s.notes.map((note) => E('p', { class: 'note' }, note)));
     renderSame(p, pv);
@@ -729,9 +753,10 @@
     const focusKey = document.activeElement?.dataset?.key || null;
     document.documentElement.lang = state.language;
     document.documentElement.dataset.theme = state.theme;
-    // Text inside a table (the rules table) gets the <wbr> of phrases(), like the tables drawn by this file
+    // Text inside a table (the rules table) gets the <wbr> of phrases(), like the tables drawn by this file, and so does a
+    // line outside the tables that keeps its words whole (.keep-words: the line above the candidates of tab 3)
     document.querySelectorAll('[data-i18n]').forEach((el) => {
-      if (el.closest('table')) el.replaceChildren(...phrases(t(el.dataset.i18n))); else el.textContent = t(el.dataset.i18n);
+      if (el.closest('table, .keep-words')) el.replaceChildren(...phrases(t(el.dataset.i18n))); else el.textContent = t(el.dataset.i18n);
     });
     document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
     $('language').textContent = state.language === 'ja' ? 'EN' : '日';

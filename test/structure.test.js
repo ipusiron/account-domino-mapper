@@ -80,12 +80,63 @@ test('H: the step function is named stepReach', () => {
   }
 });
 
-test('H: no local paths in index.html, the scripts and the tests', () => {
-  const local = new RegExp(['D:[\\\\/]', 'C:[\\\\/]Users', 'ipusiron' + '-work', 'App' + 'Data'].join('|'));
-  const files = ['index.html', ...fs.readdirSync(root).filter((f) => f.endsWith('.js')),
-    ...fs.readdirSync(__dirname).filter((f) => /\.(js|py)$/.test(f)).map((f) => 'test/' + f)];
-  assert.ok(files.includes('test/interface.browser.py'));
-  for (const file of files) assert.doesNotMatch(read(file), local, file);
+// Local paths, in any case: a drive letter (a letter, a colon, then a slash or a backslash; not the end of a scheme such as
+// https://), an MSYS drive (a slash, one letter and a slash with a name after it, as Git Bash writes a Windows drive) that is not
+// part of an http(s) address or of another path (the character before it is not a letter, digit or one of . _ ~ % / -), and the
+// work folders of this machine by name. The http(s) addresses are blanked out (with spaces, so that the positions stay) before
+// the MSYS form is looked for. An address is made of letters, digits and -._~:/?#[]@!$&()*+,;=% (the ASCII characters an
+// address may hold, but the quote '), so it ends at a space, a quote or a Japanese character: a Japanese sentence that goes on
+// right after an address or a link, without a space, is still read. Returns the first one found as a match (with its index), or null. The
+// examples of the next test are written in pieces, so that this file does not carry the paths it looks for.
+const DRIVE = /(?<![A-Za-z0-9])[A-Za-z]:[\\/]/;
+const MSYS_DRIVE = /(?<![\w.~%/-])\/[A-Za-z]\/(?=[^\s/])/;
+const WORK_FOLDERS = new RegExp(['ipusiron' + '-work', 'App' + 'Data'].join('|'), 'i');
+const ADDRESS = /https?:\/\/[\w\-.~:\/?#[\]@!$&()*+,;=%]+/gi;
+function localPath(text) {
+  const blanked = text.replace(ADDRESS, (address) => ' '.repeat(address.length));
+  return text.match(DRIVE) || blanked.match(MSYS_DRIVE) || text.match(WORK_FOLDERS);
+}
+
+test('H: the check for local paths finds drive letters, MSYS drives and the work folders in any case, also right after an address '
+  + 'in a Japanese sentence, and leaves addresses alone', () => {
+  const slash = (...parts) => parts.join('/'), back = (...parts) => parts.join('\\');
+  const found = [slash('', 'c', 'Users', 'alice', 'x'), slash('', 'D', 'work', 'x'), 'cd ' + slash('', 'd', 'projects', 'tool'),
+    '（' + slash('', 'e', '作業', 'x') + '）', '`' + slash('', 'c', 'Users', 'a') + '`', 'path=' + slash('', 'c', 'x'),
+    'see https://example.com/ and ' + slash('', 'c', 'x'), back('C:', 'Users', 'x'), slash('d:', 'work'), slash('file:', '', '', 'E:', 'x'),
+    'x ' + 'ipusiron' + '-work', 'App' + 'data',
+    // Japanese right after a link or an address (no space), and a quote that ends an address in code
+    '[x](' + slash('https:', '', 'example.com', '') + ')の写しは' + slash('', 'd', 'try200', 'x'),
+    '// 手順は' + slash('https:', '', 'example.com', '') + 'の通りで、写しは' + slash('', 'd', 'try200', 'x', 'y'),
+    '出典：[M](' + slash('https:', '', 'example.org', 'x') + ')、手元では' + slash('', 'c', 'Users', 'alice', 'x'),
+    '[\'' + slash('https:', '', 'example.com', 'a') + '\',\'' + slash('', 'c', 'Users', 'x') + '\']'];
+  const kept = [slash('https:', '', 'example.com', 'c', 'x'), '[link](' + slash('https:', '', 'example.com', 'c', 'x') + ')',
+    '[x](' + slash('https:', '', 'example.com', 'c', 'x') + ')の写し', slash('https:', '', 'example.com', 'd', 'x') + '、手順',
+    slash('https:', '', 'example.com', 'search?q=') + slash('', 'c', 'x'), slash('http:', '', '127.0.0.1:8000', 'D', 'x'),
+    slash('HTTPS:', '', 'example.com', 'C', 'Users'), 'AND/OR', 'and/or', 'A/B', '1/2/3', 'assets/en/screenshot.png',
+    '.github/workflows/test.yml', 'file://', 'Day124/Day125', slash('https:', '', 'doi.org', '10.1016', '0743-1066(84)90014-1')];
+  for (const text of found) assert.notEqual(localPath(text), null, 'found: ' + text);
+  for (const text of kept) assert.equal(localPath(text), null, 'left alone: ' + text);
+  assert.equal(localPath('（' + slash('', 'c', 'x') + '）').index, 1, 'the index of the path');
+});
+
+// Every text file of the repository: all files but the PNGs, and the READMEs, which the README check below reads line by line
+// (.git is left out: a folder, or a file in a linked work tree)
+function textFiles(dir = root, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.name !== '.git').flatMap((entry) => {
+    const relative = prefix + entry.name;
+    if (entry.isDirectory()) return textFiles(path.join(dir, entry.name), relative + '/');
+    return /\.png$/i.test(entry.name) || /^README(?:\.en)?\.md$/.test(relative) ? [] : [relative];
+  });
+}
+
+test('H: no local paths in index.html, the scripts, the style, the tests and the other text files of the repository', () => {
+  const files = textFiles();
+  for (const file of ['index.html', 'style.css', 'app.js', 'package.json', '.github/workflows/test.yml', 'test/interface.browser.py',
+    'test/structure.test.js', 'test/vectors.json']) assert.ok(files.includes(file), file);
+  for (const file of files) {
+    const m = localPath(read(file));
+    assert.equal(m, null, m && `${file}: ${m[0]} | ${m.input.slice(Math.max(0, m.index - 40), m.index + 40)}`);
+  }
 });
 
 test('H: external links in index.html open in a new tab without opener or referrer', () => {
@@ -199,6 +250,33 @@ test('H: links made by app.js open in a new tab without opener or referrer, like
   for (const href of [...Object.values(view.lessonRefs), ...view.relatedTools.map((tool) => tool.href)]) assert.match(href, /^https:\/\//);
 });
 
+// The map after a change (tab 3): app.js keeps its steps and its diagram in the two caches made by View.recentCache (the part that
+// view.test checks: the eight entries used last), keyed per person, change and card and per person, change and language, and
+// makes them nowhere else. A cache of its own in app.js (one that drops the oldest entry, say) would pass the heap check of the
+// browser, so the source is read here.
+test('H: app.js keeps the steps and the diagram after a change in two caches of View.recentCache (eight entries each, keyed per '
+  + 'person, change and card / language) and makes them nowhere else', () => {
+  const app = read('app.js');
+  assert.match(app, /\bconst AFTER_CACHE_SIZE = 8;/);
+  assert.deepEqual([...app.matchAll(/\bconst (\w+) = View\.recentCache\(AFTER_CACHE_SIZE\);/g)].map((m) => m[1]),
+    ['afterCache', 'afterLayoutCache']);
+  assert.equal((app.match(/recentCache\(/g) || []).length, 2, 'View.recentCache is used for these two only');
+  assert.ok(app.includes("return afterCache(id + '|' + moveId + '|' + card, () => View.afterMap(persona(id), moveId, card));"),
+    'the steps after a change, per person, change and card');
+  assert.ok(app.includes("return afterLayoutCache(id + '|' + moveId + '|' + language, () => View.layout(persona(id), q, Messages, language));"),
+    'the diagram after a change, per person, change and language');
+  // The steps after a change come only through afterCache; the other View.layout draws a person without a change (per person and
+  // language, in the Map layoutCache next to the Map of personaVectors)
+  assert.equal((app.match(/View\.afterMap\(/g) || []).length, 1, 'View.afterMap only inside afterFor');
+  assert.equal((app.match(/View\.layout\(/g) || []).length, 2, 'View.layout in layoutFor and afterLayoutFor only');
+  assert.ok(app.includes('layoutCache.set(key, View.layout(persona(id), null, Messages, language))'), 'the diagram without a change');
+  assert.equal([...app.matchAll(/\bnew (?:Weak)?Map\(/g)].length, 2, 'no other Map');
+  assert.deepEqual([...app.matchAll(/\bconst (\w+) = new Map\(\);/g)].map((m) => m[1]), ['vectorsCache', 'layoutCache']);
+  // Tab 3 draws the map after a change from them
+  assert.match(app, /= afterFor\(state\.persona, state\.move, state\.card\);/);
+  assert.match(app, /= afterLayoutFor\(state\.persona, state\.move, state\.language, after\.person\);/);
+});
+
 test('H: the help has, in order, the first steps, the controls, the 22 terms, the ten lessons and the note on this learning aid', () => {
   const body = html.match(/<div class="help-body"[^>]*>([\s\S]*?)<\/div>\s*<\/dialog>/)[1];
   const order = [...body.matchAll(/data-i18n="(help\w+|lessonsHeading)"|<dl id="help-terms"|<div id="lessons"/g)].map((m) => m[1] || m[0]);
@@ -221,4 +299,100 @@ test('H: the header has no decorative Day line, and the footer has the GitHub li
   const M = require('../messages.js');
   assert.equal(M.ja.footerLink, 'GitHub（ipusiron/account-domino-mapper）');
   assert.equal(M.en.footerLink, 'GitHub (ipusiron/account-domino-mapper)');
+});
+
+// The shared summary (OGP) read by sites that do not run JavaScript: the six tags, each once in <head>. The description is the
+// description_ja of the README front matter, the same as the meta description. The scripts never rewrite them.
+const DESCRIPTION_JA = '架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・'
+  + '窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手'
+  + '（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。';
+const OGP = [['property', 'og:title', 'Account Domino Mapper'], ['property', 'og:description', DESCRIPTION_JA],
+  ['property', 'og:url', 'https://ipusiron.github.io/account-domino-mapper/'],
+  ['property', 'og:image', 'https://ipusiron.github.io/account-domino-mapper/assets/screenshot.png'],
+  ['property', 'og:type', 'website'], ['name', 'twitter:card', 'summary_large_image']];
+const entities = (value) => value.replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&amp;/g, '&');
+const metas = (source) => [...source.matchAll(/<meta\b([^>]*)>/g)].map((m) => Object.fromEntries(
+  [...m[1].matchAll(/([a-z:-]+)="([^"]*)"/g)].map((a) => [a[1], entities(a[2])])));
+
+test('H: the six OGP tags (og:title, og:description, og:url, og:image, og:type, twitter:card), each once in <head>', () => {
+  const head = html.slice(html.indexOf('<head>'), html.indexOf('</head>'));
+  const all = metas(html), inHead = metas(head);
+  for (const [attribute, key, value] of OGP) {
+    const found = all.filter((tag) => tag.property === key || tag.name === key);
+    assert.equal(found.length, 1, key + ' exactly once');
+    assert.equal(found[0][attribute], key, key + ' is given by the ' + attribute + ' attribute');
+    assert.equal(found[0].content, value, key);
+    assert.equal(inHead.filter((tag) => tag[attribute] === key).length, 1, key + ' in <head>');
+  }
+  assert.equal(all.filter((tag) => /^(?:og|twitter):/.test(tag.property || tag.name || '')).length, OGP.length, 'no other og: or twitter: tag');
+  const description = all.filter((tag) => tag.name === 'description');
+  assert.equal(description.length, 1);
+  assert.equal(description[0].content, DESCRIPTION_JA, 'the meta description and og:description are the same text');
+  // Switching the language keeps the shared summary as written: no script names a meta tag, the description or the head
+  // (the browser check reads the tags again after a language switch)
+  for (const file of SCRIPTS) {
+    assert.doesNotMatch(read(file), /\b(?:og|twitter):[a-z]|<meta\b|['"]meta['"]|meta\[|description|document\.head\b|getElementsByName/i, file);
+  }
+});
+
+test('H: og:description and the meta description are the description_ja of the README.md front matter', () => {
+  const front = read('README.md').match(/^<!--[ \t]*\r?\n---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n!?-->/);
+  assert.ok(front, 'README.md starts with the front matter inside an HTML comment');
+  const line = front[1].split(/\r?\n/).filter((l) => l.startsWith('description_ja:'));
+  assert.equal(line.length, 1, 'one description_ja');
+  const value = line[0].match(/^description_ja: "(.*)"\s*$/);
+  assert.ok(value, 'description_ja is double-quoted: ' + line[0]);
+  for (const key of ['description', 'og:description']) {
+    assert.equal(metas(html).find((tag) => tag.name === key || tag.property === key).content, value[1], key);
+  }
+});
+
+// README.md and README.en.md: the forbidden wording (the Japanese list for README.md, the English list for README.en.md), and in
+// both the words of how the work went, the word ripple and local paths. A hit names its file, line and word. No line of the
+// READMEs is left out (the bibliography keys lessonRef… of messages.js are the only place where forbidden words may appear).
+// The words of how the work went: those of the screen, and those of the reviews and the steps of the work, with the ids of
+// review findings (joined at run time so that this file does not carry the words it looks for)
+const README_HISTORY = [...HISTORY_WORDS, ...[['査', '読'], ['点', '検'], ['外部', 'レビュー'], ['本人の', '決定'], ['段階', '1'], [String.fromCodePoint(0x6e1a)],
+  ['Co', 'dex'], ['external ', 'review'], ['internal ', 'review']].map((parts) => parts.join(''))];
+const README_COMMON = [...README_HISTORY.map((w) => new RegExp(literal(w).source, 'i')), /ripple/i,
+  /\b(?:O|SP|T|IT|CR|SPEC|R1B|C1b|S1C|ST)-\d{2}\b/,
+  // Local paths in any case (localPath above: a drive letter, an MSYS drive outside the http(s) addresses, the work folders)
+  localPath];
+// The screen calls the checkups of other tools 点検 (the title and the second paragraph of lesson 10), a word that this
+// check of the READMEs counts among the words of how the work went. A README may quote those sentences of the screen word
+// for word: each quote is taken out of its line before the patterns are looked for, so the word anywhere else in the line
+// is still found. The screen sentences themselves are checked with messages.js above.
+const screenQuotes = (lang) => Object.entries(M[lang])
+  .filter(([, value]) => README_HISTORY.some((w) => value.toLowerCase().includes(w.toLowerCase())));
+// A pattern is a regular expression, or a function (localPath) that returns a match like String.prototype.match
+const matchOf = (text, pattern) => (typeof pattern === 'function' ? pattern(text) : text.match(pattern));
+function readmeHits(file, patterns, joiner, quotes = []) {
+  const lines = read(file).split(/\r?\n/);
+  const text = lines.map((line) => quotes.reduce((rest, quote) => rest.split(quote).join('\u0000'), line));
+  const hits = [];
+  text.forEach((line, i) => {
+    for (const re of patterns) {
+      let m = matchOf(line, re);
+      // A phrase broken over two lines is reported on the line where it starts
+      if (!m && i + 1 < text.length) {
+        const joined = matchOf(line + joiner + text[i + 1], re);
+        if (joined && joined.index < line.length) m = joined;
+      }
+      if (m) hits.push(`${file}:${i + 1}: ${m[0]} | ${lines[i].trim().slice(0, 100)}`);
+    }
+  });
+  return hits;
+}
+
+test('H: no forbidden wording, history words, ripple or local paths in README.md and README.en.md', (t) => {
+  // The quotes allowed: lesson 10 alone (its title and second paragraph in Japanese); none in English
+  assert.deepEqual(screenQuotes('ja').map(([key]) => key), ['lesson10Title', 'lesson10Text2']);
+  assert.deepEqual(screenQuotes('en'), []);
+  const quotes = (lang) => screenQuotes(lang).map(([, value]) => value);
+  const hits = [...readmeHits('README.md', [...FORBIDDEN_JA, ...README_COMMON], '', quotes('ja')),
+    ...readmeHits('README.en.md', [...FORBIDDEN_EN, ...README_COMMON], ' ', quotes('en'))];
+  t.diagnostic(`patterns: README.md ${FORBIDDEN_JA.length + README_COMMON.length}, README.en.md ${FORBIDDEN_EN.length
+    + README_COMMON.length}; no line left out`);
+  assert.deepEqual(hits, [], 'forbidden wording in the READMEs:\n' + hits.join('\n'));
 });

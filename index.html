@@ -6,6 +6,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; connect-src 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="description" content="架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。">
+  <meta property="og:title" content="Account Domino Mapper">
+  <meta property="og:description" content="架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。">
+  <meta property="og:url" content="https://ipusiron.github.io/account-domino-mapper/">
+  <meta property="og:image" content="https://ipusiron.github.io/account-domino-mapper/assets/screenshot.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <title>Account Domino Mapper</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
@@ -22,7 +28,7 @@
       <h1>Account Domino <span>Mapper</span></h1>
       <fieldset id="startup-tools" class="header-tools startup-control-group" disabled aria-label="表示 / Display" data-i18n-aria="displayControls">
         <button id="theme" class="icon-button" type="button" data-i18n-aria="themeToggle" aria-label="明暗を切り替える">◐</button>
-        <button id="language" class="icon-button" type="button" data-i18n-aria="languageToggle" aria-label="言語を切り替える">EN</button>
+        <button id="language" class="icon-button" type="button" data-i18n-aria="languageToggle" aria-label="EN：英語の表示にする">EN</button>
         <button id="help" class="icon-button" type="button" data-i18n-aria="help" aria-haspopup="dialog" aria-label="ヘルプと座学">?</button>
       </fieldset>
     </div>
@@ -88,7 +94,7 @@
         <figure id="chain-figure" class="map-figure">
           <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
         </figure>
-        <p class="map-legend" data-i18n="mapLegend">●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
+        <p class="map-legend" data-i18n="mapLegend">★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
         <div id="chain-map" class="table-frame"></div>
         <div id="detail" class="detail" hidden>
           <h3 id="detail-heading" tabindex="-1"></h3>
@@ -131,7 +137,8 @@
           <button id="mode-all" type="button" data-key="mode:all" aria-pressed="true" data-i18n="modeAll">4枚の合計</button>
           <button id="mode-lockout" type="button" data-key="mode:lockout" aria-pressed="false" data-i18n="modeLockout">閉め出しを減らす</button>
         </div>
-        <h3 id="candidates-heading" data-i18n="candidatesHeading">おすすめとほかの候補</h3>
+        <h3 id="candidates-heading" data-i18n="candidatesHeading">この模型での上位の手</h3>
+        <p id="candidates-legend" class="map-legend keep-words" data-i18n="candidatesLegend">★＝重要なアカウント。4枚の合計＝4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）</p>
         <div id="candidates" class="candidates" role="group" aria-labelledby="candidates-heading"></div>
         <div id="candidates-status" role="status" aria-live="polite"><p id="candidates-none" class="candidates-none" hidden></p></div>
         <details id="ranking" class="ranking">
@@ -142,7 +149,7 @@
           <label for="choose-move" data-i18n="chooseLabel">1手を自分で選ぶ</label>
           <select id="choose-move"></select>
         </div>
-        <p id="no-move" class="no-move" data-i18n="noMove" hidden>上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。</p>
+        <p id="no-move" class="no-move" data-i18n="noMove" hidden>「1手を自分で選ぶ」から手を選ぶと、前後を並べます。</p>
         <div id="compare-result" class="compare-result">
           <h3 id="compare-heading" class="compare-heading" tabindex="-1"></h3>
           <div id="compare-summary" class="compare-summary" role="status" aria-live="polite"></div>
@@ -180,7 +187,7 @@
             <figure id="after-figure" class="map-figure">
               <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
             </figure>
-            <p class="map-legend" data-i18n="mapLegend">●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
+            <p class="map-legend" data-i18n="mapLegend">★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
             <div id="after-map-table" class="table-frame"></div>
           </details>
         </div>
@@ -227,6 +234,7 @@
             <li data-i18n="notInModel8">SSOとパスワード管理ソフト</li>
             <li data-i18n="notInModel9">乗っ取ったあとに攻撃者が回復先を書き換えること</li>
             <li data-i18n="notInModel10">漏れたパスワードがハッシュで守られていて解けない場合</li>
+            <li data-i18n="notInModel11">フィッシング（偽サイトでの入力。パスキーはこれに強い）</li>
           </ul>
         </details>
         <h3 id="paper-heading" class="paper-heading" tabindex="-1" data-i18n="paperHeading">紙に書いて当てはめる</h3>
@@ -241,7 +249,7 @@
       <button id="close-help" type="button" data-i18n="close">閉じる</button></div>
     <div class="help-body" role="region" tabindex="0" data-i18n-aria="helpBody" aria-label="ヘルプの本文">
       <h3 data-i18n="helpFirst">はじめて読むとき</h3>
-      <p data-i18n="helpFirstText">最初は「連鎖を追う」で会社員の漏えいを1段ずつ進め、次に「閉め出し」、最後に「1手で比べる」で同じ人の1手を試してください。</p>
+      <p data-i18n="helpFirstText">最初は「連鎖を追う」で会社員の漏えいを1段ずつ進めます。次に人物を高齢の親に替えて、見どころの「電話番号を手放すと、銀行に入れない」を押し、「閉め出し」の表の×を見ます。最後に「1手で比べる」で同じ人の1手を試してください。</p>
       <h3 data-i18n="helpKeysHeading">操作</h3>
       <p data-i18n="helpKeys">タブは←→・Home・Endで移り、ヘルプはEscで閉じます。</p>
       <h3 data-i18n="helpTermsHeading">用語</h3>
@@ -284,7 +292,7 @@
         <dd data-i18n="termSavedMeaning">手の前は倒れ、手のあとは倒れない／その逆</dd>
         <dt data-i18n="termUnlocked">解ける／新たに×</dt>
         <dd data-i18n="termUnlockedMeaning">手の前は閉め出され、手のあとは入れる／その逆</dd>
-        <dt data-i18n="termSum">延べ</dt>
+        <dt data-i18n="termSum">4枚の合計</dt>
         <dd data-i18n="termSumMeaning">4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）</dd>
         <dt data-i18n="termImportant">★</dt>
         <dd data-i18n="termImportantMeaning">重要なアカウント（並べ方で先に数える）</dd>

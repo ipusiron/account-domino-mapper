@@ -79,7 +79,7 @@ const TERMS = [
     '解ける／新たに×', '手の前は閉め出され、手のあとは入れる／その逆',
     'Unlocked / Newly locked out', 'Locked out before the change but not after / the reverse'],
   ['termSum',
-    '延べ', '4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）',
+    '4枚の合計', '4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）',
     'Sum over the four cards', 'Counted for each of the four cards and added up (the same account can be counted more than once)'],
   ['termImportant',
     '★', '重要なアカウント（並べ方で先に数える）',
@@ -99,8 +99,22 @@ test('H: Japanese and English have the same keys and the same placeholders per k
   }
 });
 
-test('H: English values contain no Japanese characters or full-width marks', () => {
-  for (const [key, value] of Object.entries(M.en)) assert.doesNotMatch(value, JAPANESE, key);
+// The one exception: the name of the language button on the English page starts with the letter the button shows (日, which
+// names Japanese), because a name must start with the text shown (WCAG 2.5.3, label in name: a speech user says what they
+// see). Only that first letter may be Japanese; the rest of the name is English.
+const LANGUAGE_LETTER = '日';
+test('H: English values contain no Japanese characters or full-width marks (the letter at the start of the language button\'s '
+  + 'name aside)', () => {
+  for (const [key, value] of Object.entries(M.en)) {
+    if (key === 'languageToggle') {
+      assert.ok(value.startsWith(LANGUAGE_LETTER + ': '), key + ': ' + value);
+      assert.doesNotMatch(value.slice(LANGUAGE_LETTER.length), JAPANESE, key);
+    } else assert.doesNotMatch(value, JAPANESE, key);
+  }
+  // The Japanese page shows EN, and its name starts with EN as well
+  assert.ok(M.ja.languageToggle.startsWith('EN：'), M.ja.languageToggle);
+  // app.js writes exactly these two letters on the button
+  assert.match(read('app.js'), /\$\('language'\)\.textContent = state\.language === 'ja' \? 'EN' : '日';/);
 });
 
 test('H: index.html uses existing keys, and its first text equals the Japanese dictionary', () => {

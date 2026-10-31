@@ -8,7 +8,7 @@
   return {
     ja: {
       themeToggle: "明暗を切り替える",
-      languageToggle: "言語を切り替える",
+      languageToggle: "EN：英語の表示にする",
       help: "ヘルプと座学",
       helpBody: "ヘルプの本文",
       close: "閉じる",
@@ -33,7 +33,8 @@
       rulesIntro: "この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。",
       footerLink: "GitHub（ipusiron/account-domino-mapper）",
       helpFirst: "はじめて読むとき",
-      helpFirstText: "最初は「連鎖を追う」で会社員の漏えいを1段ずつ進め、次に「閉め出し」、最後に「1手で比べる」で同じ人の1手を試してください。",
+      helpFirstText: "最初は「連鎖を追う」で会社員の漏えいを1段ずつ進めます。次に人物を高齢の親に替えて、見どころの「電話番号を手放すと、銀行に入れない」を押し、"
+        + "「閉め出し」の表の×を見ます。最後に「1手で比べる」で同じ人の1手を試してください。",
       helpKeysHeading: "操作",
       helpKeys: "タブは←→・Home・Endで移り、ヘルプはEscで閉じます。",
       helpTermsHeading: "用語",
@@ -77,7 +78,7 @@
       termSavedMeaning: "手の前は倒れ、手のあとは倒れない／その逆",
       termUnlocked: "解ける／新たに×",
       termUnlockedMeaning: "手の前は閉め出され、手のあとは入れる／その逆",
-      termSum: "延べ",
+      termSum: "4枚の合計",
       termSumMeaning: "4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）",
       termImportant: "★",
       termImportantMeaning: "重要なアカウント（並べ方で先に数える）",
@@ -129,7 +130,7 @@
       stepStatusWithSummary: "{status}。{summary}",
       reducedPlay: "動きを減らす設定のため、最後の段を表示しました。1段ずつ見るときは「最初から」を押してから「次の段 ▶」を押します。",
       stepHint: "「最初から」を押すと、段0から1段ずつ追えます。",
-      mapLegend: "●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行",
+      mapLegend: "★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行",
       mapCaption: "{person}の地図（{card}・段{step}）",
       colAccount: "アカウント",
       colEntrances: "入口",
@@ -234,22 +235,27 @@
       lockNoteNumber: "「スマホをなくした」では電話番号は失いません（SIMを再発行できる前提）。",
       lockNoteSync: "「スマホをなくした」の値は、認証アプリやパスキーを、ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。",
       lockEntrances: "{account}の入口：{entrances}",
+      // The SMS requirement on that line names the phone number (the column the line explains); the other places keep "SMS"
+      lockTagPhone: "SMS（電話番号）",
       // One change: effects, sentences and notes
       effectSaved: "守れる{n}",
       effectSavedImp: "守れる{n}（★{imp}）",
-      effectSavedAll: "守れる（延べ）{n}",
-      effectSavedAllImp: "守れる（延べ）{n}（★{imp}）",
+      effectSavedAll: "守れる（4枚の合計）{n}",
+      effectSavedAllImp: "守れる（4枚の合計）{n}（★{imp}）",
       effectUnlocked: "閉め出しが解ける{n}",
       effectNewly: "新たに×{n}",
-      effectExposed: "新たに倒れる（延べ）{n}",
+      effectExposed: "新たに倒れる（4枚の合計）{n}",
       effectPairNew: "2つ同時で新たに×{n}",
       effectSep: "・",
       noFall: "このカードでは倒れるアカウントがないので、守る手はありません。",
       noLockout: "{person}は、1つ失っただけで入れなくなるアカウントがありません。2つ同時の閉め出しは、1手を選ぶと1行で出ます。",
       noSafeMove: "閉め出しを増やさずに守れる1手は、この範囲にありません。",
-      rankingCards: "閉め出しを1つでも増やす手は後ろに並べます。そのうえで、差し引きで守れる★（重要）の数（多い順）→差し引きで守れる数（多い順）→閉め出しの増減（少ない順）→4枚のカードで新たに倒れる数（延べ、少ない順）の順です。差し引きは、守れた数から、"
-        + "同じカード（4枚の合計では4枚）で新たに倒れた数を引いた数です。ボタンの「守れる」は引く前の数で、新たに倒れる数があればボタンに別に出します。同点なら足す→付け替え→外すの順です。閉め出しは1つの喪失で数え、2つ同時は並べ方に入れていません。",
-      rankingLockout: "閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数（延べ、少ない順）→差し引きで守れる★の数（4枚の延べ、多い順）→差し引きで守れる数（4枚の延べ、多い順）の順です。同点なら足す→付け替え→外すの順です。",
+      rankingCards: "閉め出しを1つでも増やす手は後ろに並べます。そのうえで、差し引きで守れる★（重要）の数（多い順）→差し引きで守れる数（多い順）→閉め出しの増減（少ない順）→"
+        + "4枚のカードで新たに倒れる数の合計（少ない順）の順です。差し引きは、守れた数から、同じカード（4枚の合計では4枚）で新たに倒れた数を引いた数です。"
+        + "ボタンの「守れる」は引く前の数で、新たに倒れる数があればボタンに別に出します。同点なら足す→付け替え→外すの順です。閉め出しは1つの喪失で数え、"
+        + "2つ同時は並べ方に入れていません。",
+      rankingLockout: "閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数の合計（少ない順）→差し引きで守れる★の数（4枚の合計、多い順）→"
+        + "差し引きで守れる数（4枚の合計、多い順）の順です。同点なら足す→付け替え→外すの順です。",
       moveAdd: "{account}：{method}にスマホを足す",
       moveReplace: "{account}：{method}の{from}を{to}に付け替える",
       moveRemove: "{account}：{method}を外す",
@@ -265,7 +271,7 @@
       sumLockNone: "閉め出し：変わらない",
       sumPair: "2つ同時：{lines}",
       pairNone: "2つ同時に失ったとき：変わらない",
-      attackTotal: "合計（延べ）",
+      attackTotal: "4枚の合計",
       lossOneNew: "{lossIf}、{accounts}に入れなくなる",
       lossOneUnlocked: "{lossEven}、{accounts}に入れるようになる",
       lossIfPhone: "スマホをなくすと",
@@ -302,11 +308,14 @@
       modeDesk: "窓口のなりすまし",
       modeAll: "4枚の合計",
       modeLockout: "閉め出しを減らす",
-      candidatesHeading: "おすすめとほかの候補",
+      candidatesHeading: "この模型での上位の手",
+      // The line above the candidates: what ★ and the sum over the four cards (the counts on the buttons) stand for
+      candidatesLegend: "★＝重要なアカウント。4枚の合計＝4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）",
       rankingSummary: "並べ方",
       chooseLabel: "1手を自分で選ぶ",
       choosePlaceholder: "（1手を選ぶ）",
-      noMove: "上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。",
+      // Shown only when the mode has no candidate (no suggestion), so it points to the select alone
+      noMove: "「1手を自分で選ぶ」から手を選ぶと、前後を並べます。",
       attackCaption: "攻撃（カード4枚）",
       attackColCard: "カード",
       attackColBefore: "前",
@@ -322,8 +331,8 @@
       legendPaper: "紙＝紙の回復コードをなくした",
       sameHeading: "同じ入口のほかの手と比べる",
       sameColMove: "手",
-      sameColSaved: "守れた（延べ）",
-      sameColNewly: "新たに倒れる（延べ）",
+      sameColSaved: "守れた（4枚の合計）",
+      sameColNewly: "新たに倒れる（4枚の合計）",
       sameColLock: "閉め出し（1つ）",
       sameColPair: "2つ同時",
       backToCompare: "比べた結果へ戻る",
@@ -398,7 +407,8 @@
       symMarkName: "●1・×・消・★",
       symMarkMeaning: "段1で倒れた・閉め出し・そのメール自体が消えた・重要",
       notesHeading: "注記",
-      notePasskey: "パスキーと認証アプリはスマホの中の鍵として扱います。同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
+      notePasskey: "パスキーと認証アプリはスマホの中の鍵として扱います。このため、パスキーが偽サイトに強いことは数に出ません。"
+        + "同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
         + "端末の感染で乗っ取る経路は、この模型に入れていません。この模型にはスマホを攻撃者に渡すカードがないので、スマホを足す手で攻撃の面が悪くなることはありません。{sync}",
       notePaperRules: "紙の回復コードは本人の手元にだけあります。{paper}紙を分けて保管するなら{day124}・{day125}へ。",
       toolDay124: "Day124 Scatter Seeds",
@@ -414,6 +424,7 @@
       notInModel8: "SSOとパスワード管理ソフト",
       notInModel9: "乗っ取ったあとに攻撃者が回復先を書き換えること",
       notInModel10: "漏れたパスワードがハッシュで守られていて解けない場合",
+      notInModel11: "フィッシング（偽サイトでの入力。パスキーはこれに強い）",
       paperHeading: "紙に書いて当てはめる",
       paperFormIntro: "自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。",
       printButton: "印刷する（3人の地図と空欄の用紙）",
@@ -525,7 +536,8 @@
       lesson4Caption: "SIMスワップのカードの結果（3人）",
       lesson5Title: "5. 窓口（ヘルプデスク）",
       lesson5Text1: "電話の窓口は、個人情報に答えられれば通る入口として描いています。NCSCは2025年5月、小売業の事件について、ヘルプデスクでのパスワードと多要素のリセットを"
-        + "狙う社会工学が議論されていることに触れ、リセット手順の見直しを勧めました。対象は企業の社内ヘルプデスクです。",
+        + "狙うソーシャルエンジニアリング（人をだまして情報や操作を引き出す手口）が議論されていることに触れ、リセット手順の見直しを勧めました。"
+        + "対象は企業の社内ヘルプデスクです。",
       lesson5Text2: "NIST SP 800-63B-4（§4.2.1）の回復の方法の4分類に、秘密の質問は入っていません。4分類以外の方法は、リスク分析にもとづいて文書化するよう求めています。"
         + "書類の偽造は模型の外です（注記3）。",
       lesson5Text3: "表は、3人の窓口のなりすましのカードの結果です。学生の地図には電話の窓口がないので、何も倒れません。",
@@ -548,7 +560,7 @@
       lesson7Text2: "2020年に20人を面接した研究（CHI 2022）では、全員が自分のアカウントのつながりを一部しか把握していませんでした。電話番号を変えて30日、機種を変えて"
         + "2カ月閉め出された例が語られています。",
       lesson7Text3: "2023年1月に、大手2社のどちらか一方のアカウントについて、米国とドイツの居住者ほぼ半数ずつの185人に設定を尋ねた研究では、"
-        + "27人が、1つを失うだけで入れなくなるおそれのある設定で、失うものはほとんどがメインのスマホでした。",
+        + "27人（2社それぞれ10人と17人を足した数）が、1つを失うだけで入れなくなるおそれのある設定で、失うものはほとんどがメインのスマホでした。",
       lesson7Text4: "表は、3人の閉め出しの表のうち、×か「あと1つ失うと×」のあるアカウントです。",
       lesson7Caption: "閉め出しの表の×と「あと1つ」（3人）",
       lesson7ColMail: "メール（人ごとに1つ）",
@@ -557,8 +569,9 @@
         + "1つ失っただけの閉め出しが増えることがあります。紙へ付け替える手では、閉め出しがなくなるとは限りません。入れなくなる2つの組み合わせが移ることも、"
         + "新たにできることもあります（「スマホと紙を一緒になくすと入れない」）。",
       lesson8Text2: "NIST SP 800-63B-4（米国の指針）は、保存型の回復コードについて、64ビット以上の乱数で作ること、使ったら無効にして新しいものを出すこと、差し替えたら"
-        + "通知することを求めています（§4.2.1.1）。印刷や手書きでオフラインに置くことは説明として書かれており、要件ではありません。回復コードは「持っているもの」の"
-        + "典型で、偽サイトに強くありません（§3.1.2）。AAL2の回復には、種類の違う回復コード2つか、回復コード1つと単一要素の認証の組を求めています（§4.2.2.2）。",
+        + "通知することを求めています（§4.2.1.1）。印刷や手書きでオフラインに置くことは説明として書かれており、要件ではありません。保存型の回復コードは、"
+        + "NISTの言うlook-up secret（「持っているもの」）の典型的な使い方で、偽サイトに強くありません（§3.1.2）。AAL2の回復には、種類の違う回復コード2つ、"
+        + "回復コード1つと単一要素の認証の組、身元確認のやり直し（身元確認済みのアカウントの場合）のどれかを求めています（§4.2.2.2）。",
       lesson8Text3: "紙は、保管している間はネット越しに盗まれにくい一方で、置き場所が新しい入口になります。CHI 2022の参加者の1人は、書き出したコードを家族が見られることを"
         + "心配していました。紙を分けて保管するなら{day124}・{day125}へ。",
       lesson8Caption: "外す手と付け替える手（3人の5つの入口）",
@@ -568,9 +581,10 @@
       lesson8Entrance: "{person}：{account}の{method}",
       lesson8NoReplace: "付け替える先はない",
       lesson9Title: "9. 模型の約束と研究の形式",
-      lesson9Text1: "この教材の閉め出しは、到達の補集合で数えます。失ったものを外し、手元に残ったものから同じ規則で入れないアカウントが閉め出しです。これは論文の"
-        + "定義18の規則の最大不動点と同じになります（本人が、入る線のない資格情報をすべて持っているとき。この教材ではいつもそうです）。定義18を最小不動点の"
-        + "まま計算すると、復旧が輪になったときに閉め出しを見落とします。",
+      lesson9Text1: "この教材の閉め出しは、到達の補集合で数えます。失ったものを外し、手元に残ったものから同じ規則で入れないアカウントが閉め出しです。論文の定義18は、"
+        + "閉め出しを最小不動点として定めています。次の2つは、この教材で導いて確かめたことです。補集合は、定義18の規則の最大不動点と同じになります"
+        + "（本人が、入る線のない資格情報をすべて持っているとき。この教材ではいつもそうです）。定義18を最小不動点のまま計算すると、復旧が輪になったときに"
+        + "閉め出しを見落とすことがあります（下の表）。",
       lesson9Text2: "この例は論文の形式（パスワードも失いうる）での比べ方で、画面の喪失カードとは別です。",
       lesson9Text3: "2020年に20人を面接した研究（CHI 2022）では、2つのメールが互いの回復先になっている輪が3つ見つかっています。",
       lesson9Text4: "裏口の印は、Hammannらの定義26を点数なしの二値にしたものです（このカードで倒れたアカウントのうち、復旧の入口をまとめて外したグラフでは倒れないものが"
@@ -633,7 +647,8 @@
     },
     en: {
       themeToggle: "Switch light and dark",
-      languageToggle: "Switch language",
+      // The name starts with the letter the button shows (日, which names Japanese), so that the name holds the text shown
+      languageToggle: "日: Switch to Japanese",
       help: "Help and lessons",
       helpBody: "Help text",
       close: "Close",
@@ -667,8 +682,9 @@
         + "such as detecting suspicious log-ins and sending notifications.",
       footerLink: "GitHub (ipusiron/account-domino-mapper)",
       helpFirst: "First time here",
-      helpFirstText: "Start with “Follow the chain” and step through the office worker's breach one step at a time. Then open “Lockout”, "
-        + "and finally use “Try one change” for the same person.",
+      helpFirstText: "Start with “Follow the chain” and step through the office worker's breach one step at a time. Next, switch the person "
+        + "to the older parent, press the highlight “Give up the number, and you are locked out of the bank” and see the × in the “Lockout” "
+        + "table. Finally, use “Try one change” for the same person.",
       helpKeysHeading: "Controls",
       helpKeys: "Move between tabs with ← →, Home and End. Close the help with Esc.",
       helpTermsHeading: "Terms",
@@ -771,7 +787,8 @@
       stepStatusWithSummary: "{status}. {summary}",
       reducedPlay: "Reduced motion is on, so the last step is shown. To go one step at a time, press “Start over”, then “Next step ▶”.",
       stepHint: "Press “Start over” to follow the chain one step at a time from step 0.",
-      mapLegend: "●n = the step it falls at · backdoor = would not fall to this card without the recovery entrances · this step = fell at this step",
+      mapLegend: "★ = important account · ●n = the step it falls at · backdoor = would not fall to this card without the recovery entrances "
+        + "· this step = fell at this step",
       mapCaption: "Map: {person} ({card}, step {step})",
       colAccount: "Account",
       colEntrances: "Entrances",
@@ -879,6 +896,7 @@
       lockNoteNumber: "“Lost the phone” keeps the phone number (assuming the SIM can be reissued).",
       lockNoteSync: "The “Lost the phone” values assume the authenticator app and passkeys are not synced or backed up to another device or the cloud.",
       lockEntrances: "{account}: {entrances}",
+      lockTagPhone: "SMS (phone number)",
       // One change: effects, sentences and notes
       effectSaved: "Saves: {n}",
       effectSavedImp: "Saves: {n} (★{imp})",
@@ -956,11 +974,13 @@
       modeDesk: "Help-desk impersonation",
       modeAll: "All four cards",
       modeLockout: "Fewer lockouts",
-      candidatesHeading: "Suggested change and alternatives",
+      candidatesHeading: "Top changes in this model",
+      candidatesLegend: "★ = important account. Sum over the four cards = counted for each of the four cards and added up "
+        + "(the same account can be counted more than once)",
       rankingSummary: "How changes are ranked",
       chooseLabel: "Choose a change yourself",
       choosePlaceholder: "(choose a change)",
-      noMove: "Pick a change from the suggestions above or from “Choose a change yourself” to compare before and after.",
+      noMove: "Pick a change from “Choose a change yourself” to compare before and after.",
       attackCaption: "Attack (four cards)",
       attackColCard: "Card",
       attackColBefore: "Before",
@@ -1053,7 +1073,8 @@
       symMarkName: "●1 · × · gone · ★",
       symMarkMeaning: "Fell at step 1 · locked out · the email itself is gone · important",
       notesHeading: "Notes",
-      notePasskey: "Passkeys and authenticator apps are treated as keys inside the phone. Retrieving synced passkeys through cloud-account recovery, "
+      notePasskey: "Passkeys and authenticator apps are treated as keys inside the phone. So passkeys' resistance to fake sites does not show "
+        + "in the numbers. Retrieving synced passkeys through cloud-account recovery, "
         + "and takeover through an infected device, are outside this model. No card here hands the phone to the attacker, "
         + "so adding the phone never makes the attack side worse. {sync}",
       notePaperRules: "Paper recovery codes exist only in the owner's hands. {paper} To keep them split across places, see {day124} and {day125}.",
@@ -1070,6 +1091,7 @@
       notInModel8: "Single sign-on and password managers",
       notInModel9: "An attacker changing recovery details after a takeover",
       notInModel10: "Leaks where the passwords are protected by hashing and cannot be cracked",
+      notInModel11: "Phishing on fake sites (which passkeys resist)",
       paperHeading: "Apply it on paper",
       paperFormIntro: "Your own setup is never entered on this page. Print the blank sheet and fill it in with symbols, without passwords. "
         + "The sheet has a “Keep safe (map of weak points)” box.",
@@ -1154,7 +1176,7 @@
         + "changes what a long password is worth; this model counts only the former.",
       lesson2Text2: "An estimated 43–51% of users reused the same password on several sites (Das et al., NDSS 2014: 43% in leak data from 2006–2012, "
         + "51% in a university survey). These figures are not the share of users in Japan today.",
-      lesson2Text3: "In October 2026, a points site in Japan announced that there were 249 accounts that may have been logged into without "
+      lesson2Text3: "In October 2026, it was announced that a points site in Japan had 249 accounts that may have been logged into without "
         + "authorization using ID and password pairs leaked elsewhere. JPCERT/CC and the Ministry of Internal Affairs and Communications also "
         + "advise against reusing passwords.",
       lesson2Text4: "The table counts, for each password family of the three people, the accounts that have it as a requirement.",
@@ -1226,7 +1248,8 @@
         + "were connected. Participants told of being locked out for 30 days after changing their phone number and for two months after "
         + "changing their phone.",
       lesson7Text3: "A study that asked 185 users of either of two major providers' accounts (about half living in the US, half in Germany) about "
-        + "their settings in January 2023 found that 27 of them could be locked out by losing a single thing, nearly always their main phone.",
+        + "their settings in January 2023 found that 27 of them (10 for one provider plus 17 for the other) could be locked out by losing "
+        + "a single thing, nearly always their main phone.",
       lesson7Text4: "The table lists the accounts whose lockout table has × or “one more loss locks you out” for the three people.",
       lesson7Caption: "Lockout cells with × or one more loss (three people)",
       lesson7ColMail: "Email (one per person)",
@@ -1237,9 +1260,10 @@
         + "the paper codes together locks you out).",
       lesson8Text2: "NIST SP 800-63B-4, a US guideline, requires saved recovery codes to be random with at least 64 bits, to be invalidated once used "
         + "with new ones issued, and to trigger a notification when replaced (§4.2.1.1). Keeping them offline, printed or written down, is "
-        + "described there but is not a requirement. A recovery code is a typical “something you have” and is not phishing-resistant (§3.1.2). "
-        + "For recovery at AAL2, NIST asks for two recovery codes of different kinds, or one recovery code together with a single-factor "
-        + "authenticator (§4.2.2.2).",
+        + "described there but is not a requirement. Saved recovery codes are a typical use of what NIST calls look-up secrets "
+        + "(“something you have”), which are not phishing-resistant (§3.1.2). For recovery at AAL2, NIST requires one of these: two recovery "
+        + "codes of different kinds, one recovery code together with a single-factor authenticator, or repeated identity proofing for an "
+        + "identity-proofed account (§4.2.2.2).",
       lesson8Text3: "Paper codes are hard to steal over the network while they are in storage, but where you keep them becomes a new entrance. "
         + "One participant in the CHI 2022 study worried that family members could see recovery codes written down. To keep them split across places, "
         + "see {day124} and {day125}.",
@@ -1251,9 +1275,10 @@
       lesson8NoReplace: "Nothing to replace it with",
       lesson9Title: "9. The model and the research formalism",
       lesson9Text1: "This teaching aid counts lockout as the complement of reach: after removing what was lost, the accounts the owner cannot reach "
-        + "by the same rules from what remains are locked out. This equals the greatest fixed point of the rules of Definition 18 in the paper "
+        + "by the same rules from what remains are locked out. Definition 18 in the paper defines lockout as a least fixed point. The next two "
+        + "points were derived and checked for this teaching aid. The complement equals the greatest fixed point of the rules of Definition 18 "
         + "when the owner holds every credential that no line leads into, which is always the case here. Computing Definition 18 as a least "
-        + "fixed point misses lockouts when recovery forms a cycle.",
+        + "fixed point can miss lockouts when recovery forms a cycle (the table below).",
       lesson9Text2: "This example compares the two in the paper's formalism (where passwords can also be lost); it is separate from the loss "
         + "cards on the screen.",
       lesson9Text3: "In a study based on interviews with 20 people in 2020 (CHI 2022), three cycles were found in which two emails were each other's "

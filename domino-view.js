@@ -308,7 +308,7 @@
     return mv;
   }
   const cardIdsFor = (p, mode) => (mode === 'all' || mode === 'lockout' ? p.cards.map((c) => c.id) : [mode]);
-  // 候補：並べた順に、オススメと同じ条件を満たす手だけを取り、同じ入口（アカウントと入口の組）の手は飛ばして3つまで。先頭＝best
+  // 候補（この模型での上位の手）：並べた順に、条件（ok）を満たす手だけを取り、同じ入口（アカウントと入口の組）の手は飛ばして3つまで。先頭＝best
   function candidates(p, pv, mode) {
     const ok = (mv) => {
       let net = 0, delta = 0, newly = 0;
@@ -335,7 +335,7 @@
     }
     return { ids, reason };
   }
-  // 効果の文の数。saved＝守れた数（カードのモードはそのカード、4枚の合計は4枚の延べ）、imp＝そのうち★
+  // 効果の文の数。saved＝守れた数（カードのモードはそのカード、4枚の合計は4枚のカードごとに数えて足した数）、imp＝そのうち★
   function effect(p, pv, moveId, mode) {
     const mv = moveOf(pv, moveId);
     const imp = new Set(p.services.filter((s) => s.important).map((s) => s.id));
@@ -476,6 +476,24 @@
       move: mv,
     };
   }
+  // 手のあとの地図の段の結果と図の座標を覚える入れ物：最後に使った limit 件だけを覚える（小さな LRU）。make() は覚えていない鍵の
+  // ときだけ呼ぶ。使った鍵はいちばん新しい位置へ移し、limit を超えたら、いちばん長く使っていない1件を捨てる（3人の全手を選んでも、
+  // 覚える数が増え続けない）
+  function recentCache(limit) {
+    const entries = new Map();
+    return (key, make) => {
+      if (entries.has(key)) {
+        const value = entries.get(key);
+        entries.delete(key);
+        entries.set(key, value);
+        return value;
+      }
+      const value = make();
+      entries.set(key, value);
+      if (entries.size > limit) entries.delete(entries.keys().next().value);
+      return value;
+    };
+  }
 
   // ===== 1手の文 =====
   function moveTitle(p, mv, M, lang) {
@@ -582,7 +600,7 @@
     if (changesNothing(mv)) notes.push(D.noteNoChange);
     return notes;
   }
-  // 攻撃（カード4枚）の表の行と、合計（延べ）の行。表の行の名前は全名（要約の行は短い名前）。
+  // 攻撃（カード4枚）の表の行と、4枚の合計の行。表の行の名前は全名（要約の行は短い名前）。
   // 選んだカード（selected）の印は、モードのカードの行にだけ付ける（4枚の合計と閉め出しを減らすのモードでは、どの行にも付けない）
   function attackRows(p, pv, mv, mode, M, lang) {
     const D = dictionary(M, lang), nm = names(p, M, lang);
@@ -993,8 +1011,8 @@
     const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5));
     for (let i = 1; i <= n; i++) out.push([a[0] + (b[0] - a[0]) * i / n, a[1] + (b[1] - a[1]) * i / n]);
   }
-  // 直角に折れる線の角を円弧にした経路と、経路を 1px 以下の間隔で分けた点
-  function roundedPath(points, radius) {
+  // 直角に折れる線の角を円弧にした経路。sample のときだけ、経路を 1px 以下の間隔で分けた点（points）も返す
+  function roundedPath(points, radius, sample) {
     const P = [];
     for (const pt of points) {
       const last = P[P.length - 1];
@@ -1005,13 +1023,13 @@
       if ((a[0] === b[0] && b[0] === c[0]) || (a[1] === b[1] && b[1] === c[1])) P.splice(i, 1); else i++;
     }
     let d = 'M ' + round(P[0][0]) + ' ' + round(P[0][1]);
-    const samples = [P[0]];
+    const samples = sample ? [P[0]] : null;
     let current = P[0];
     for (let i = 1; i < P.length; i++) {
       const pt = P[i];
       if (i === P.length - 1) {
         d += ' L ' + round(pt[0]) + ' ' + round(pt[1]);
-        sampleSegment(current, pt, samples);
+        if (sample) sampleSegment(current, pt, samples);
         break;
       }
       const prev = P[i - 1], next = P[i + 1];
@@ -1022,21 +1040,26 @@
       const sweep = d1[0] * d2[1] - d1[1] * d2[0] > 0 ? 1 : 0;
       d += ' L ' + round(start[0]) + ' ' + round(start[1]) + ' A ' + round(r) + ' ' + round(r) + ' 0 0 ' + sweep + ' '
         + round(end[0]) + ' ' + round(end[1]);
-      sampleSegment(current, start, samples);
-      const center = [start[0] + d2[0] * r, start[1] + d2[1] * r];
-      const a0 = Math.atan2(start[1] - center[1], start[0] - center[0]);
-      const turn = (sweep ? 1 : -1) * Math.PI / 2;
-      const n = Math.max(2, Math.ceil(r * Math.PI / 2 / 0.5));
-      for (let j = 1; j <= n; j++) {
-        const t = a0 + turn * j / n;
-        samples.push([center[0] + Math.cos(t) * r, center[1] + Math.sin(t) * r]);
+      if (sample) {
+        sampleSegment(current, start, samples);
+        const center = [start[0] + d2[0] * r, start[1] + d2[1] * r];
+        const a0 = Math.atan2(start[1] - center[1], start[0] - center[0]);
+        const turn = (sweep ? 1 : -1) * Math.PI / 2;
+        const n = Math.max(2, Math.ceil(r * Math.PI / 2 / 0.5));
+        for (let j = 1; j <= n; j++) {
+          const t = a0 + turn * j / n;
+          samples.push([center[0] + Math.cos(t) * r, center[1] + Math.sin(t) * r]);
+        }
       }
       current = end;
     }
-    return { d, points: samples };
+    return sample ? { d, points: samples } : { d };
   }
-  // 隣の列へは3次ベジエ（M x1 y1 C x1+20 y1, x2−20 y2, x2 y2）
-  function bezierPath(x1, y1, x2, y2) {
+  // 隣の列へは3次ベジエ（M x1 y1 C x1+20 y1, x2−20 y2, x2 y2）。点（points）は sample のときだけ
+  function bezierPath(x1, y1, x2, y2, sample) {
+    const d = 'M ' + round(x1) + ' ' + round(y1) + ' C ' + round(x1 + 20) + ' ' + round(y1) + ', ' + round(x2 - 20) + ' '
+      + round(y2) + ', ' + round(x2) + ' ' + round(y2);
+    if (!sample) return { d };
     const c = [[x1, y1], [x1 + 20, y1], [x2 - 20, y2], [x2, y2]];
     const at = (t) => {
       const u = 1 - t, w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
@@ -1053,14 +1076,15 @@
       if (gap <= 1) break;
       n *= 2;
     }
-    const d = 'M ' + round(x1) + ' ' + round(y1) + ' C ' + round(x1 + 20) + ' ' + round(y1) + ', ' + round(x2 - 20) + ' '
-      + round(y2) + ', ' + round(x2) + ' ' + round(y2);
     return { d, points };
   }
   // 地図の座標。列と順は手の前の人物 p で決める。q を渡したときは、行と箱の高さを前後の文字の長いほうにそろえ、
   // 前後で座標を変えない（外した入口の行も場所を残す。列の横の位置は p だけの図と同じ）。
   // lines＝描く人物（q か p）の条件の線、linesBefore＝q があるときの p の線、gaps＝列の間の幅（左から）
-  function layout(p, q, M, lang) {
+  // 線の点（points＝経路を 1px 以下の間隔で分けた点）は、画面では使わないので、options.samplePoints のとき（テスト）だけ作る。
+  // 手の前後の図1つで約5万の点（約4MB）になり、手を選ぶたびに持つと重くなるため
+  function layout(p, q, M, lang, options = {}) {
+    const sample = options.samplePoints === true;
     const D = dictionary(M, lang);
     const after = q || p;
     const nmAfter = names(after, M, lang), nmBefore = names(p, M, lang);
@@ -1260,13 +1284,15 @@
       return route.list.map((l) => {
         const x1 = right(l.c1), x2 = colX(l.c2);
         let path, channel = null;
-        if (l.c2 - l.c1 === 1) path = bezierPath(x1, l.y1, x2, l.y2);
+        if (l.c2 - l.c1 === 1) path = bezierPath(x1, l.y1, x2, l.y2, sample);
         else {
           const xs = x1 + G.edge + l.laneOut * spacing[l.c1], xt = x2 - G.edge - l.laneIn * spacing[l.c2 - 1];
           channel = l.channel;
-          path = roundedPath([[x1, l.y1], [xs, l.y1], [xs, channel], [xt, channel], [xt, l.y2], [x2, l.y2]], G.radius);
+          path = roundedPath([[x1, l.y1], [xs, l.y1], [xs, channel], [xt, channel], [xt, l.y2], [x2, l.y2]], G.radius, sample);
         }
-        return { from: l.from, to: l.to, kind: l.kind, role: l.role, d: path.d, points: path.points, columns: [l.c1, l.c2], channel };
+        const line = { from: l.from, to: l.to, kind: l.kind, role: l.role, d: path.d, columns: [l.c1, l.c2], channel };
+        if (sample) line.points = path.points;
+        return line;
       });
     }
     const lines = linesFor(after);
@@ -1279,7 +1305,7 @@
   return Object.freeze({
     fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, mapCaption, mapRows, needText,
     detail, fourCards, lockCell, lockTable, lockEntrances, lockChanges, candidates, effect, effectText, rankingNote, sameEntrance, sameRows, afterMap,
-    moveTitle, moveChoice, moveOptions, attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle,
+    recentCache, moveTitle, moveChoice, moveOptions, attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle,
     layout, textWidth, wrapText, wrapRow, mailDepths, symbolTable, printTable,
     lessons: LESSONS, lessonRefs: LESSON_REFS, relatedTools: RELATED_TOOLS, lessonScenes: LESSON_SCENES, lesson8Rows: LESSON8_ROWS, lessonTable,
   });

@@ -207,7 +207,8 @@ caption { padding: .35rem 0; text-align: left; font-weight: 700; }
 th, td { padding: .4rem; border: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: break-word; }
 th { background: var(--bg); }
 /* A piece between two line breaks that holds ＋＝／→ (or × in the printed lockout cells), kept on one line by app.js:
-   keep-all does not hold these marks, and no line may start with one of them */
+   keep-all does not hold these marks, and no line may start with one of them. So is a piece that holds （4枚の合計） or
+   SMS（電話番号）, two labels that never break inside */
 .joined { white-space: nowrap; }
 /* The heading inside a cell of a stacked table, shown only below 720px (thead shows it on wide screens) */
 .responsive-table .cell-label { display: none; }
@@ -321,6 +322,11 @@ th { background: var(--bg); }
 }
 .compare-result { margin-top: 1rem; }
 .compare-heading { margin: 1rem 0 .5rem; }
+/* The comparison heading, the lines of its summary, the lockout lines under it, the sentences of the candidates and the line
+   above them (.keep-words) keep a Japanese word whole like the step line: a line breaks only at a <wbr> put by app.js, at a
+   space or after punctuation (a word longer than the line still breaks) */
+.compare-heading, .compare-summary p, .sentence-list li, .cand-title, .cand-effect, .keep-words {
+  word-break: keep-all; overflow-wrap: anywhere; }
 .compare-heading:focus-visible { outline-offset: 2px; }
 .compare-summary { margin: .5rem 0; padding: .4rem .75rem; border-left: 4px solid var(--accent); background: var(--bg); font-weight: 700; }
 .compare-summary p { margin: .2rem 0; }

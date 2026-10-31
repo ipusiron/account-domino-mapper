@@ -1,10 +1,14 @@
 """Browser gates for Account Domino Mapper (Playwright for Python; not part of CI).
 
 Run with a Python environment that already contains Playwright:
-    python test/interface.browser.py --stage 1c
-    python test/interface.browser.py --stage 1c --output <folder>
-    python test/interface.browser.py --stage 1c --url http://127.0.0.1:8000/
-A stage also runs the checks of the stages before it (1c runs the 1a and 1b checks too).
+    python test/interface.browser.py --stage 1d
+    python test/interface.browser.py --stage 1d --output <folder>
+    python test/interface.browser.py --stage 1d --url http://127.0.0.1:8000/
+A stage also runs the checks of the stages before it (1c runs the 1a and 1b checks too). 1d runs all the
+checks of 1a, 1b and 1c again; the checks that came with 1d (the description and OGP tags stay as index.html
+writes them; the comparison heading and the candidates keep Japanese words whole) run inside those checks, and
+1d adds one case in Chromium: the heap after every change of tab 3 has been chosen.
+Without --stage, the last stage (1d) runs.
 Results and viewport screenshots are written to --output (default: a new folder in the
 system temporary directory). Nothing is written inside the repository.
 """
@@ -17,6 +21,7 @@ import sys
 import tempfile
 from contextlib import contextmanager
 from functools import partial
+from html import unescape
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
@@ -27,7 +32,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "account-domino-mapper."
-STAGES = ("1a", "1b", "1c")
+STAGES = ("1a", "1b", "1c", "1d")
 WIDTHS = (320, 390, 720, 808, 1280)
 HTTP_WIDTHS = (320, 1280)
 TABS = ("chain", "lockout", "compare", "rules")
@@ -119,7 +124,7 @@ HELP_TERMS = (
      "解ける／新たに×", "手の前は閉め出され、手のあとは入れる／その逆",
      "Unlocked / Newly locked out", "Locked out before the change but not after / the reverse"),
     ("termSum",
-     "延べ", "4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）",
+     "4枚の合計", "4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）",
      "Sum over the four cards", "Counted for each of the four cards and added up "
                                 "(the same account can be counted more than once)"),
     ("termImportant",
@@ -129,6 +134,13 @@ HELP_TERMS = (
      "手元", "本人が直接持つもの",
      "What the owner holds", "What the owner holds directly"),
 )
+HELP_FIRST_TEXT = {
+    "ja": "最初は「連鎖を追う」で会社員の漏えいを1段ずつ進めます。次に人物を高齢の親に替えて、見どころの「電話番号を手放すと、銀行に入れない」を押し、"
+          "「閉め出し」の表の×を見ます。最後に「1手で比べる」で同じ人の1手を試してください。",
+    "en": "Start with “Follow the chain” and step through the office worker's breach one step at a time. Next, switch the person to the "
+          "older parent, press the highlight “Give up the number, and you are locked out of the bank” and see the × in the “Lockout” "
+          "table. Finally, use “Try one change” for the same person.",
+}
 CSP = (
     "default-src 'none'; script-src 'self'; style-src 'self'; "
     "img-src 'self' data:; base-uri 'none'; form-action 'none'; "
@@ -369,13 +381,34 @@ def assert_preference(page, language, theme):
     check(page.locator("html").get_attribute("data-theme") == theme, "theme " + theme)
     labels = tuple(page.locator("#tab-" + tab).inner_text() for tab in TABS)
     check(labels == TAB_LABELS[language], labels)
+    shown = page.locator("#language").inner_text()
+    check(shown == ("EN" if language == "ja" else "日"), "language button text")
     for control in ("theme", "language", "help"):
-        assert_language_text(page.locator("#" + control).get_attribute("aria-label"), language, control)
-    check(page.locator("#language").inner_text() == ("EN" if language == "ja" else "日"), "language button text")
+        label = page.locator("#" + control).get_attribute("aria-label")
+        if control == "language":
+            # The name starts with the text shown (WCAG 2.5.3, label in name): "EN：…" on the Japanese page, "日: …" on the
+            # English page. That letter 日 names Japanese and is the only Japanese the English page may read out; the rest of
+            # the name is in the language of the page
+            check(label.startswith(shown) and len(label) > len(shown), ("the language button's name starts with its text", shown, label))
+            label = label[len(shown):]
+        assert_language_text(label, language, control)
+
+
+# The description and the six OGP tags in <head>, as index.html writes them: sites read them without running JavaScript,
+# so the page never rewrites them (not at startup in either language, not on a language switch)
+HEAD_META = [(m.group(1), unescape(m.group(2))) for m in re.finditer(
+    r'<meta (?:name|property)="(description|(?:og|twitter):[a-z:]+)" content="([^"]*)">',
+    (ROOT / "index.html").read_text(encoding="utf-8").split("</head>")[0])]
+HEAD_META_STATE = """() => Array.from(document.head.querySelectorAll('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]'),
+  m => [m.getAttribute('property') || m.getAttribute('name'), m.getAttribute('content')])"""
 
 
 def assert_ready_state(page, language):
-    """Startup type after readiness: notice removed, both groups released and labelled in the current language."""
+    """Startup type after readiness: notice removed, both groups released and labelled in the current language; the
+    description and the OGP tags of <head> as index.html writes them."""
+    check(len(HEAD_META) == 7 and len(dict(HEAD_META)) == 7, ("the description and the six OGP tags of index.html", HEAD_META))
+    found = sorted(map(tuple, page.evaluate(HEAD_META_STATE)))
+    check(found == sorted(HEAD_META), ("the description and the OGP tags stay as index.html writes them", found))
     check(page.locator("html").get_attribute("data-app-ready") == "true", "ready marker")
     check(page.locator("#startup-note").count() == 0, "startup notice is removed from the DOM")
     for group in ("startup-tools", "startup-controls"):
@@ -510,6 +543,9 @@ def test_help(page, width, layouts, screenshot, language):
         expected += [{"tag": "dt", "key": key, "text": term}, {"tag": "dd", "key": key + "Meaning", "text": meaning}]
     items = page.evaluate(GLOSSARY)
     check(items == expected, ("help terms", len(items), [pair for pair in zip(items, expected) if pair[0] != pair[1]][:3]))
+    # The first steps go from the office worker's breach to the parent's highlight that shows × in the lockout table
+    first = dialog.locator('[data-i18n="helpFirstText"]').text_content()
+    check(first == HELP_FIRST_TEXT[language], ("the first steps of the help", first))
     text = dialog.inner_text()
     if language == "en":
         check(not JAPANESE.search(text), ("Japanese in the English help", JAPANESE.findall(text)[:10]))
@@ -599,6 +635,9 @@ STATUS_JOIN = {"ja": "{status}。{summary}", "en": "{status}. {summary}"}
 LIST_SEPARATOR = {"ja": "・", "en": ", "}
 PERSONAL_DETAILS = {"ja": "個人情報", "en": "Personal details"}
 MAP_CAPTION = {"ja": "{person}の地図（{card}・段{step}）", "en": "Map: {person} ({card}, step {step})"}
+MAP_LEGEND = {"ja": "★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行",
+              "en": "★ = important account · ●n = the step it falls at · backdoor = would not fall to this card without the recovery "
+                    "entrances · this step = fell at this step"}
 CARD_NAMES = {"ja": {"leak": "漏えい", "simswap": "SIMスワップ", "mail": "メールの乗っ取り", "desk": "窓口のなりすまし"},
               "en": {"leak": "Breach", "simswap": "SIM swap", "mail": "Email takeover", "desk": "Help-desk impersonation"}}
 DETAIL_HEADING = {"ja": "{account}の詳しい様子", "en": "{account}: details"}
@@ -665,8 +704,13 @@ NOTE_BROKERAGE_STUDENT = {
 }
 VISIBLE = """el => { if (!el) return null; const c = el.cloneNode(true);
   c.querySelectorAll('.visually-hidden').forEach(n => n.remove()); return c.textContent.replace(/\\s+/g, ' ').trim(); }"""
+# A legend that can be seen: it has a box (not display: none or hidden), is not one of the texts read aloud only (.visually-hidden,
+# one pixel and clipped) nor inside one, and is not visibility: hidden
+SEEN = """el => !!el && el.getClientRects().length > 0 && !el.closest('.visually-hidden')
+  && getComputedStyle(el).visibility === 'visible'"""
 CHAIN_STATE = """() => {
   const visible = """ + VISIBLE + """;
+  const seen = """ + SEEN + """;
   const rows = Array.from(document.querySelectorAll('#chain-map tbody tr'), tr => {
     const button = tr.querySelector('th button'), cells = tr.querySelectorAll('td'), result = cells[cells.length - 1];
     return {id: button.dataset.key.slice('chain-acct:'.length), pressed: button.getAttribute('aria-pressed'),
@@ -678,7 +722,10 @@ CHAIN_STATE = """() => {
     return {disabled: b.getAttribute('aria-disabled'), pressed: b.getAttribute('aria-pressed'), text: b.textContent,
       tabindex: b.getAttribute('tabindex')}; };
   const note = document.querySelector('#card-note'), line = document.querySelector('#step-line');
+  const legend = document.querySelector('#panel-chain > .map-legend');
   return {caption: document.querySelector('#chain-map caption').textContent, rows,
+    legend: seen(legend) ? legend.textContent : null,
+    legendBefore: !!legend && !!(legend.compareDocumentPosition(document.querySelector('#chain-map')) & Node.DOCUMENT_POSITION_FOLLOWING),
     line: visible(line), lineShown: line.getClientRects().length > 0,
     lineLive: [line.getAttribute('role'), line.getAttribute('aria-live'), line.closest('[aria-live]') ? 'inside a live region' : null],
     summary: visible(document.querySelector('#step-summary')), status: document.querySelector('#step-status').textContent,
@@ -1222,6 +1269,8 @@ def assert_chain(page, k, pid, card, step, language, name):
     caption = MAP_CAPTION[language].format(person=PERSON_LABELS[language][PEOPLE.index(pid)],
                                            card=CARD_NAMES[language][card], step=step)
     check(state["caption"] == caption, (name, "caption", state["caption"], caption))
+    # The legend above the map table says what ★ (an important account) and the marks of the result column stand for
+    check(state["legend"] == MAP_LEGEND[language] and state["legendBefore"], (name, "the legend of the map", state["legend"]))
     check([row["id"] for row in state["rows"]] == k["services"], (name, "rows", [row["id"] for row in state["rows"]]))
     for row in state["rows"]:
         expected = expected_cell(k, card, row["id"], step, language)
@@ -1527,13 +1576,118 @@ OPEN_DETAILS = """([where, states]) => { const all = Array.from(document.querySe
   const before = all.map(d => d.open); all.forEach(d => { d.open = true; }); return before; }"""
 
 
-def test_table_words(page, width, language, results):
+# Outside the tables of tab 3: the comparison heading (the sentence of the change chosen; W2, W3, P3 and "Back to the
+# comparison" move the focus to it), the lines of the summary under it, the lockout lines under "Lockout (one loss)" and
+# "Losing two at once" (the same sentences as the summary's), the buttons of the candidates (the sentence and the effect) and
+# the line above them (★ and the sum over the four cards) keep each Japanese word whole like the step line. The buttons of
+# the same-entrance table sit in a table and are checked with the tables.
+COMPARE_WORDS = ["#compare-heading", "#compare-summary p", "#lock-one li", "#lock-two li", "#candidates .cand-button",
+                 "#candidates-legend"]
+# Two labels stay whole on one line even where those rules allow a break (app.js keeps each in one nowrap piece): （4枚の合計）,
+# the counts summed over the four cards (the effects of the candidates, the headings of the same-entrance table), and
+# SMS（電話番号） on the line under the lockout table. A 320px screen would otherwise break them as （4枚の｜合計） and
+# SMS｜（電話番号）.
+WHOLE_LABELS = {"ja": ("（4枚の合計）", "SMS（電話番号）"), "en": ()}
+# The boxes of tab 3 with those labels (the stacked headings below 720px, the column headings above), and the line above the
+# candidates: none may run past its box or the panel
+WHOLE_BOXES = ["#candidates-legend", "#candidates .cand-effect", "#same-table .cell-label", "#same-table thead th"]
+# For each selector: how many labels the text shown by its boxes holds (text read aloud only is skipped), the labels that run
+# over two lines, and the boxes whose characters run past the box or whose box runs past the panel; and the width of the page
+WHOLE_LINES = """([selectors, labels]) => {
+  const out = {page: document.documentElement.scrollWidth - document.documentElement.clientWidth};
+  for (const sel of selectors) {
+    const res = {found: 0, split: [], outside: []};
+    for (const box of Array.from(document.querySelectorAll(sel)).filter(el => el.getClientRects().length)) {
+      const chars = [];
+      const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node.parentElement.closest('.visually-hidden')) continue;
+        for (let i = 0; i < node.length; i++) {
+          const range = document.createRange(); range.setStart(node, i); range.setEnd(node, i + 1);
+          const rect = range.getClientRects()[0];
+          if (rect && rect.width > 0) chars.push({ch: node.data[i], top: rect.top, left: rect.left, right: rect.right});
+        }
+      }
+      if (!chars.length) continue;
+      const text = chars.map(c => c.ch).join('');
+      for (const label of labels) {
+        for (let at = text.indexOf(label); at >= 0; at = text.indexOf(label, at + label.length)) {
+          const part = chars.slice(at, at + label.length);
+          res.found += 1;
+          if (part.some(c => Math.abs(c.top - part[0].top) > 3)) res.split.push(text.slice(Math.max(0, at - 3), at + label.length + 2));
+        }
+      }
+      const r = box.getBoundingClientRect(), p = (box.closest('.panel') || document.body).getBoundingClientRect();
+      const left = Math.min(...chars.map(c => c.left)), right = Math.max(...chars.map(c => c.right));
+      if (left < r.left - 0.5 || right > r.right + 0.5 || r.left < p.left - 0.5 || r.right > p.right + 0.5) {
+        res.outside.push({text: box.textContent.slice(0, 40), box: [r.left, r.right], chars: [left, right], panel: [p.left, p.right]});
+      }
+    }
+    out[sel] = res;
+  }
+  return out;
+}"""
+
+
+def assert_whole(page, selectors, language, name, found):
+    """The whole labels of the language stay on one line, and no box of the selectors runs past itself or the panel, nor the
+    page past the screen. Adds the labels found to found (per selector)."""
+    measured = page.evaluate(WHOLE_LINES, [selectors, list(WHOLE_LABELS[language])])
+    check(measured.pop("page") <= 0, (name, "the page runs past the screen"))
+    for sel, res in measured.items():
+        check(not res["split"], (name, sel, "a label that stays whole breaks over two lines", res["split"]))
+        check(not res["outside"], (name, sel, "a box runs past itself or the panel", res["outside"]))
+        found[sel] = found.get(sel, 0) + res["found"]
+
+
+def lock_line_sms(k, language):
+    """How many times SMS（電話番号） stands on the lines under the lockout table of one person (the line of each account names
+    every entrance with its requirements): once per SMS requirement. English has no label to keep whole."""
+    if not WHOLE_LABELS[language]:
+        return 0
+    phones = {c["id"] for c in k["person"]["credentials"] if c["type"] == "phone"}
+    return sum(r in phones for m in k["methods"].values() for r in m["requires"])
+
+
+# How many of them are shown: the heading with its sentence (none without a change), the lines of the summary, the lockout
+# lines and the candidate buttons
+COMPARE_SHOWN = """() => { const heading = document.querySelector('#compare-heading');
+  const shown = sel => Array.from(document.querySelectorAll(sel)).filter(el => el.getClientRects().length && el.textContent.trim()).length;
+  return {headings: heading.getClientRects().length && heading.textContent.trim() ? 1 : 0, summaries: shown('#compare-summary p'),
+    losses: shown('#lock-one li') + shown('#lock-two li'), candidates: shown('#candidates .cand-button')}; }"""
+
+
+def loss_lines(k, move):
+    """The lockout lines of a change (View.sentences): under "Lockout (one loss)", one per loss with newly locked accounts,
+    one per loss with accounts let in again outright and one per account that a single loss no longer locks out but a pair
+    still does; under "Losing two at once", one per account whose pairs change, and those accounts again. A list without
+    a line shows one line that says so."""
+    mv = move_of(k, move)
+    pair_only = mv["lossTable"]["pairOnly"]
+    one = to_pair = 0
+    for loss in mv["lossTable"]["columns"]:
+        change = mv["losses"][loss]
+        pairs = [s for s in change["unlocked"] if any(loss in key.split("+") and s in pair_only[key] for key in pair_only)]
+        one += bool(change["newlyLocked"]) + (len(change["unlocked"]) > len(pairs)) + len(pairs)
+        to_pair += len(pairs)
+    accounts = {s for x in mv["pairLosses"].values() for s in x["newlyLocked"] + x["unlocked"]}
+    return max(one, 1) + max(len(accounts) + to_pair, 1)
+
+
+def test_table_words(page, width, language, results, known):
     """Every table keeps each Japanese word whole (it breaks at a <wbr>, a space or after punctuation): tab 1 and tab 2 of
     the three people, tab 3 with the suggested change of every mode, tab 4 and the ten lessons, their <details> opened
     for the check and closed again. The lockout table with .break-words (a 320px panel too narrow for whole words) is
-    left to test_narrow_tables. Leaves tab 1 and the office worker."""
+    left to test_narrow_tables. In tab 3 the comparison heading, the lines of its summary, the lockout lines, the
+    candidate buttons and the line above them keep the words whole too: with the suggestion of every mode of the three
+    people (W2 and P3 among them) and with W3 chosen in the select. There, too, （4枚の合計） stays on one line (the effects
+    and the same-entrance headings), and no box with it nor the line above the candidates runs past itself or the panel.
+    Leaves tab 1 and the office worker."""
     boxes = ("caption", "th", "td")
     counted = []
+    shown = {"headings": 0, "summaries": 0, "losses": 0, "candidates": 0}
+    whole = {}
 
     def assert_tables(where, name):
         before = page.evaluate(OPEN_DETAILS, [where, None])
@@ -1541,6 +1695,14 @@ def test_table_words(page, width, language, results):
         page.evaluate(OPEN_DETAILS, [where, before])
         check(not any(split.values()), (name, "a word is split in a table", split))
         counted.append(name)
+
+    def assert_compare_words(name):
+        split = page.evaluate(TEXT_SPLITS, COMPARE_WORDS)
+        check(not any(split.values()), (name, "the comparison heading, its summary, a lockout line, a candidate or the line above "
+                                        "the candidates splits a word", split))
+        for key, count in page.evaluate(COMPARE_SHOWN).items():
+            shown[key] += count
+        assert_whole(page, WHOLE_BOXES, language, name, whole)
     for pid in PEOPLE:
         page.locator("#person-" + pid).click()
         page.locator("#tab-chain").click()
@@ -1551,6 +1713,33 @@ def test_table_words(page, width, language, results):
         for mode in MODES:
             page.locator("#mode-" + mode).click()
             assert_tables("#panel-compare", f"{pid}-compare-{mode}")
+            assert_compare_words(f"{pid}-compare-{mode}")
+    # W3, the office worker's removal, is not a suggestion: it is chosen in the select (W2 and P3 are suggestions, above)
+    page.locator("#person-worker").click()
+    page.locator("#mode-simswap").click()
+    page.locator("#choose-move").select_option(W3_MOVE)
+    check(page.evaluate(COMPARE_STATE)["select"]["value"] == W3_MOVE, "W3 chosen in the select")
+    assert_compare_words("worker-W3")
+    # Every sentence was measured: one heading per mode with a change, plus W3, the lines of their summaries (the attack and
+    # the lockout, and a third line when a pair of losses changes), their lockout lines and every candidate of the spec (a
+    # mode without a change has its reason, a string, in CANDIDATES)
+    found = [CANDIDATES[pid][mode] for pid in PEOPLE for mode in MODES if not isinstance(CANDIDATES[pid][mode], str)]
+    lines = lambda pid, move: 2 + any(x["newlyLocked"] or x["unlocked"] for x in move_of(known[pid], move)["pairLosses"].values())
+    suggestions = [(pid, known[pid]["vectors"]["best"][mode]) for pid in PEOPLE for mode in MODES if known[pid]["vectors"]["best"][mode]]
+    expected = {"headings": len(found) + 1, "summaries": sum(lines(pid, move) for pid, move in suggestions) + lines("worker", W3_MOVE),
+                "losses": sum(loss_lines(known[pid], move) for pid, move in suggestions) + loss_lines(known["worker"], W3_MOVE),
+                "candidates": sum(map(len, found)) + len(CANDIDATES["worker"]["simswap"])}
+    check(shown == expected, ("the headings, summary lines and candidates measured", shown, expected))
+    # （4枚の合計） was found where it is shown: the effects of the candidates of the sum of the four cards (and of the
+    # student's lockout mode), and the same-entrance headings (stacked below 720px) of every change; English has no such label
+    heads = whole["#same-table .cell-label"] + whole["#same-table thead th"]
+    if language == "ja":
+        effects = sum(effect.count(WHOLE_LABELS["ja"][0]) for pid in PEOPLE for mode in MODES
+                      if not isinstance(CANDIDATES[pid][mode], str) for _, effect, _ in CANDIDATES[pid][mode])
+        check(whole["#candidates .cand-effect"] == effects and heads >= 2 * (expected["headings"]),
+              ("the labels that stay whole were measured", whole, effects))
+    else:
+        check(not any(whole.values()), ("no label to keep whole in English", whole))
     page.locator("#tab-rules").click()
     assert_tables("#panel-rules", "rules")
     press(page, "#help")
@@ -1558,7 +1747,7 @@ def test_table_words(page, width, language, results):
     page.keyboard.press("Escape")
     page.locator("#tab-chain").click()
     page.locator("#person-worker").click()
-    results.append({"state": f"table-words-{width}-{language}", "checked": len(counted)})
+    results.append({"state": f"table-words-{width}-{language}", "checked": len(counted), **shown})
 
 
 STEP_TEXT = ["#step-line", "#step-summary"]
@@ -1755,9 +1944,9 @@ CANDIDATES = {
         "desk": (("replace:mailOld.recDesk:info>idcheck", "守れる7（★1）", "Saves: 7 (★1)"),
                  ("replace:mailMain.recMail:mailOld>paper:mailMain", "守れる6（★1）", "Saves: 6 (★1)"),
                  ("replace:shop.recMail:mailMain>paper:shop", "守れる1", "Saves: 1")),
-        "all": (("replace:mailMain.recMail:mailOld>paper:mailMain", "守れる（延べ）12（★2）", "Saves (sum over 4 cards): 12 (★2)"),
-                ("replace:mailMain.recSms:phone>paper:mailMain", "守れる（延べ）6（★2）", "Saves (sum over 4 cards): 6 (★2)"),
-                ("replace:mailOld.recDesk:info>idcheck", "守れる（延べ）7（★1）", "Saves (sum over 4 cards): 7 (★1)")),
+        "all": (("replace:mailMain.recMail:mailOld>paper:mailMain", "守れる（4枚の合計）12（★2）", "Saves (sum over 4 cards): 12 (★2)"),
+                ("replace:mailMain.recSms:phone>paper:mailMain", "守れる（4枚の合計）6（★2）", "Saves (sum over 4 cards): 6 (★2)"),
+                ("replace:mailOld.recDesk:info>idcheck", "守れる（4枚の合計）7（★1）", "Saves (sum over 4 cards): 7 (★1)")),
         "lockout": "noLockout",
     },
     "parent": {
@@ -1770,9 +1959,9 @@ CANDIDATES = {
         "desk": (("replace:mailIsp.recDesk:info>idcheck", "守れる4（★1）", "Saves: 4 (★1)"),
                  ("replace:shop.recMail:mailIsp>paper:shop", "守れる1", "Saves: 1"),
                  ("replace:photo.recMail:mailIsp>paper:photo", "守れる1", "Saves: 1")),
-        "all": (("replace:mailIsp.recDesk:info>idcheck", "守れる（延べ）4（★1）", "Saves (sum over 4 cards): 4 (★1)"),
-                ("replace:points.login:pw:yellow>pw:own-points", "守れる（延べ）3（★1）", "Saves (sum over 4 cards): 3 (★1)"),
-                ("replace:bank.recSms:phone>idcheck", "守れる（延べ）1（★1）", "Saves (sum over 4 cards): 1 (★1)")),
+        "all": (("replace:mailIsp.recDesk:info>idcheck", "守れる（4枚の合計）4（★1）", "Saves (sum over 4 cards): 4 (★1)"),
+                ("replace:points.login:pw:yellow>pw:own-points", "守れる（4枚の合計）3（★1）", "Saves (sum over 4 cards): 3 (★1)"),
+                ("replace:bank.recSms:phone>idcheck", "守れる（4枚の合計）1（★1）", "Saves (sum over 4 cards): 1 (★1)")),
         "lockout": (("replace:bank.recSms:phone>idcheck", "閉め出しが解ける1", "Unlocks: 1"),
                     ("replace:bank.login:phone>device", "閉め出しが解ける1", "Unlocks: 1")),
     },
@@ -1789,11 +1978,11 @@ CANDIDATES = {
                  ("replace:sec.recMail:mailFree>paper:sec", "守れる1（★1）・2つ同時で新たに×1",
                   "Saves: 1 (★1) · New two-at-once lockouts: 1")),
         "desk": "noFall",
-        "all": (("replace:game.login:pw:green>pw:own-game", "守れる（延べ）4（★3）", "Saves (sum over 4 cards): 4 (★3)"),
-                ("replace:sec.recMail:mailFree>paper:sec", "守れる（延べ）3（★3）・2つ同時で新たに×1",
+        "all": (("replace:game.login:pw:green>pw:own-game", "守れる（4枚の合計）4（★3）", "Saves (sum over 4 cards): 4 (★3)"),
+                ("replace:sec.recMail:mailFree>paper:sec", "守れる（4枚の合計）3（★3）・2つ同時で新たに×1",
                  "Saves (sum over 4 cards): 3 (★3) · New two-at-once lockouts: 1"),
-                ("replace:mailFree.recMail:mailUni>paper:mailFree", "守れる（延べ）4（★2）", "Saves (sum over 4 cards): 4 (★2)")),
-        "lockout": (("replace:sub.login:mailUni>mailFree", "閉め出しが解ける1・新たに倒れる（延べ）2",
+                ("replace:mailFree.recMail:mailUni>paper:mailFree", "守れる（4枚の合計）4（★2）", "Saves (sum over 4 cards): 4 (★2)")),
+        "lockout": (("replace:sub.login:mailUni>mailFree", "閉め出しが解ける1・新たに倒れる（4枚の合計）2",
                      "Unlocks: 1 · Newly fallen (sum over 4 cards): 2"),),
     },
 }
@@ -1803,18 +1992,30 @@ REASONS = {
     "noLockout": {"ja": "{person}は、1つ失っただけで入れなくなるアカウントがありません。2つ同時の閉め出しは、1手を選ぶと1行で出ます。",
                   "en": "{person}: no account is locked out by a single loss. Two-at-once lockouts appear as one line once you pick a change."},
 }
-NO_MOVE = {"ja": "上の候補か「1手を自分で選ぶ」から手を選ぶと、前後を並べます。",
-           "en": "Pick a change from the suggestions above or from “Choose a change yourself” to compare before and after."}
+CANDIDATES_HEADING = {"ja": "この模型での上位の手", "en": "Top changes in this model"}
+CANDIDATES_LEGEND = {"ja": "★＝重要なアカウント。4枚の合計＝4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）",
+                     "en": "★ = important account. Sum over the four cards = counted for each of the four cards and added up "
+                           "(the same account can be counted more than once)"}
+# The line above the candidates keeps its Japanese words whole like the comparison heading: keep-all, and a <wbr> (| here) where
+# app.js lets a line break (after ＝, after a particle before a word that does not start in hiragana, before an opening bracket),
+# written out by those rules. English is one piece (it breaks at its spaces).
+CANDIDATES_LEGEND_PIECES = {
+    "ja": "★＝|重要なアカウント。4枚の|合計＝|4枚の|カードごとに|数えて足した数|（同じアカウントを|2回以上数えることがある）",
+    "en": CANDIDATES_LEGEND["en"],
+}
+# Shown only when the mode has no candidate, so it points to the select alone
+NO_MOVE = {"ja": "「1手を自分で選ぶ」から手を選ぶと、前後を並べます。",
+           "en": "Pick a change from “Choose a change yourself” to compare before and after."}
 CHOOSE = {"ja": ("1手を自分で選ぶ", "（1手を選ぶ）"), "en": ("Choose a change yourself", "(choose a change)")}
 # The ranking notes of the spec's screen text table, written out (rankingCards for the card modes and the sum of the four,
 # then rankingLockout)
 RANKING_TEXT = {
     "ja": ("閉め出しを1つでも増やす手は後ろに並べます。そのうえで、差し引きで守れる★（重要）の数（多い順）→差し引きで守れる数（多い順）"
-           "→閉め出しの増減（少ない順）→4枚のカードで新たに倒れる数（延べ、少ない順）の順です。差し引きは、守れた数から、同じカード（4枚の合計"
+           "→閉め出しの増減（少ない順）→4枚のカードで新たに倒れる数の合計（少ない順）の順です。差し引きは、守れた数から、同じカード（4枚の合計"
            "では4枚）で新たに倒れた数を引いた数です。ボタンの「守れる」は引く前の数で、新たに倒れる数があればボタンに別に出します。同点なら足す"
            "→付け替え→外すの順です。閉め出しは1つの喪失で数え、2つ同時は並べ方に入れていません。",
-           "閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数（延べ、少ない順）→差し引きで守れる★の数（4枚の延べ、多い順）→差し引きで"
-           "守れる数（4枚の延べ、多い順）の順です。同点なら足す→付け替え→外すの順です。"),
+           "閉め出しの増減（減る手が先）→4枚のカードで新たに倒れる数の合計（少ない順）→差し引きで守れる★の数（4枚の合計、多い順）→差し引きで"
+           "守れる数（4枚の合計、多い順）の順です。同点なら足す→付け替え→外すの順です。"),
     "en": ("Changes that add any lockout go last. The rest are ranked by ★ (important) accounts saved on balance (more first), then "
            "accounts saved on balance (more first), then the change in lockouts (smaller first), then accounts newly falling, summed over "
            "the four cards (fewer first). On balance means saved minus newly falling to the same card (all four for the total); the "
@@ -1837,10 +2038,10 @@ AFTER_KNOWN = {
 }
 SR_FALLEN = {"ja": "段{rank}で倒れる。開けた入口：{via}", "en": "Falls at step {rank}. Entrance used: {via}."}
 ATTACK_HEADS = {"ja": ("カード", "前", "後", "守れた", "新たに倒れる"), "en": ("Card", "Before", "After", "Saved", "Newly fallen")}
-ATTACK_TOTAL = {"ja": "合計（延べ）", "en": "Total"}
+ATTACK_TOTAL = {"ja": "4枚の合計", "en": "Total"}
 ATTACK_MODE = {"ja": "選んだカード", "en": "selected card"}
 CHANGED_TAG = {"ja": "変更", "en": "changed"}
-SAME_HEADS = {"ja": ("手", "守れた（延べ）", "新たに倒れる（延べ）", "閉め出し（1つ）", "2つ同時"),
+SAME_HEADS = {"ja": ("手", "守れた（4枚の合計）", "新たに倒れる（4枚の合計）", "閉め出し（1つ）", "2つ同時"),
               "en": ("Change", "Saved (sum over 4 cards)", "Newly fallen (sum over 4 cards)", "Lockout (one loss)", "Two at once")}
 LOCK_PHASE = {"ja": "{loss}（{phase}）", "en": "{loss} ({phase})"}
 LOCK_HEADS = {"ja": ("スマホ", "番号"), "en": ("Phone", "Number")}
@@ -1938,17 +2139,23 @@ SHOWN = """el => { if (!el) return null; let text = '';
 COMPARE_STATE = """() => {
   const shownText = """ + SHOWN + """;
   const shown = el => !!el && el.getClientRects().length > 0;
+  const seen = """ + SEEN + """;
   const hiddenText = el => Array.from(el.querySelectorAll('.visually-hidden'), n => n.textContent).join('');
   const value = cell => shownText(cell.querySelector('.cell-value') || cell);
   const body = sel => Array.from(document.querySelectorAll(sel + ' tbody tr'));
   const select = document.querySelector('#choose-move'), heading = document.querySelector('#compare-heading');
-  const summary = document.querySelector('#compare-summary');
+  const summary = document.querySelector('#compare-summary'), legend = document.querySelector('#candidates-legend');
   return {
     modes: Object.fromEntries(Array.from(document.querySelectorAll('.mode-buttons button'),
       b => [b.dataset.key.slice(5), b.getAttribute('aria-pressed')])),
     modeTexts: Array.from(document.querySelectorAll('.mode-buttons button'), b => b.textContent),
     card: (document.querySelector('.card-buttons [aria-pressed="true"]') || {}).id || null,
     chainCaption: document.querySelector('#chain-map caption').textContent,
+    candidatesHeading: document.querySelector('#candidates-heading').textContent,
+    candidatesLegend: seen(legend) ? legend.textContent : null,
+    // The pieces of its text, with | for each <wbr> (the joined pieces are spans and read as their text)
+    legendPieces: legend ? Array.from(legend.childNodes, n => (n.nodeName === 'WBR' ? '|' : n.textContent)).join('') : null,
+    legendBefore: !!legend && !!(legend.compareDocumentPosition(document.querySelector('#candidates')) & Node.DOCUMENT_POSITION_FOLLOWING),
     candidatesShown: shown(document.querySelector('#candidates')),
     candidates: Array.from(document.querySelectorAll('#candidates .cand-button'), b => ({id: b.dataset.key.slice(5),
       pressed: b.getAttribute('aria-pressed'), title: b.querySelector('.cand-title').textContent,
@@ -1991,11 +2198,16 @@ COMPARE_STATE = """() => {
 }"""
 AFTER_STATE = """() => {
   const shownText = """ + SHOWN + """;
+  const seen = """ + SEEN + """;
   const details = document.querySelector('#after-map'), svg = document.querySelector('#after-figure svg');
+  const legend = details.querySelector('.map-legend');
   return {open: details.open, hidden: details.hidden,
     phases: Object.fromEntries(Array.from(document.querySelectorAll('.phase-buttons button'),
       b => [b.dataset.key.slice(6), b.getAttribute('aria-pressed')])),
     mapCard: document.querySelector('#map-card').textContent,
+    legend: seen(legend) ? legend.textContent : null,
+    legendBefore: !!legend && !!(legend.compareDocumentPosition(document.querySelector('#after-map-table'))
+      & Node.DOCUMENT_POSITION_FOLLOWING),
     caption: (document.querySelector('#after-map-table caption') || {}).textContent || null,
     rows: Array.from(document.querySelectorAll('#after-map-table tbody tr'), tr => { const b = tr.querySelector('th button');
       return {id: b.dataset.key.slice('after-acct:'.length), pressed: b.getAttribute('aria-pressed'), tabindex: b.getAttribute('tabindex'),
@@ -2093,6 +2305,13 @@ def assert_compare(page, k, pid, mode, move, card, width, language, name):
     check(state["modeTexts"] == list(MODE_LABELS[language]), (name, "mode names", state["modeTexts"]))
     check(state["card"] == "card-" + card, (name, "the card of the map", state["card"]))
     check(state["ranking"] == RANKING_TEXT[language][mode == "lockout"], (name, "ranking note", state["ranking"]))
+    # The heading says the list is the top changes of this model; the line above the buttons says what ★ and the sum over
+    # the four cards stand for, in words that are shown
+    check(state["candidatesHeading"] == CANDIDATES_HEADING[language], (name, "candidates heading", state["candidatesHeading"]))
+    check(state["candidatesLegend"] == CANDIDATES_LEGEND[language] and state["legendBefore"],
+          (name, "the line above the candidates", state["candidatesLegend"]))
+    check(state["legendPieces"] == CANDIDATES_LEGEND_PIECES[language],
+          (name, "the <wbr> of the line above the candidates, as in the comparison heading", state["legendPieces"]))
     expected = CANDIDATES[pid][mode]
     if isinstance(expected, str):
         check(not state["candidatesShown"] and not state["candidates"], (name, "no candidates", state["candidates"]))
@@ -2126,6 +2345,7 @@ def assert_compare(page, k, pid, mode, move, card, width, language, name):
     check(state["select"]["font"] == "16px" and state["select"]["label"] == CHOOSE[language][0], (name, "select", state["select"]["font"]))
     check(state["select"]["value"] == (move or ""), (name, "select value", state["select"]["value"], move))
     if move is None:
+        # Only a mode without candidates has no change (checked above), so the guidance names the select alone
         check(state["noMove"] == NO_MOVE[language] and not state["result"], (name, "no change chosen", state["noMove"]))
         return state
     check(state["noMove"] is None and state["result"], (name, "the comparison is shown"))
@@ -2204,6 +2424,9 @@ def assert_after_map(page, k, pid, move, card, width, language, name, results):
     check(state["open"] and not state["hidden"], (name, "the map box is open"))
     check(state["phases"] == {"before": "false", "after": "true"}, (name, "after the change", state["phases"]))
     check(state["mapCard"] == MAP_CARD[language].format(card=CARD_NAMES[language][card]), (name, "card of the map", state["mapCard"]))
+    # The legend is shown (its box open) above the table, as in tab 1
+    check(state["legend"] == MAP_LEGEND[language] and state["legendBefore"],
+          (name, "the legend of the map after the change, shown above its table", state["legend"], state["legendBefore"]))
     fallen = [row["id"] for row in state["rows"] if row["cell"].startswith("●")]
     check(fallen == expected_after(k, mv, card), (name, "the accounts that fall after the change", fallen))
     check([row["id"] for row in state["rows"]] == k["services"], (name, "rows of the map after"))
@@ -2288,6 +2511,8 @@ def test_compare_tab(page, width, layouts, language, known):
         check(page.locator("#after-map").evaluate("el => el.open"), (pid, "Before keeps the map box open"))
         state = page.evaluate(AFTER_STATE)
         check(state["phases"] == {"before": "true", "after": "false"}, (pid, "before the change", state["phases"]))
+        check(state["legend"] == MAP_LEGEND[language] and state["legendBefore"],
+              (pid, "the legend of the map before the change, shown above its table", state["legend"], state["legendBefore"]))
         last = last_step(k, card)
         cells = [row["cell"] for row in state["rows"]]
         expected = [expected_cell(k, card, account, last, language) for account in k["services"]]
@@ -2444,11 +2669,12 @@ def test_compare_updates(page, width, language, known, results):
 # the lockout table, the note on removals under the same-entrance table and the button back to the comparison
 STEP_HINT = {"ja": "「最初から」を押すと、段0から1段ずつ追えます。",
              "en": "Press “Start over” to follow the chain one step at a time from step 0."}
+# (on this line the SMS requirement names the phone number, the column the line explains; elsewhere it stays SMS)
 LOCK_ENTRANCES = {
-    "bank": {"ja": "銀行のネットバンキングの入口：ログイン：黄A＋SMS／復旧：SMS",
-             "en": "Online banking: Log-in: Yellow A + SMS / Recovery: SMS"},
-    "msg": {"ja": "メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS＋黄A",
-            "en": "Messaging app (family chats): Log-in: Phone / Recovery: SMS + Yellow A"},
+    "bank": {"ja": "銀行のネットバンキングの入口：ログイン：黄A＋SMS（電話番号）／復旧：SMS（電話番号）",
+             "en": "Online banking: Log-in: Yellow A + SMS (phone number) / Recovery: SMS (phone number)"},
+    "msg": {"ja": "メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS（電話番号）＋黄A",
+            "en": "Messaging app (family chats): Log-in: Phone / Recovery: SMS (phone number) + Yellow A"},
 }
 BACK_TO_COMPARE = {"ja": "比べた結果へ戻る", "en": "Back to the comparison"}
 
@@ -2498,12 +2724,17 @@ def test_owner_decisions(page, width, language, known, results):
           ("the hint and the entrances in the other language", hint.text_content(), line.text_content()))
     page.locator("#language").click()
     if width < 720:
+        # SMS（電話番号） stays on one line as well, and the line stays inside the panel (every account with an SMS requirement)
+        whole = {}
         for pid in PEOPLE:
             page.locator("#person-" + pid).click()
             for key in page.evaluate("() => Array.from(document.querySelectorAll('#lock-map tbody th button'), b => b.dataset.key)"):
                 page.locator(f'[data-key="{key}"]').click()
                 split = page.evaluate(TEXT_SPLITS, ["#lock-entrances"])
                 check(not any(split.values()), (pid, key, "the entrances under the lockout table split a word", split))
+                assert_whole(page, ["#lock-entrances"], language, (pid, key), whole)
+        sms = sum(lock_line_sms(known[pid], language) for pid in PEOPLE)
+        check(whole["#lock-entrances"] == sms, ("SMS（電話番号） measured on the line under the lockout table", whole, sms))
     # Tab 3: the note on removals under the same-entrance table (P3), not for the removal itself (W3)
     note = page.locator("#same-note")
     page.locator("#person-parent").click()
@@ -2685,7 +2916,8 @@ SYMBOL_ROWS = {
 RULE_NOTES = {
     "ja": ("SMSの線は、SIMスワップのカードがあるときだけ攻撃者に開きます。根拠の研究（Leeら、SOUPS 2020。携帯会社を調べたのは2019年）は"
            "米国のプリペイド5社のもので、日本の携帯会社には当てはめません。",
-           "パスキーと認証アプリはスマホの中の鍵として扱います。同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
+           "パスキーと認証アプリはスマホの中の鍵として扱います。このため、パスキーが偽サイトに強いことは数に出ません。"
+           "同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
            "端末の感染で乗っ取る経路は、この模型に入れていません。この模型にはスマホを攻撃者に渡すカードがないので、"
            "スマホを足す手で攻撃の面が悪くなることはありません。「スマホをなくした」の値は、認証アプリやパスキーを、"
            "ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。",
@@ -2697,7 +2929,8 @@ RULE_NOTES = {
            "入れなくなることがあります。紙を分けて保管するならDay124 Scatter Seeds・Day125 Overlay QR Sharesへ。"),
     "en": ("An SMS line opens for the attacker only with the SIM-swap card. The study behind it (Lee et al., SOUPS 2020; "
            "carrier tests run in 2019) covered five US prepaid carriers and is not applied to Japanese carriers.",
-           "Passkeys and authenticator apps are treated as keys inside the phone. Retrieving synced passkeys through cloud-account "
+           "Passkeys and authenticator apps are treated as keys inside the phone. So passkeys' resistance to fake sites does not show "
+           "in the numbers. Retrieving synced passkeys through cloud-account "
            "recovery, and takeover through an infected device, are outside this model. No card here hands the phone to the attacker, "
            "so adding the phone never makes the attack side worse. The “Lost the phone” values assume the authenticator app and "
            "passkeys are not synced or backed up to another device or the cloud.",
@@ -2715,12 +2948,12 @@ NOT_IN_MODEL = {
     "ja": ("この模型に入れていないもの",
            ("パスワードの強さ", "攻撃の確率・手間・時間", "不審なログインの検知と通知", "同期パスキーをクラウドの回復で取り出す経路", "端末の感染",
             "書類の偽造", "パスワードを忘れること", "SSOとパスワード管理ソフト", "乗っ取ったあとに攻撃者が回復先を書き換えること",
-            "漏れたパスワードがハッシュで守られていて解けない場合")),
+            "漏れたパスワードがハッシュで守られていて解けない場合", "フィッシング（偽サイトでの入力。パスキーはこれに強い）")),
     "en": ("Not in this model",
            ("Password strength", "Attack probability, effort and time", "Detection of suspicious log-ins and notifications",
             "Retrieving synced passkeys through cloud recovery", "Infected devices", "Forged documents", "Forgetting a password",
             "Single sign-on and password managers", "An attacker changing recovery details after a takeover",
-            "Leaks where the passwords are protected by hashing and cannot be cracked")),
+            "Leaks where the passwords are protected by hashing and cannot be cracked", "Phishing on fake sites (which passkeys resist)")),
 }
 PAPER = {
     "ja": ("自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。",
@@ -2818,9 +3051,9 @@ def test_rules_tab(page, width, layouts, language):
     check(all(link["target"] == "_blank" and link["rel"] == "noopener noreferrer" for link in state["links"]), ("new tab", state["links"]))
     summary, items = NOT_IN_MODEL[language]
     check(state["notIn"]["summary"] == summary and not state["notIn"]["open"], ("not in the model: closed", state["notIn"]))
-    check(state["notIn"]["items"] == list(items), ("not in the model: ten items", state["notIn"]["items"]))
+    check(len(items) == 11 and state["notIn"]["items"] == list(items), ("not in the model: eleven items", state["notIn"]["items"]))
     page.locator("#not-in-model > summary").click()
-    check(page.evaluate(RULES_STATE)["notIn"]["shown"] == 10, "the ten items are shown when opened")
+    check(page.evaluate(RULES_STATE)["notIn"]["shown"] == len(items), "the eleven items are shown when opened")
     page.locator("#person-parent").click()
     page.locator("#person-worker").click()
     check(page.locator("#not-in-model").evaluate("el => el.open"), "the box stays open across a redraw")
@@ -2859,28 +3092,32 @@ def test_rules_tab(page, width, layouts, language):
 
 
 # The whole text of the page, shown or hidden (closed details, the dialog, the printed sheets, SVG titles), with the attributes
-# that are read (aria-label, title, data-label, option labels). The language button and <noscript> are left out (they carry
-# both languages on purpose).
+# that are read (aria-label, title, data-label, option labels). <noscript> is left out (it carries both languages on purpose).
+# The letter the language button shows (日 on the English page, the letter that names Japanese) is left out, in the button and
+# at the start of its name only: the name starts with the text shown (WCAG 2.5.3), and the rest of the name is checked.
 DOM_TEXT = """() => {
   const copy = document.body.cloneNode(true);
   copy.querySelectorAll('noscript').forEach(n => n.remove());
+  const button = document.querySelector('#language'), letter = button ? button.textContent : '';
   const language = copy.querySelector('#language');
   if (language) language.textContent = '';
   const attributes = [];
   for (const el of document.body.querySelectorAll('*')) {
     if (el.closest('noscript')) continue;
     for (const name of ['aria-label', 'title', 'alt', 'placeholder', 'data-label', 'label', 'aria-description']) {
-      const value = el.getAttribute(name);
+      let value = el.getAttribute(name);
+      if (value && el === button && name === 'aria-label' && letter && value.startsWith(letter)) value = value.slice(letter.length);
       if (value) attributes.push(value);
     }
   }
   return [document.title, copy.textContent, ...attributes].join(' ');
 }"""
 NOT_ON_SCREEN = ("（仮）", "(provisional)", "この口座だけの系統", "Own family (")
-# Every text node and read attribute of the page (shown or hidden), one unit each; the bibliography of the lessons, the language
-# button and <noscript> are left out (the bibliography keeps titles as published; the other two carry both languages on purpose).
+# Every text node and read attribute of the page (shown or hidden), one unit each; the bibliography of the lessons and <noscript>
+# are left out (the bibliography keeps titles as published; <noscript> carries both languages on purpose). The language button
+# is read like the rest: EN and its name "EN：…" on the Japanese page.
 TEXT_UNITS = """() => {
-  const skip = el => !el || !!el.closest('noscript, #language, .lesson-sources');
+  const skip = el => !el || !!el.closest('noscript, .lesson-sources');
   const units = [document.title];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   let node;
@@ -3895,7 +4132,7 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             test_dom_text(page, language, layouts)
             test_lessons(page, width, layouts, language, known)
             if theme == "light":  # the theme does not change where a line breaks
-                test_table_words(page, width, language, layouts)
+                test_table_words(page, width, language, layouts, known)
             # The map after a change is computed with the person after it: personaVectors is still built once per person
             assert_vectors_built(page, "after the stage 1c checks", everyone=True)
         saved = test_preferences_interaction(page, language, theme, counts)
@@ -4085,6 +4322,112 @@ def http_case(browser, browser_name, base_url, width, output, counts, stage, kno
         context.close()
 
 
+# Tab 3 keeps the steps and the diagram after a change for the last few changes only, and its diagrams carry no sampled points
+# of the lines (domino-view.js makes them for the tests only). Going through every change of the three people in both
+# languages, and through the office worker's changes under the other three cards, the JavaScript heap (after a forced garbage
+# collection) grows by a few MB at most. A cache without a limit grows by about 9MB here, and the points (about 4MB for each
+# diagram before and after a change) by about 20MB with the limit, and by more than 300MB without it.
+HEAP_GROWTH_LIMIT_MB = 4
+# What tab 3 keeps after a change, counted among the objects of the page that a garbage collection leaves (Runtime.queryObjects
+# collects the garbage first): the steps after a change (View.afterMap: an object with changedMethod, backdoor and gives) and
+# the diagrams after a change (View.layout with the person after it: linesBefore is set). app.js keeps the last eight of each,
+# so once every change has been chosen, at most eight of each are left, and at least the one of the change shown. A cache of
+# the steps without a limit adds less than 2MB here, too little for the heap check alone.
+KEPT_LIMIT = 8
+KEPT_AFTER = """function () {
+  const own = (o, key) => { try { return Object.prototype.hasOwnProperty.call(o, key); } catch (_) { return false; } };
+  return {steps: this.filter(o => own(o, 'changedMethod') && own(o, 'backdoor') && own(o, 'gives')).length,
+    diagrams: this.filter(o => own(o, 'linesBefore') && o.linesBefore !== null && own(o, 'gaps')).length};
+}"""
+MOVE_OPTIONS ="() => Array.from(document.querySelectorAll('#choose-move option'), option => option.value).filter(Boolean)"
+# A change chosen in the select, and what the page drew for it right after the change event (app.js draws synchronously): the
+# key of the diagram after the change (person|language|change|phase, written by app.js), the comparison heading and the text of
+# the option chosen. The value of the select alone is no proof: this script sets it.
+CHOOSE_MOVE = """id => { const select = document.querySelector('#choose-move'); select.value = id;
+  select.dispatchEvent(new Event('change', {bubbles: true}));
+  const svg = document.querySelector('#after-figure svg'), option = select.options[select.selectedIndex];
+  return {drawn: svg ? svg.getAttribute('data-drawn') : null, heading: document.querySelector('#compare-heading').textContent,
+    option: option ? option.textContent : null}; }"""
+
+
+def memory_case(browser, browser_name, url, output, known):
+    """The heap after every change of tab 3 has been chosen, and the steps and diagrams after a change that the page still
+    keeps (Chromium: both are read through the DevTools protocol)."""
+    name = f"{browser_name}-1280-ja-light-memory"
+    context = new_context(browser, browser_name, 1280, "ja", "light")
+    page = context.new_page()
+    errors, violations = observe(page, url)
+    try:
+        page.goto(set_language_query(url, None), wait_until="load")
+        wait_ready(page)
+        page.wait_for_selector('#print-sheet[data-ready="true"]', state="attached")
+        cdp = context.new_cdp_session(page)
+
+        def heap_mb():
+            cdp.send("HeapProfiler.enable")
+            cdp.send("HeapProfiler.collectGarbage")
+            cdp.send("HeapProfiler.collectGarbage")
+            return cdp.send("Runtime.getHeapUsage")["usedSize"] / 1048576
+
+        def kept_after():
+            proto = cdp.send("Runtime.evaluate", {"expression": "Object.prototype", "objectGroup": "kept"})["result"]["objectId"]
+            found = cdp.send("Runtime.queryObjects", {"prototypeObjectId": proto, "objectGroup": "kept"})["objects"]["objectId"]
+            kept = cdp.send("Runtime.callFunctionOn", {"objectId": found, "functionDeclaration": KEPT_AFTER,
+                                                       "returnByValue": True})["result"]["value"]
+            cdp.send("Runtime.releaseObjectGroup", {"objectGroup": "kept"})
+            return kept
+
+        page.locator("#tab-compare").click()
+        start = heap_mb()
+        steps, chosen = [], 0
+
+        def choose_all(label, pid, language):
+            """Every change of the person, chosen one by one in the select: the options are the known changes (grouped by
+            account in the data order), and after each change event the page has drawn that change (the key of the diagram
+            after the change, and the comparison heading with the option's text after the account)."""
+            nonlocal chosen
+            k = known[pid]
+            moves = page.evaluate(MOVE_OPTIONS)
+            expected = [m["id"] for s in k["services"] for m in k["vectors"]["moves"] if m["service"] == s]
+            check(moves == expected and len(moves) == len(k["vectors"]["moves"]),
+                  (label, "the changes of the select are the known changes", len(moves), len(expected)))
+            for move in moves:
+                seen = page.evaluate(CHOOSE_MOVE, move)
+                account = k["full"][language][move_of(k, move)["service"]]
+                check(seen["drawn"] == "|".join((pid, language, move, "after")) and seen["option"]
+                      and seen["heading"].startswith(account) and account_head(seen["heading"], language) == seen["option"],
+                      (label, move, "the page drew the change chosen", seen))
+            chosen += len(moves)
+            steps.append({"step": label, "heap_mb": round(heap_mb(), 2)})
+
+        for pid in PEOPLE:
+            page.locator("#person-" + pid).click()
+            for language in ("ja", "en"):
+                check(page.locator("html").get_attribute("lang") == language, (pid, "language", language))
+                choose_all(f"{pid} {language}", pid, language)
+                page.locator("#language").click()
+        page.locator("#person-worker").click()
+        for card in ("simswap", "mail", "desk"):
+            press(page, f'[data-key="mode:{card}"]')
+            check(page.locator("html").get_attribute("lang") == "ja", ("worker", card, "language"))
+            choose_all(f"worker {card}", "worker", "ja")
+        growth = steps[-1]["heap_mb"] - start
+        check(chosen == 2 * sum(len(known[pid]["vectors"]["moves"]) for pid in PEOPLE) + 3 * len(known["worker"]["vectors"]["moves"]),
+              ("every change chosen", chosen))
+        check(growth <= HEAP_GROWTH_LIMIT_MB, ("the heap after every change of tab 3", round(growth, 2), "MB", steps))
+        kept = kept_after()
+        check(all(1 <= kept[key] <= KEPT_LIMIT for key in ("steps", "diagrams")),
+              ("the steps and diagrams after a change that are kept", kept, "limit", KEPT_LIMIT))
+        assert_clean(errors, violations)
+        return {"case": name, "status": "passed", "start_mb": round(start, 2), "growth_mb": round(growth, 2), "chosen": chosen,
+                "steps": steps, "kept": kept}
+    except Exception as error:
+        page.screenshot(path=str(output / (name + "-failed.png")), full_page=False)
+        return {"case": name, "status": "failed", "error": str(error), "errors": errors, "violations": violations}
+    finally:
+        context.close()
+
+
 @contextmanager
 def local_http():
     """Serve the repository on an ephemeral loopback port; the server stops when the block ends."""
@@ -4162,6 +4505,9 @@ def main():
                 # Every link to another site, clicked: a new tab with the link's address, no opener, the page's state kept
                 for width, language, theme in ((1280, "ja", "light"), (320, "en", "dark")):
                     record(links_case(browser, browser_name, args.url, width, language, theme, output))
+            if args.stage >= "1d" and browser_name == "chromium":
+                # The heap after every change of tab 3 has been chosen (read through the DevTools protocol of Chromium)
+                record(memory_case(browser, browser_name, args.url, output, known))
             with local_http() as http_url:
                 for width in HTTP_WIDTHS:
                     record(http_case(browser, browser_name, http_url, width, output, counts, args.stage, known))

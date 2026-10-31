@@ -32,9 +32,9 @@ const CANDIDATES = {
     desk: [['replace:mailOld.recDesk:info>idcheck', '守れる7（★1）', 'Saves: 7 (★1)'],
       ['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（★1）', 'Saves: 6 (★1)'],
       ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1']],
-    all: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる（延べ）12（★2）', 'Saves (sum over 4 cards): 12 (★2)'],
-      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（延べ）6（★2）', 'Saves (sum over 4 cards): 6 (★2)'],
-      ['replace:mailOld.recDesk:info>idcheck', '守れる（延べ）7（★1）', 'Saves (sum over 4 cards): 7 (★1)']],
+    all: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる（4枚の合計）12（★2）', 'Saves (sum over 4 cards): 12 (★2)'],
+      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（4枚の合計）6（★2）', 'Saves (sum over 4 cards): 6 (★2)'],
+      ['replace:mailOld.recDesk:info>idcheck', '守れる（4枚の合計）7（★1）', 'Saves (sum over 4 cards): 7 (★1)']],
     lockout: 'noLockout',
   },
   parent: {
@@ -45,9 +45,9 @@ const CANDIDATES = {
       ['replace:photo.recMail:mailIsp>paper:photo', '守れる1', 'Saves: 1'], ['remove:points.recMail', '守れる1', 'Saves: 1']],
     desk: [['replace:mailIsp.recDesk:info>idcheck', '守れる4（★1）', 'Saves: 4 (★1)'],
       ['replace:shop.recMail:mailIsp>paper:shop', '守れる1', 'Saves: 1'], ['replace:photo.recMail:mailIsp>paper:photo', '守れる1', 'Saves: 1']],
-    all: [['replace:mailIsp.recDesk:info>idcheck', '守れる（延べ）4（★1）', 'Saves (sum over 4 cards): 4 (★1)'],
-      ['replace:points.login:pw:yellow>pw:own-points', '守れる（延べ）3（★1）', 'Saves (sum over 4 cards): 3 (★1)'],
-      ['replace:bank.recSms:phone>idcheck', '守れる（延べ）1（★1）', 'Saves (sum over 4 cards): 1 (★1)']],
+    all: [['replace:mailIsp.recDesk:info>idcheck', '守れる（4枚の合計）4（★1）', 'Saves (sum over 4 cards): 4 (★1)'],
+      ['replace:points.login:pw:yellow>pw:own-points', '守れる（4枚の合計）3（★1）', 'Saves (sum over 4 cards): 3 (★1)'],
+      ['replace:bank.recSms:phone>idcheck', '守れる（4枚の合計）1（★1）', 'Saves (sum over 4 cards): 1 (★1)']],
     lockout: [['replace:bank.recSms:phone>idcheck', '閉め出しが解ける1', 'Unlocks: 1'],
       ['replace:bank.login:phone>device', '閉め出しが解ける1', 'Unlocks: 1']],
   },
@@ -62,11 +62,12 @@ const CANDIDATES = {
       ['replace:sns.recMail:mailUni>paper:sns', '守れる1（★1）', 'Saves: 1 (★1)'],
       ['replace:sec.recMail:mailFree>paper:sec', '守れる1（★1）・2つ同時で新たに×1', 'Saves: 1 (★1) · New two-at-once lockouts: 1']],
     desk: 'noFall',
-    all: [['replace:game.login:pw:green>pw:own-game', '守れる（延べ）4（★3）', 'Saves (sum over 4 cards): 4 (★3)'],
-      ['replace:sec.recMail:mailFree>paper:sec', '守れる（延べ）3（★3）・2つ同時で新たに×1',
+    all: [['replace:game.login:pw:green>pw:own-game', '守れる（4枚の合計）4（★3）', 'Saves (sum over 4 cards): 4 (★3)'],
+      ['replace:sec.recMail:mailFree>paper:sec', '守れる（4枚の合計）3（★3）・2つ同時で新たに×1',
         'Saves (sum over 4 cards): 3 (★3) · New two-at-once lockouts: 1'],
-      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（延べ）4（★2）', 'Saves (sum over 4 cards): 4 (★2)']],
-    lockout: [['replace:sub.login:mailUni>mailFree', '閉め出しが解ける1・新たに倒れる（延べ）2', 'Unlocks: 1 · Newly fallen (sum over 4 cards): 2']],
+      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（4枚の合計）4（★2）', 'Saves (sum over 4 cards): 4 (★2)']],
+    lockout: [['replace:sub.login:mailUni>mailFree', '閉め出しが解ける1・新たに倒れる（4枚の合計）2',
+      'Unlocks: 1 · Newly fallen (sum over 4 cards): 2']],
   },
 };
 
@@ -147,6 +148,37 @@ test('F: the map after a change uses the person after the change (89 changes × 
   assert.equal(sub('simswap').backdoor.includes('sub'), true);
   assert.equal(sub('mail').backdoor.includes('sub'), true);
   assert.equal(sub('leak').backdoor.includes('sub'), false);
+});
+
+test('F: the two caches of the map after a change keep the entries used last: with room for 8, using A to H, then A, then I drops '
+  + 'B (used least recently) and keeps A; B made again has the value it had before', () => {
+  const p = persona('worker'), ids = pv('worker').moves.slice(0, 9).map((mv) => mv.id);
+  assert.equal(new Set(ids).size, 9, 'nine different changes');
+  // As app.js keeps them: the steps after a change (per person, change and card) and the diagram after it (per person, change and
+  // language)
+  const makers = {
+    steps: (id) => V.afterMap(p, id, 'leak'),
+    diagram: (id) => V.layout(p, V.afterMap(p, id, 'leak').person, M, 'ja'),
+  };
+  for (const [kind, make] of Object.entries(makers)) {
+    const cached = V.recentCache(8), made = [];
+    const use = (id) => cached(id, () => {
+      made.push(id);
+      return make(id);
+    });
+    const [A, B] = ids, I = ids[8];
+    const first = new Map(ids.slice(0, 8).map((id) => [id, use(id)]));
+    assert.deepEqual(made, ids.slice(0, 8), kind + ': A to H are made once each');
+    assert.equal(use(A), first.get(A), kind + ': A used again is the value kept (not made again)');
+    use(I);
+    assert.deepEqual(made, ids, kind + ': I is made');
+    assert.equal(use(A), first.get(A), kind + ': A, used again before I came, is still kept');
+    for (const id of ids.slice(2, 8)) assert.equal(use(id), first.get(id), kind + ': ' + id + ' is still kept');
+    const again = use(B);
+    assert.deepEqual(made, [...ids, B], kind + ': B, the entry used least recently when I came, was dropped and is made again');
+    assert.notEqual(again, first.get(B));
+    assert.deepEqual(again, first.get(B), kind + ': B made again has the value it had before it was dropped');
+  }
 });
 
 test('F: a changed entrance is named from its requirement tags, not from the data label', () => {
@@ -465,15 +497,17 @@ test('F: the diagram layout (columns, lines from left to right, no drawn line un
     assert.ok(L.width <= limit[id], label + ': width ' + L.width);
     layouts++;
   };
+  // The points of the lines are made only when asked for (the screen never uses them)
+  const sampled = { samplePoints: true };
   for (const id of PEOPLE) {
     const p = persona(id);
     for (const lang of ['ja', 'en']) {
-      const base = V.layout(p, null, M, lang);
+      const base = V.layout(p, null, M, lang, sampled);
       assert.deepEqual(base.columns, expectedColumns[id], id + ' ' + lang);
       assert.equal(base.width, limit[id], id + ' ' + lang);
       inspect(base, base.lines, id, id + ' ' + lang);
       for (const move of C.enumerateMoves(p)) {
-        const L = V.layout(p, C.applyMove(p, move), M, lang);
+        const L = V.layout(p, C.applyMove(p, move), M, lang, sampled);
         assert.deepEqual(L.columns.slice(1), expectedColumns[id].slice(1), move.id);
         for (const [key, row] of Object.entries(base.rows)) assert.equal(L.rows[key].x, row.x, move.id);
         inspect(L, L.lines, id, id + ' ' + lang + ' after ' + move.id);
@@ -484,6 +518,30 @@ test('F: the diagram layout (columns, lines from left to right, no drawn line un
   }
   assert.equal(afterLines, 1736);
   assert.equal(layouts, 3 * 2 + 89 * 2 * 2);
+});
+
+// The layout for the screen carries no points: the screen draws d only, and the points of one diagram before and after a
+// change come to about 50,000 (about 4MB), which the page would keep for every change chosen. Asked for, the points come with
+// the same diagram (the same d, boxes, rows and size).
+test('F: the points of the lines are made only when asked for; the diagram is the same with or without them', () => {
+  let diagrams = 0;
+  const without = (lines) => lines.map(({ points, ...line }) => line);
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const lang of ['ja', 'en']) {
+      for (const q of [null, ...C.enumerateMoves(p).map((move) => C.applyMove(p, move))]) {
+        const L = V.layout(p, q, M, lang), S = V.layout(p, q, M, lang, { samplePoints: true });
+        const label = id + ' ' + lang + (q ? ' after a change' : '');
+        for (const line of [...L.lines, ...(L.linesBefore || [])]) assert.ok(!('points' in line), label + ': ' + line.from + ' -> ' + line.to);
+        for (const line of [...S.lines, ...(S.linesBefore || [])]) assert.ok(line.points.length >= 2, label + ': ' + line.from + ' -> ' + line.to);
+        assert.deepEqual({ ...L, lines: null, linesBefore: null }, { ...S, lines: null, linesBefore: null }, label);
+        assert.deepEqual(L.lines, without(S.lines), label);
+        assert.deepEqual(L.linesBefore, S.linesBefore && without(S.linesBefore), label);
+        diagrams++;
+      }
+    }
+  }
+  assert.equal(diagrams, 3 * 2 + 89 * 2);
 });
 
 // The straight pieces of a drawn path (M, L, A and C commands; a C counts only when it is a flat horizontal line).
@@ -1112,22 +1170,43 @@ test('F: the lessons show their paragraphs, tables and notes in the order of the
   }
 });
 
-test('F: the line under the lockout table names the entrances of the account chosen, written as the map table writes them', () => {
-  // Known: the parent's bank leans on the phone number at both entrances (log-in Yellow A + SMS, recovery SMS), and the
-  // messaging app on the phone (log-in) and on the SMS with Yellow A (recovery). In English the account's name heads the line.
+// The dictionary app.js gives the line under the lockout table: the SMS tag names the phone number there (lockTagPhone)
+const LOCK_LINE = Object.fromEntries(['ja', 'en'].map((lang) => [lang, { ...M[lang], tagPhone: M[lang].lockTagPhone }]));
+const lockTagOf = (id, person, lang) => (person.credentials.some((c) => c.id === id && c.type === 'phone') ? M[lang].lockTagPhone
+  : tagOf(id, person, lang));
+
+test('F: the line under the lockout table names the entrances of the account chosen, written as the map table writes them '
+  + 'except that SMS names the phone number', () => {
+  // Written with the dictionary as it is, the entrances read as in the map table. Known: the parent's bank leans on the phone
+  // number at both entrances (log-in Yellow A + SMS, recovery SMS), and the messaging app on the phone (log-in) and on the SMS
+  // with Yellow A (recovery). In English the account's name heads the line.
   assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'ja'), '銀行のネットバンキングの入口：ログイン：黄A＋SMS／復旧：SMS');
   assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'en'), 'Online banking: Log-in: Yellow A + SMS / Recovery: SMS');
   assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'ja'), 'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS＋黄A');
   assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'en'), 'Messaging app (family chats): Log-in: Phone / Recovery: SMS + Yellow A');
+  // The line drawn under the lockout table says SMS (phone number), the column the line explains (the number lost)
+  assert.equal(V.lockEntrances(persona('parent'), 'bank', LOCK_LINE, 'ja'),
+    '銀行のネットバンキングの入口：ログイン：黄A＋SMS（電話番号）／復旧：SMS（電話番号）');
+  assert.equal(V.lockEntrances(persona('parent'), 'bank', LOCK_LINE, 'en'),
+    'Online banking: Log-in: Yellow A + SMS (phone number) / Recovery: SMS (phone number)');
+  assert.equal(V.lockEntrances(persona('parent'), 'msg', LOCK_LINE, 'ja'), 'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS（電話番号）＋黄A');
+  assert.equal(V.lockEntrances(persona('parent'), 'msg', LOCK_LINE, 'en'),
+    'Messaging app (family chats): Log-in: Phone / Recovery: SMS (phone number) + Yellow A');
   for (const id of PEOPLE) {
     const person = samplePerson(id);
     for (const lang of ['ja', 'en']) {
       for (const s of person.services) {
+        const entrances = (tag) => s.methods.map((m) => fillText(M[lang][m.role === 'login' ? 'entranceLogin' : 'entranceRecovery'],
+          { req: m.requires.map((r) => tag(r, person, lang)).join(M[lang].sepPlus) })).join(M[lang].sepLines);
         assert.equal(V.lockEntrances(persona(id), s.id, M, lang), fillText(M[lang].lockEntrances,
-          { account: s.label[lang], entrances: s.methods.map((m) => entranceOf(m, person, lang)).join(M[lang].sepLines) }), id + ' ' + s.id);
+          { account: s.label[lang], entrances: entrances(tagOf) }), id + ' ' + s.id);
+        assert.equal(V.lockEntrances(persona(id), s.id, LOCK_LINE, lang), fillText(M[lang].lockEntrances,
+          { account: s.label[lang], entrances: entrances(lockTagOf) }), id + ' ' + s.id + ' (the line under the table)');
       }
     }
   }
+  // Only that line: the SMS tag of the map tables, the details, the diagram and the same-entrance table stays SMS
+  assert.deepEqual([M.ja.tagPhone, M.en.tagPhone], ['SMS', 'SMS']);
 });
 
 test('F: the note on removals goes under the same-entrance table when the table has a removal other than the change chosen', () => {
