@@ -1,0 +1,9 @@
+{
+  "name": "account-domino-mapper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Compare account takeover chains and lockouts with three fictional people. Day127.",
+  "scripts": { "test": "node --test \"test/**/*.test.js\"" },
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}
