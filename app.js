@@ -546,14 +546,24 @@
     const parts = text.split('の');
     return parts.flatMap((part, i) => (i < parts.length - 1 ? [part + 'の', E('wbr')] : part ? [part] : []));
   }
+  // The four-cards table (table.matrix): on wide screens, a grid of accounts × attack cards. Below 720px it stacks (one card
+   // row of its own), so that no column shrinks to a word's length and the table never scrolls sideways. Each td carries its
+   // card name as a label (shown only when stacked, via style.css .responsive-table .cell-label); the th scope="row" still
+   // carries the account name as the row header. The stacked view looks like "card: result", one per row
   function renderFourCards(p, pv) {
     const f = View.fourCards(p, pv, Messages, state.language);
-    const table = E('table', { class: 'matrix' },
+    const accountHead = t('colAccount');
+    const table = E('table', { class: 'matrix responsive-table' },
       E('caption', {}, words(f.caption)),
-      E('thead', {}, E('tr', {}, E('th', { scope: 'col', class: 'matrix-account' }, t('colAccount')),
-        f.columns.map((c) => E('th', { scope: 'col', class: 'matrix-card' }, symbol(phrases(c.short), c.full))))),
-      E('tbody', {}, f.rows.map((row) => E('tr', {}, E('th', { scope: 'row' }, row.important ? symbol('★', t('srImportant') + ' ') : null,
-        breakAfterNo(row.name)), row.cells.map((cell) => E('td', { class: cell.text === t('cellNone') ? null : 'fallen' }, symbol(cell.text, cell.sr)))))));
+      E('thead', {}, E('tr', {}, E('th', { scope: 'col', class: 'matrix-account' }, accountHead),
+        f.columns.map((c) => E('th', { scope: 'col', class: 'matrix-card', 'data-label': c.full }, symbol(phrases(c.short), c.full))))),
+      E('tbody', {}, f.rows.map((row) => E('tr', {},
+        E('th', { scope: 'row', 'data-label': accountHead },
+          E('span', { class: 'cell-label' }, words(accountHead)),
+          E('span', { class: 'cell-value' }, row.important ? symbol('★', t('srImportant') + ' ') : null, breakAfterNo(row.name))),
+        row.cells.map((cell, i) => E('td', { class: cell.text === t('cellNone') ? null : 'fallen', 'data-label': f.columns[i].full },
+          E('span', { class: 'cell-label' }, phrases(f.columns[i].full)),
+          E('span', { class: 'cell-value' }, symbol(cell.text, cell.sr))))))));
     $('four-cards-table').replaceChildren(table);
   }
   function renderChain() {
@@ -679,9 +689,11 @@
   }
   // A candidate: its rank on the left (1, 2, 3; read as 1位), the change and what else it does (newly fallen accounts, a
   // two-at-once lockout) in the middle, and its count large on the right with the important accounts among them (うち★2).
-  // Every text keeps its Japanese words whole like the comparison heading (<wbr> and keep-all)
+  // Every text keeps its Japanese words whole like the comparison heading (<wbr> and keep-all).
+  // In the card modes, the list is drawn in two groups ("Changes that protect a ★ account" and "Other changes"), each
+  // with a short heading above its candidates; the ranks (1, 2, 3) stay as the overall order in the list
   function renderCandidates(p, pv, found) {
-    $('candidates').replaceChildren(...found.ids.map((id, i) => {
+    const candButton = (id, i) => {
       const face = View.effectFace(p, pv, id, state.mode, Messages, state.language);
       const button = E('button', { type: 'button', class: 'cand-button', 'data-key': 'cand:' + id, 'aria-pressed': String(id === state.move) },
         E('span', { class: 'cand-rank' }, symbol(String(i + 1), t('candRank', { n: i + 1 }))),
@@ -691,7 +703,22 @@
           E('span', { class: 'cand-score-n' }, String(face.n)), face.imp ? [' ', E('span', { class: 'cand-score-imp' }, phraseStars(face.imp))] : null));
       button.addEventListener('click', () => selectMove(id, 'reveal', button));
       return button;
-    }));
+    };
+    const children = [];
+    if (found.groups && (found.groups.impIds.length || found.groups.otherIds.length)) {
+      const indexOf = (id) => found.ids.indexOf(id);
+      if (found.groups.impIds.length) {
+        children.push(E('h4', { class: 'cand-group-heading' }, phraseStars(t('candGroupImp'))));
+        for (const id of found.groups.impIds) children.push(candButton(id, indexOf(id)));
+      }
+      if (found.groups.otherIds.length) {
+        children.push(E('h4', { class: 'cand-group-heading' }, phrases(t('candGroupOther'))));
+        for (const id of found.groups.otherIds) children.push(candButton(id, indexOf(id)));
+      }
+    } else {
+      found.ids.forEach((id, i) => children.push(candButton(id, i)));
+    }
+    $('candidates').replaceChildren(...children);
     $('candidates').hidden = !found.ids.length;
     // The reason without candidates is a status message (#candidates-none sits in the live region #candidates-status). It is
     // written only when it changes, so that a redraw that changes nothing (the theme, for example) does not read it again.
@@ -757,15 +784,21 @@
     const heads = ['attackColCard', 'attackColBeforeAfter', 'attackColSaved', 'attackColNewly'].map((key) => t(key));
     const changedRow = (r) => r.card !== 'all' && (r.saved || r.newly);
     const rowClass = (r) => [r.card === 'all' ? 'total' : '', r.selected ? 'selected' : '', changedRow(r) ? 'changed' : ''].join(' ').trim() || null;
-    // The title is shown above the legend; the caption with the same words names the table for screen readers
+    // The title is shown above the legend; the caption with the same words names the table for screen readers.
+    // The attack table stacks below 720px (responsive-table), so that no column shrinks and the table never scrolls sideways;
+    // each cell carries the column heading as a label, shown only when stacked (style.css .responsive-table .cell-label)
     setWords($('attack-title'), t('attackCaption'));
-    $('attack-area').replaceChildren(E('table', { class: 'attack-table' },
+    const cell = (content, head) => E('td', { 'data-label': head },
+      E('span', { class: 'cell-label' }, words(head)), E('span', { class: 'cell-value' }, content));
+    $('attack-area').replaceChildren(E('table', { class: 'attack-table responsive-table' },
       E('caption', { class: 'visually-hidden' }, t('attackCaption')),
-      E('thead', {}, E('tr', {}, heads.map((heading, i) => E('th', { scope: 'col', class: 'attack-col-' + i }, words(heading))))),
+      E('thead', {}, E('tr', {}, heads.map((heading, i) => E('th', { scope: 'col', class: 'attack-col-' + i, 'data-label': heading }, words(heading))))),
       E('tbody', {}, rows.map((r) => E('tr', { class: rowClass(r) },
-        E('th', { scope: 'row' }, words(r.label), r.selected ? E('span', { class: 'visually-hidden' }, ' ' + t('attackMode')) : null),
-        E('td', {}, symbol(r.before + '→' + r.after, t('attackBeforeAfterSr', { before: r.before, after: r.after }))),
-        E('td', {}, String(r.saved)), E('td', {}, String(r.newly)))))));
+        E('th', { scope: 'row', 'data-label': heads[0] },
+          E('span', { class: 'cell-label' }, words(heads[0])),
+          E('span', { class: 'cell-value' }, words(r.label), r.selected ? E('span', { class: 'visually-hidden' }, ' ' + t('attackMode')) : null)),
+        cell(symbol(r.before + '→' + r.after, t('attackBeforeAfterSr', { before: r.before, after: r.after })), heads[1]),
+        cell(String(r.saved), heads[2]), cell(String(r.newly), heads[3]))))));
     const names = (list) => (list.length ? words(list.join(t('sepList'))) : '0');
     $('attack-names-table').replaceChildren(...(changed.length ? [stackedTable('attack-names-list', t('attackNamesCaption'), [heads[0], heads[2], heads[3]],
       changed.map((r) => ({ cells: [r.label, names(r.savedNames), names(r.newlyNames)] })))] : []));

@@ -358,25 +358,21 @@ th { background: var(--bg); }
   .lock-table th, .lock-table td { padding: .3rem .15rem; overflow-wrap: break-word; }
   .lock-table .name-button { padding: .2rem .3rem; overflow-wrap: break-word; }
   .back-to-map { display: inline-flex; align-items: center; }
-  /* Four cards at once: the table takes the full width of its box, and each card column only the width of its heading */
-  .four-cards > .table-frame { margin-inline: -.6rem; }
-  .four-cards caption { padding-inline: .6rem; }
+  /* Four cards at once and the attack table of tab 3 both have columns too narrow for the long card names (ソーシャル
+     エンジニアリング) on a phone. Below 720px they stack like the other long tables (responsive-table): each account (or each
+     attack card row) becomes a block, with "card: result" one per line. The table never scrolls sideways */
   .matrix { table-layout: auto; }
   .matrix .matrix-card { width: auto; }
   .matrix thead th { font-size: .75rem; overflow-wrap: normal; }
-  /* The full card names (ソーシャルエンジニアリング) make the four-cards table and the attack table wider than a 320px screen:
-     the frame scrolls sideways there, so that the page itself never does (390px and up fit) */
-  .four-cards > .table-frame, #attack-area { position: relative; overflow-x: auto; }
-  /* Tab 3: the select takes the full width; the attack table is a grid of counts (the names go to its details box);
-     the lockout table before and after and the same-entrance table stack, each cell with its heading */
+  /* Tab 3: the select takes the full width; the lockout table before and after and the same-entrance table stack, each cell with its heading */
   /* A card or mode name (ソーシャルエンジニアリング) breaks only between its words in a 320px column (the same size in tab 1 and tab 3) */
   .card-buttons button, .mode-buttons button { padding-inline: .3rem; font-size: .875rem; }
   .attack-table { table-layout: auto; }
   .attack-table th, .attack-table td { padding: .3rem .2rem; font-size: .875rem; overflow-wrap: break-word; }
   .attack-table thead th { font-size: .75rem; }
-  .attack-table td { white-space: nowrap; }
-  .after-stage > .table-frame { margin-inline: -.6rem; }
-  .after-map caption { padding-inline: .6rem; }
+  /* Stacked matrix/attack: a count stays on one line inside its value box, but the row itself can hold a longer card name
+     above it, so the stack never pushes the page sideways */
+  .matrix.responsive-table .cell-value, .attack-table.responsive-table .cell-value { white-space: normal; }
   .responsive-table thead { display: none; }
   .responsive-table tr { display: block; margin: .6rem 0; border: 1px solid var(--line); }
   .responsive-table td, .responsive-table th[scope="row"] {
@@ -417,15 +413,17 @@ th { background: var(--bg); }
      button that would print invisibly when backgrounds are not sent to the printer */
   :root:not([data-app-ready="true"]) button { color: #000; background: #fff; border-color: #000; }
   :root[data-app-ready="true"] body > :not(#print-sheet) { display: none !important; }
-  #print-sheet { display: block; margin: 0; font-size: 10.5pt; line-height: 1.3; }
+  #print-sheet { display: block; margin: 0; font-size: 10.5pt; line-height: 1.25; }
   #print-sheet, #print-sheet * { color: #000; background: #fff; border-color: #000; box-shadow: none; }
   .print-page { break-after: page; }
   .print-page:last-child { break-after: auto; }
-  .print-page h2 { margin: 0 0 1mm; font-size: 13pt; line-height: 1.25; }
+  .print-page h2 { margin: 0 0 1mm; font-size: 12pt; line-height: 1.2; }
   .print-page p { margin: 0 0 1.5mm; }
-  #print-sheet table { margin: 0 0 2mm; font-size: 9.5pt; line-height: 1.2; table-layout: auto; }
+  /* Tables slimmed down (9pt, tighter padding) so each person's page fits on a single A4 even when a wider system font is
+     used on the body (the body text and the paragraphs stay at the printed 10.5pt as the test gate expects) */
+  #print-sheet table { margin: 0 0 2mm; font-size: 9pt; line-height: 1.15; table-layout: auto; }
   #print-sheet caption { padding: 0 0 .5mm; font-weight: 700; }
-  #print-sheet th, #print-sheet td { padding: .5mm 1mm; border: 1px solid #000; vertical-align: top; overflow-wrap: break-word; }
+  #print-sheet th, #print-sheet td { padding: .4mm .8mm; border: 1px solid #000; vertical-align: top; overflow-wrap: break-word; }
   #print-sheet thead th { font-weight: 700; }
   .print-map .print-group { text-align: center; }
   .print-map .print-attack { text-align: center; }
@@ -434,7 +432,9 @@ th { background: var(--bg); }
   /* Each symbol stays on one line (the column widens for "Personal details" or "●1 · × · gone · ★"), which keeps the
      legends short enough for the blank sheet to stay on page 4 even with a wider system font */
   .print-legend th[scope="row"] { width: 7.5em; white-space: nowrap; font-weight: 700; }
-  .print-abbr { display: flex; flex-wrap: wrap; gap: 0 6mm; margin: 0 0 2.5mm; padding: 0; list-style: none; font-size: 9.5pt; }
+  /* The three abbreviation lines above the map table (attack cards, losses, ★): shortened for English so that each person's
+     page still fits on one A4 at 10.5pt even with a wider system font (Verdana). 9pt saves another line in English */
+  .print-abbr { display: flex; flex-wrap: wrap; gap: 0 6mm; margin: 0 0 2.5mm; padding: 0; list-style: none; font-size: 9pt; }
   .print-keep { margin: 0 0 2mm; padding: 1mm 2mm; border: 1px solid #000; }
   .print-keep p { margin: 0 0 .5mm; }
   .print-keep .print-keep-title { font-weight: 700; }
@@ -648,6 +648,12 @@ h1 { font-size: clamp(1.4rem, 3vw, 1.85rem); }
   font-size: .875rem; }
 .tab3-legend li { min-width: 0; }
 .candidates-story { margin: .5rem 0; padding: .4rem .75rem; border-left: 4px solid var(--accent); background: var(--bg); }
+/* The heading above each group of candidates (★のアカウントを守れる変更 / Other changes): small, sits above the first button of
+   the group. The first heading has no space above it so that it sits flush with the top of the list */
+.cand-group-heading {
+  margin: .3rem 0 .15rem; font-size: .9375rem; font-weight: 700; word-break: keep-all; overflow-wrap: anywhere;
+}
+.cand-group-heading:first-child { margin-top: 0; }
 /* A candidate: its rank, the change (with what else it does) and its count (large, with the important accounts under it) */
 .cand-button { grid-template-columns: 1.6rem minmax(0, 1fr); grid-template-areas: "rank main" "rank score"; align-items: start; column-gap: .5rem; }
 .cand-rank { grid-area: rank; align-self: center; text-align: center; font-size: 1.3rem; font-weight: 700; }
@@ -794,7 +800,7 @@ caption .table-ref { margin-right: .35em; }
 .lock-table.names-above th, .lock-table.names-above td { border: 0; }
 .lock-table.names-above thead th + th, .lock-table.names-above tbody td + td { border-left: 1px solid var(--line); }
 .lock-table.names-above tbody th[scope="row"] { grid-column: 1 / -1; padding-bottom: .15rem; }
-.lock-table.names-above .name-button { width: auto; }
+.lock-table.names-above .name-button { width: auto; min-width: 44px; }
 .lock-table.names-above tr.selected { border: 3px solid var(--accent); border-bottom: 0; }
 .lock-table.names-above tr.selected > * { border-top: 0; }
 .lock-table.names-above tr.selected > :first-child { border-left: 0; }

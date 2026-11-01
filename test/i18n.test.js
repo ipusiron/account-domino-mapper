@@ -92,9 +92,9 @@ const TERMS = [
     'Sum over the four cards', 'Counted for each of the four cards and added up (one account can be counted up to four times, so the sum can exceed the '
       + 'number of accounts)'],
   ['termImportant',
-    '★', '重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更を並べるとき、守れる★の数を先に比べる',
+    '★', '重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更は、★のアカウントを守れる変更を先、守れない変更を後に並べる',
     '★ Important', 'An important account: three per person, chosen as the ones they can least afford to lose (the main email, accounts that hold money, and '
-      + 'so on). When top changes are ranked, the ★ accounts saved are compared first'],
+      + 'so on). The top changes list the changes that protect a ★ account first, and the changes that do not after them'],
   ['termHoldings',
     '手元', '本人が直接持っているもの（パスワード・スマホ・電話番号など）',
     'What the owner holds', 'What the owner holds directly (passwords, the phone, the phone number and so on)'],
@@ -183,11 +183,24 @@ test('H: data-i18n, data-i18n-aria and data-label keep separate roles', () => {
   for (const m of html.matchAll(/<[a-z]+\b[^>]*\baria-label="[^"]*"[^>]*>/g)) assert.match(m[0], /\bdata-i18n-aria="/, m[0]);
 });
 
-test('H: rule 5 says that a breach card stands for a password leaked as-is, in plain text', () => {
-  assert.ok(M.ja.rule5.includes('そのまま（平文で）出回った'), M.ja.rule5);
-  assert.ok(M.en.rule5.includes('leaked as-is'), M.en.rule5);
-  // The rules table of index.html carries rule 5 (its first text is the Japanese one; render() puts the current language)
-  assert.match(html, /<td data-i18n="rule5">[^<]*そのまま（平文で）出回った[^<]*<\/td>/);
+test('H: the rules table has eleven rules; rule 5 names the password letters, rule 6 the plain-text breach', () => {
+  // Eleven rules in the rules table of index.html (data-i18n="rule1" .. "rule11"), and the dictionary carries each
+  for (let n = 1; n <= 11; n += 1) {
+    assert.equal(typeof M.ja['rule' + n], 'string', 'rule' + n);
+    assert.equal(typeof M.en['rule' + n], 'string', 'rule' + n);
+    assert.ok(new RegExp('<th scope="row" class="rules-no">' + n + '</th>').test(html), 'rules row ' + n);
+    assert.ok(new RegExp('data-i18n="rule' + n + '"').test(html), 'rules i18n ' + n);
+  }
+  assert.doesNotMatch(html, /<th scope="row" class="rules-no">12<\/th>/, 'twelfth rule row should not exist');
+  // Rule 5 names the password letters (A, B, C) and no longer mentions the breach plain-text case
+  assert.ok(M.ja.rule5.includes('A・B・C'), M.ja.rule5);
+  assert.ok(M.en.rule5.includes('A, B and C'), M.en.rule5);
+  assert.ok(!M.ja.rule5.includes('そのまま（平文で）'), 'rule 5 should no longer mention plain text (JA)');
+  assert.ok(!M.en.rule5.includes('leaked as-is'), 'rule 5 should no longer mention plain text (EN)');
+  // Rule 6 carries the plain-text breach text
+  assert.ok(M.ja.rule6.includes('そのまま（平文で）出回った'), M.ja.rule6);
+  assert.ok(M.en.rule6.includes('leaked as-is'), M.en.rule6);
+  assert.match(html, /<td data-i18n="rule6">[^<]*そのまま（平文で）出回った[^<]*<\/td>/);
 });
 
 test('H: no half-width space between Japanese and Latin letters or digits in Japanese values', () => {

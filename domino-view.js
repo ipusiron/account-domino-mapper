@@ -382,8 +382,10 @@
   }
   // 候補（このシミュレーションでの上位の変更）：並べた順に、条件（ok）を満たす手だけを取り、同じ入口（アカウントと入口の組）の手は飛ばして3つまで。
   // 失うものに入っているメールへ切り替える変更は出さない（消える予定のメールに頼り直すことを上位に並べない。「変更を自分で選ぶ」では選べる）。
-  // 外した変更は同じ入口の枠を使わないので、同じ入口のほかの変更（紙の回復コードへ切り替えるなど）が繰り上がる。先頭＝best
-  // （3人のどのモードでも、先頭は外す変更でないので best のまま。view.test で確かめる）
+  // 外した変更は同じ入口の枠を使わないので、同じ入口のほかの変更（紙の回復コードへ切り替えるなど）が繰り上がる。
+  // そのあと、カードのモード（＝「閉め出し」以外）では、★のアカウントを守れる変更が先、守れない変更が後になるように並べ直し、
+  // 各段の中は守れる数の多い順にする（同じなら元の順＝安定ソート）。候補が3つの中に★ありと★なしが混ざるときに、順位の数と
+  // 守れる数の多少が合わない見え方（例：1・2・3位の守れる数が12・6・7）を解く
   function candidates(p, pv, mode) {
     const ok = (mv) => {
       let net = 0, delta = 0, newly = 0;
@@ -396,21 +398,32 @@
     };
     const lost = new Set(lostMails(p));
     const toLostMail = (mv) => mv.kind === 'replace' && lost.has(mv.to);
-    const ids = [], entrances = new Set();
+    const picked = [], entrances = new Set();
     for (const id of pv.ranking[mode]) {
       const mv = moveOf(pv, id);
       const entrance = mv.service + '.' + mv.method;
       if (!ok(mv) || toLostMail(mv) || entrances.has(entrance)) continue;
       entrances.add(entrance);
-      ids.push(id);
-      if (ids.length === 3) break;
+      picked.push(id);
+      if (picked.length === 3) break;
+    }
+    // カードのモードは2段に分けて並べ直す（閉め出しのモードは★の数が守れる数と対応しないので、そのまま）
+    let ids = picked;
+    let groups = null;
+    if (mode !== 'lockout' && picked.length) {
+      const face = Object.fromEntries(picked.map((id) => [id, effect(p, pv, id, mode)]));
+      const stable = picked.map((id, i) => ({ id, i, imp: face[id].imp, saved: face[id].saved }));
+      const impIds = stable.filter((x) => x.imp > 0).sort((a, b) => b.saved - a.saved || a.i - b.i).map((x) => x.id);
+      const otherIds = stable.filter((x) => !(x.imp > 0)).sort((a, b) => b.saved - a.saved || a.i - b.i).map((x) => x.id);
+      ids = [...impIds, ...otherIds];
+      groups = { impIds, otherIds };
     }
     let reason = null;
     if (!ids.length) {
       if (mode === 'lockout') reason = p.losses.every((l) => !pv.losses[l.id].locked.length) ? 'noLockout' : 'noSafeMove';
       else reason = cardIdsFor(p, mode).every((c) => !pv.cards[c].services.length) ? 'noFall' : 'noSafeMove';
     }
-    return { ids, reason };
+    return { ids, groups, reason };
   }
   // 効果の文の数。saved＝守れた数（カードのモードはそのカード、4枚の合計は4枚のカードごとに数えて足した数）、imp＝そのうち★。
   // exposedCard はいま並べ替えに使っているカード（4枚の合計・閉め出しのモードでは4枚の合計）、exposedAll は常に4枚の合計

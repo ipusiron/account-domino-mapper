@@ -151,10 +151,11 @@ HELP_TERMS = (
      "number of accounts)"),
     ("termImportant",
      "★",
-     "重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更を並べるとき、守れる★の数を先に比べる",
+     "重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更は、★のアカウントを守れる変更を先、守れない変更を後に並べる",
      "★ Important",
      "An important account: three per person, chosen as the ones they can least afford to lose (the main email, accounts that "
-     "hold money, and so on). When top changes are ranked, the ★ accounts saved are compared first"),
+     "hold money, and so on). The top changes list the changes that protect a ★ account first, and the changes that do not "
+     "after them"),
     ("termHoldings",
      "手元", "本人が直接持っているもの（パスワード・スマホ・電話番号など）",
      "What the owner holds", "What the owner holds directly (passwords, the phone, the phone number and so on)"),
@@ -380,21 +381,14 @@ def assert_layout(page, width, name, results):
     check(measured["page"] <= measured["client"], (name, "page overflow", measured))
     check(measured["rootOverflow"] not in ("hidden", "clip"), (name, measured))
     check(measured["bodyOverflow"] not in ("hidden", "clip"), (name, measured))
-    # The buttons that sit in table cells (name buttons of the chain, lockout, same-entrance and after-change tables) take the
-    # width of their column: on narrow screens where a column is tight, a button may be narrower than 44px but still 44px tall,
-    # which keeps the touch target reachable with a vertical swipe. The spacing-only check keeps the controls outside tables at
-    # the 44x44 size (header tools, step buttons, mode and card buttons, highlight buttons, candidate buttons etc.).
-    table_targets = [t for t in measured["small"] if "button[" in t["el"] and (t.get("h") or 0) >= 44]
-    offending = [t for t in measured["small"] if t not in table_targets]
-    check(not offending, (name, "small targets", offending))
+    # Every visible button and link is at least 44x44 px (including the name buttons inside the chain, lockout, same-entrance
+    # and after-change tables). The long tables stack below 720px, so no column shrinks a name button below 44px wide.
+    check(not measured["small"], (name, "small targets", measured["small"]))
     # The diagrams are drawn at their natural size; below 808px a figure may scroll inside itself (never the page). Below 720px
-    # the long tables (the map table, the four-cards table, the attack table, the entrance table of tab 2 etc.) sit in a
-    # table-frame that scrolls inside itself when their widest column (a full account name, say) does not fit — the page
-    # itself still does not scroll (checked above by measured["page"] <= measured["client"]).
+    # the long tables (the map table, the four-cards table, the attack table, the entrance table of tab 2 etc.) stack: no
+    # table-frame scrolls sideways any more, so the page itself never does either
     def allowed(box):
         if box["el"] in ("figure#chain-figure", "figure#after-figure") and width < 808:
-            return True
-        if box["el"].startswith("div#") and width < 720:
             return True
         return False
     unexpected = [box for box in measured["wraps"] if not allowed(box)]
@@ -3762,18 +3756,15 @@ def assert_print_sheet(page, known, language, name, results):
 
 
 def pdf_pages(page, path, known, language, wide_font=False):
-    """page.pdf (A4, 12mm margins) and the text of each page read back with pypdf: four pages at the printed font, none
-    empty, the people's maps on the first three and the blank sheet on the last (and when the wider font pushes the body
-    text wider than 10.5pt would, each person's page may spill to a second page: up to eight pages, with each map still
-    starting its own page and the blank sheet last). The pages are then named by the title in their first lines."""
+    """page.pdf (A4, 12mm margins) and the text of each page read back with pypdf: exactly four pages at the printed font
+    (also with a wider system font such as Verdana), none empty, the people's maps on the first three and the blank sheet
+    on the last. The pages are then named by the title in their first lines."""
     import unicodedata
     from pypdf import PdfReader
     page.pdf(path=str(path), format="A4", margin={"top": "12mm", "right": "12mm", "bottom": "12mm", "left": "12mm"})
     texts = [unicodedata.normalize("NFKC", item.extract_text() or "") for item in PdfReader(str(path)).pages]
     flat = [re.sub(r"\s+", "", text) for text in texts]
-    limit = 8 if wide_font else 4
-    check(4 <= len(texts) <= limit, ("page.pdf has four pages (or up to eight with the wider font)",
-                                     len(texts), [text[:60] for text in texts]))
+    check(len(texts) == 4, ("page.pdf has exactly four pages", len(texts), [text[:60] for text in texts]))
     check(all(text.strip() for text in texts), ("every page has text", [len(text) for text in texts]))
     # Find which pdf page each person's map starts on (its title appears in the extracted text): three in order, each with
     # at least one page of its own, and the blank sheet comes last
@@ -3852,10 +3843,9 @@ def print_case(browser, browser_name, url, language, theme, output, known, early
             page.emulate_media(media="print")
             results.append({"state": name + "-pdf", "characters": pdf_pages(page, output / (name + ".pdf"), known, language)})
             if theme == "light" and not early:
-                # A wider system font (Verdana where it is installed): each person's page may spill to a second page in
-                # English (the three abbreviations above the map table are long sentences; the Verdana font pushes them
-                # over the single-page limit at the printed 10.5pt). The invariant kept is that each person still starts
-                # on a new page in order, the blank sheet comes last, and no page is empty — pdf_pages verifies this.
+                # A wider system font (Verdana where it is installed): each person's page still fits on a single A4 at
+                # 10.5pt, so the four printed pages (three people + blank sheet) stay exactly four even in that font.
+                # pdf_pages verifies this.
                 page.evaluate(WIDE_FONT, True)
                 results.append({"state": name + "-pdf-wide", "characters": pdf_pages(page, output / (name + "-wide.pdf"), known, language, wide_font=True),
                                 "font": page.evaluate("() => getComputedStyle(document.querySelector('#print-sheet td')).fontFamily")})

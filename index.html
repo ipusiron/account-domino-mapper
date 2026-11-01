@@ -278,7 +278,7 @@
       <section id="panel-rules" class="panel" role="tabpanel" aria-labelledby="tab-rules" tabindex="0" hidden>
         <h2 data-i18n="rulesHeading">規則表（単純化したシミュレーション）</h2>
         <p data-i18n="rulesIntro">この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。</p>
-        <p data-i18n="rulesScope">規則1〜3と8は、どのタブにも共通の決まりです。規則4〜7は攻撃の数え方（「連鎖を追う」と「1つ変えて比べる」）、規則9は閉め出しの数え方（「閉め出し」と「1つ変えて比べる」）です。規則10には、扱わないものを書いています。</p>
+        <p data-i18n="rulesScope">規則1〜3と9は、どのタブにも共通の決まりです。規則4〜8は攻撃の数え方（「連鎖を追う」と「1つ変えて比べる」）、規則10は閉め出しの数え方（「閉め出し」と「1つ変えて比べる」）です。規則11には、扱わないものを書いています。</p>
         <nav class="section-nav" aria-labelledby="rules-nav-label">
           <p id="rules-nav-label" class="section-nav-label" data-i18n="rulesNavLabel">このタブの中</p>
           <div class="section-nav-buttons">
@@ -300,14 +300,15 @@
               <tr><th scope="row" class="rules-no">3</th><td data-i18n="rule3">入口どうしは「または」。どれか1つ開けば入れる</td></tr>
               <tr><th scope="row" class="rules-no">4</th>
                 <td data-i18n="rule4">攻撃者は、カードで最初に手にしたものから始める。倒れたメールのアカウントも、次の入口の条件に使う。新しく倒れるアカウントがなくなるまで繰り返し、1回の繰り返しで新しく倒れた分を1段と数える</td></tr>
-              <tr><th scope="row" class="rules-no">5</th>
-                <td data-i18n="rule5">パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）。漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、同じパスワードを使う入口ではパスワードの条件がそろう</td></tr>
-              <tr><th scope="row" class="rules-no">6</th><td data-i18n="rule6">SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ</td></tr>
-              <tr><th scope="row" class="rules-no">7</th><td data-i18n="rule7">電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない</td></tr>
-              <tr><th scope="row" class="rules-no">8</th><td data-i18n="rule8">パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある</td></tr>
-              <tr><th scope="row" class="rules-no">9</th>
-                <td data-i18n="rule9">閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない</td></tr>
-              <tr><th scope="row" class="rules-no">10</th><td data-i18n="rule10">時間・確率・通知・不審なログインの検知は扱わない</td></tr>
+              <tr><th scope="row" class="rules-no">5</th><td data-i18n="rule5">パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）</td></tr>
+              <tr><th scope="row" class="rules-no">6</th>
+                <td data-i18n="rule6">漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、同じパスワードを使う入口ではパスワードの条件がそろう</td></tr>
+              <tr><th scope="row" class="rules-no">7</th><td data-i18n="rule7">SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ</td></tr>
+              <tr><th scope="row" class="rules-no">8</th><td data-i18n="rule8">電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない</td></tr>
+              <tr><th scope="row" class="rules-no">9</th><td data-i18n="rule9">パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある</td></tr>
+              <tr><th scope="row" class="rules-no">10</th>
+                <td data-i18n="rule10">閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない</td></tr>
+              <tr><th scope="row" class="rules-no">11</th><td data-i18n="rule11">時間・確率・通知・不審なログインの検知は扱わない</td></tr>
             </tbody>
           </table>
         </div>
@@ -408,7 +409,7 @@
         <dt data-i18n="termSum">4枚の合計</dt>
         <dd data-i18n="termSumMeaning">カード4枚それぞれで数えて足した数（1つのアカウントを最大4回数えるので、アカウントの数より大きくなることがある）</dd>
         <dt data-i18n="termImportant">★</dt>
-        <dd data-i18n="termImportantMeaning">重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更を並べるとき、守れる★の数を先に比べる</dd>
+        <dd data-i18n="termImportantMeaning">重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更は、★のアカウントを守れる変更を先、守れない変更を後に並べる</dd>
         <dt data-i18n="termHoldings">手元</dt>
         <dd data-i18n="termHoldingsMeaning">本人が直接持っているもの（パスワード・スマホ・電話番号など）</dd>
       </dl>

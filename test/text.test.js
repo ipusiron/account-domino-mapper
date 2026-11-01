@@ -362,16 +362,17 @@ const RANKING = {
       exclude: ['1つ失ったときの閉め出しを増やす変更',
         '解約や卒業で消えるメール（「閉め出し」のタブで、失うものに入っているメール）へ切り替える変更。「変更を自分で選ぶ」では選べる'],
       orderLead: '残りの変更を、次の順に比べて並べます。',
-      order: ['守れる★の数が多い変更が先', '守れるアカウントの数が多い変更が先', '閉め出しが減る数が多い変更が先', '4枚のカードで新たに倒れる数の合計が少ない変更が先',
-        'それでも同じなら、追加→切り替え→外すの順'],
+      order: ['★のアカウントを守れる変更が先（★のアカウントを守れない変更は後）', '各段の中は、守れるアカウントの数が多い変更が先',
+        '閉め出しが減る数が多い変更が先', '4枚のカードで新たに倒れる数の合計が少ない変更が先', 'それでも同じなら、追加→切り替え→外すの順'],
       note: '1と2は、守れた数から、同じカード（4枚の合計では4枚）で新たに倒れた数を引いた差で比べます。ボタンの「守れる」は引く前の数です。'
         + '2つを同時に失ったときの閉め出しは、並べ方に使っていません。同じ入口の変更は、いちばん上の1つだけを出します。' },
     en: { excludeLead: 'These changes are left out of the top changes:',
       exclude: ['changes that add a lockout after a single loss', 'changes to an email that will be gone (one the Lockout tab counts as a loss, '
         + 'gone when an ISP is canceled or the owner graduates); “Choose a change yourself” still lists them'],
       orderLead: 'The other changes are compared in this order:',
-      order: ['more ★ accounts saved first', 'more accounts saved first', 'larger decrease in lockouts first',
-        'fewer accounts newly falling, summed over the four cards, first', 'if still tied: add, then replace, then remove'],
+      order: ['changes that protect a ★ account come first (changes that do not come second)', 'within each group, more accounts saved first',
+        'larger decrease in lockouts first', 'fewer accounts newly falling, summed over the four cards, first',
+        'if still tied: add, then replace, then remove'],
       note: 'Items 1 and 2 count the accounts saved minus those newly falling to the same card (all four for the sum). The “Saves” on each button '
         + 'is before that subtraction. Losing two things at once is not used for ranking. Only the highest change for each entrance is shown.' },
   },
@@ -617,7 +618,8 @@ test('G: the screen text of tab 3 is the text of the spec', () => {
     ['legendPairNew', '閉め出し（2つ同時）が増える＝2つを一緒に失ったときにだけ入れなくなるアカウントが、変更で増える（並べ方には使わない）',
       'Two-at-once lockouts added = accounts that become locked out only when two things are lost together (not used for ranking)'],
     // Why 7 comes after 6 in the worker's list (★ first)
-    ['legendOrderCards', '並び＝守れる★の数が多い順。★の数が同じなら、守れる数が多い順', 'Order = more ★ saved first; with the same number of ★, more saved first'],
+    ['legendOrderCards', '並び＝「★のアカウントを守れる変更」が先、「★のアカウントを守れない変更」が後。各段の中は、守れる数が多い順',
+    'Order = changes that protect a ★ account first, then changes that do not. Within each group, more saved first'],
     ['legendOrderLockout', '並び＝閉め出しが減る数が多い順。同じなら、新たに倒れる数が少ない順',
       'Order = larger decrease in lockouts first; if equal, fewer newly fallen first'],
     // A candidate: its rank (read as 1位), what its count is, and the important accounts among them
@@ -813,7 +815,8 @@ test('G: the numbers in the stories follow the data', () => {
 });
 
 // Tab 4 and the printed sheets, from the screen text table of the spec ("タブ4 規則表・ヘルプ・印刷"), the rules table
-// ("規則表（10行）"), the symbols table ("記号の一覧") and the section on printing ("印刷"): key, Japanese, English
+// (eleven rows: the password symbol rule and the breach plain-text case are two rules), the symbols table ("記号の一覧")
+// and the section on printing ("印刷"): key, Japanese, English
 const RULES_TEXT = [
   ['rulesHeading', '規則表（単純化したシミュレーション）', 'Rules (a simplified model)'],
   ['rule1', 'アカウントには入口がある。ログインの入口と、復旧（再設定）の入口がある', 'An account has entrances: log-in entrances and recovery (reset) entrances'],
@@ -822,23 +825,24 @@ const RULES_TEXT = [
   ['rule4', '攻撃者は、カードで最初に手にしたものから始める。倒れたメールのアカウントも、次の入口の条件に使う。新しく倒れるアカウントがなくなるまで繰り返し、1回の繰り返しで新しく倒れた分を1段と数える',
   'The attacker starts from what the card gives first and uses every fallen email account for further entrances, until no new account falls. Each round of '
     + 'newly fallen accounts is one step'],
-  ['rule5', 'パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）。漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、'
+  ['rule5', 'パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）',
+  'Passwords are shown as letters such as A, B and C (per person). The same letter counts as the same password everywhere, small variations included'],
+  ['rule6', '漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、'
     + '同じパスワードを使う入口ではパスワードの条件がそろう',
-  'Passwords are shown as letters such as A, B and C (per person). The same letter counts as the same password everywhere, small variations included. A '
-    + 'breach card stands for the case where the breached service\'s ID and password have leaked as-is (in plain text); then the password requirement is met '
+  'A breach card stands for the case where the breached service\'s ID and password have leaked as-is (in plain text); then the password requirement is met '
     + 'on every entrance that uses that password, however long it is'],
-  ['rule6',
+  ['rule7',
   'SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ',
   'An SMS requirement is met by holding the phone number; the attacker gets the phone number only with the SIM-swap card'],
-  ['rule7',
+  ['rule8',
   '電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない',
   'A phone help desk resets the account for anyone who can answer with the personal details; no card defeats a document check (photo ID, postal mail)'],
-  ['rule8', 'パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある',
+  ['rule9', 'パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある',
   'Passkeys and authenticator apps are treated as keys inside the phone; paper recovery codes exist only in the owner\'s hands'],
-  ['rule9', '閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない',
+  ['rule10', '閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない',
   'Lockout: after removing what the owner lost (one thing, or two at once), the accounts they cannot reach by the same rules from what remains. A vanished '
     + 'email itself is shown as gone and is not counted as locked out. Forgetting a password is not modeled'],
-  ['rule10', '時間・確率・通知・不審なログインの検知は扱わない', 'Time, probability, notifications and detection of suspicious log-ins are not modeled'],
+  ['rule11', '時間・確率・通知・不審なログインの検知は扱わない', 'Time, probability, notifications and detection of suspicious log-ins are not modeled'],
   ['rule2Example', '例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。「かつ」を「または」として数えると、ここで倒れたことになってしまいます。',
   'Example: the office worker\'s online bank resets with SMS + personal details. The SIM-swap card alone lacks the personal details, so the bank does not '
     + 'fall. Counting AND as OR would wrongly make it fall here.'],
@@ -896,15 +900,14 @@ const RULES_TEXT = [
   ['printBackdoor', '裏口', 'backdoor'],
   ['printLegendAttack',
   '攻撃カードの列＝そのカード1枚で、何段目に倒れるか（●0＝最初に乗っ取られたメール、－＝倒れない、裏口＝復旧の入口を通って倒れた）',
-  'Attack-card columns = the step at which the account falls to that card alone (●0 = the email taken over first, – = does not fall, backdoor = fell through '
-    + 'a recovery entrance)'],
+  'Attack cards = the step the account falls at (●0 = email taken over first, – = does not fall, backdoor = fell via recovery)'],
   ['printLegendLoss',
   '失ったときの列＝それを失っても本人が入れるか（○＝入れる、×＝入れない、消えた＝そのメール自体がなくなった、△（番号も失うと×）＝いまは入れるが、番号も一緒に失うと入れない）',
-  'When-lost columns = whether the owner can still get in after losing that (○ = can get in, × = locked out, gone = the email itself is gone, △ (× if the '
-    + 'number goes too) = can get in now, but losing the number too locks you out)'],
+  'When lost = can the owner still get in (○ = yes, × = locked out, gone = email itself gone, △ (× if the number goes too) '
+    + '= yes now, but one more loss locks you out)'],
   ['printLegendStar',
   '★＝重要なアカウント（人物ごとに、失うと困るものとして選んだ3つ）',
-  '★ = important account (three per person, the ones they can least afford to lose)'],
+  '★ = important (three per person)'],
   ['printGroupAttack', '攻撃カード', 'Attack cards'],
   ['printGroupLoss', '失ったとき', 'When lost'],
   ['formHow1', 'アカウントの名前は略してよい（例：メイン、銀行）。', 'Account names may be shortened (e.g. Main, Bank).'],
