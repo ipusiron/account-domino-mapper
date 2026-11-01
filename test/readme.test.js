@@ -70,14 +70,14 @@ const H2 = [['🌐 デモページ', '🌐 Demo'], ['📸 スクリーンショ�
 const h2Title = (lang, icon) => H2.find((pair) => pair[0].startsWith(icon))[lang === 'ja' ? 0 : 1];
 
 // The front matter of the spec (README.md only), with the keys in this order
-const DESCRIPTION_JA = '架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・'
-  + '窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手'
-  + '（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。';
-const DESCRIPTION_EN = 'A teaching aid that maps three fictional people\'s accounts by their log-in and recovery entrances (AND/OR) and replays, '
-  + 'step by step, how a breach, a SIM swap, an email takeover or a help-desk impersonation topples them. It shows which accounts the '
-  + 'owner is locked out of after losing the phone, the number or an email account, and compares before and after one change to a '
-  + 'single entrance: adding the phone, replacing one requirement, or removing a recovery entrance. No real account details; nothing '
-  + 'is sent anywhere. Japanese and English UI.';
+const DESCRIPTION_JA = '架空の3人のアカウントで、1つの攻撃（漏えい・SIMスワップ・メールの乗っ取り・ソーシャルエンジニアリング）が、ログインや復旧を'
+  + '通じて広がる様子を順に見る教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変えたとき（認証アプリかパスキーを追加する・必要なものを'
+  + '切り替える・復旧の入口を外す）の前後も比べられる。自分のアカウントの情報は入力せず、外部へは何も送らない。日英対応。';
+const DESCRIPTION_EN = 'A teaching aid that uses the accounts of three fictional people to show, step by step, how one attack (a breach, a SIM '
+  + 'swap, an email takeover or social engineering) spreads through log-in and recovery. It also shows the lockouts after losing the phone, '
+  + 'the phone number or an email account, and compares before and after changing one entrance (adding an authenticator app or passkey, '
+  + 'switching what it needs, or removing a recovery entrance). Your own account details are never entered, and nothing is sent anywhere. '
+  + 'Japanese and English UI.';
 const META = {
   id: 'day127', slug: SLUG, title: 'Account Domino Mapper',
   subtitle_ja: 'アカウントの連鎖と閉め出しを比べる教材', subtitle_en: 'Account takeover chains and lockouts, side by side',
@@ -131,12 +131,12 @@ test('I: README.md front matter: block style, the keys in order and the values o
   assert.doesNotMatch(doc('en'), /^(?:id|slug|subtitle_ja|description_ja|category_ja|repo_url|demo_url|hub):/m);
 });
 
-const H1_JA = '# Account Domino Mapper - アカウントの連鎖と閉め出しを1手で比べる教材';
+const H1_JA = '# Account Domino Mapper - アカウントの連鎖と閉め出しを、入口を1つ変えて比べる教材';
 const SWITCH = { ja: '[English](README.en.md) · 日本語', en: 'English · [日本語](README.md)' };
 const SERIES = { ja: '**Day127 - 生成AIで作るセキュリティツール200**', en: '**Day127 - 200 Security Tools with Generative AI**' };
 const LEARNING = {
-  ja: '学習用の教材です。本物のアカウントの構成は入れません（入れる欄もありません）。自分の構成は、印刷した用紙に記号で書きます。',
-  en: 'This is a learning aid. Real account setups are never entered (there are no fields for them). To map your own setup, '
+  ja: '学習用の教材です。本物のアカウントの情報は入力しません（入力する欄もありません）。自分のアカウントは、印刷した用紙に記号で書いて確かめます。',
+  en: 'This is a learning aid. Real account details are never entered (there are no fields for them). To check your own accounts, '
     + 'print the blank sheet and fill it in with symbols.',
 };
 const BADGES = ['img.shields.io/github/stars/ipusiron/' + SLUG, 'img.shields.io/github/forks/ipusiron/' + SLUG,
@@ -230,13 +230,13 @@ function numbersIn(text, lang) {
   const re = lang === 'ja' ? /\d+/g : new RegExp(`\\b(?:\\d+|${WORDS.join('|')})\\b`, 'gi');
   return (text.replace(/\bDay\d+/g, '').match(re) || []).map(toNumber);
 }
-// The numbers written with a unit: Japanese 4枚, 89手, 3人, 2つ, 1本 and 段2; English "4 cards" or "four cards", "step 2" and
+// The numbers written with a unit: Japanese 4枚, 89通り, 3人, 2つ, 1本 and 段2; English "4 cards" or "four cards", "step 2" and
 // the kinds of change ("89 changes", "24 removals", "3 additions", "15 replacements")
 const KINDS = ['change', 'removal', 'addition', 'replacement'];
 function unitNumbers(text, lang) {
   const out = {}, add = (unit, n) => (out[unit] ??= []).push(n);
   if (lang === 'ja') {
-    for (const m of text.matchAll(/(\d+)(枚|手|人|つ|本)/g)) add(m[2], Number(m[1]));
+    for (const m of text.matchAll(/(\d+)(枚|通り|人|つ|本)/g)) add(m[2], Number(m[1]));
     for (const m of text.matchAll(/段(\d+)/g)) add('段', Number(m[1]));
   } else {
     for (const m of text.matchAll(new RegExp(`\\b(\\d+|${WORDS.join('|')}) cards?\\b`, 'gi'))) add('card', toNumber(m[1]));
@@ -255,11 +255,11 @@ const num = (n) => new RegExp(`\\b(?:${n}${n < WORDS.length ? '|' + WORDS[n] : '
 const escaped = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const upper = (s) => s[0].toUpperCase() + s.slice(1);
 const lower = (s) => s[0].toLowerCase() + s.slice(1);
-// A number bound to the kind of change it counts, as Japanese binds 足す3手 and 付け替え15手 (English "3 additions")
+// A number bound to the kind of change it counts, as Japanese binds 追加3通り and 切り替え15通り (English "3 additions")
 const kindNum = (n, kind) => new RegExp(`\\b(?:${n}${n < WORDS.length ? '|' + WORDS[n] : ''}) ${kind}s?\\b`, 'i');
-// The word of a requirement, as the symbols of the screen name it (an email account, the SMS, the personal details …)
+// The word of a requirement, as the symbols of the screen name it (an email account by its name, the SMS, the personal details …)
 function requirementWord(p, id, lang) {
-  if (p.services.some((s) => s.id === id && s.mail)) return M[lang].symMailLine;
+  if (p.services.some((s) => s.id === id && s.mail)) return V.names(p, M, lang).full[id];
   const type = p.credentials.find((c) => c.id === id).type;
   return M[lang]['sym' + { phone: 'Sms', info: 'Info', device: 'Phone', idcheck: 'Doc', paper: 'Paper' }[type] + 'Name'];
 }
@@ -358,20 +358,20 @@ test('I: the use cases particular to this tool carry the numbers of the calculat
       { ja: [`${uc3.cards}枚`, '1枚では', uc3.entrance, ...uc3.names.ja],
         en: [num(uc3.cards), new RegExp(escaped(uc3.entranceEn), 'i'), ...uc3.names.en], allowed: [1, uc3.cards],
         units: { 枚: [1, uc3.cards], card: [1, uc3.cards] } },
-      { ja: [`${uc4.people}人`, `${uc4.total}手`, `${uc4.increase}手`, `外す${uc4.removals}手`, `足す${uc4.pairs.add}手`,
-        `付け替え${uc4.pairs.replace}手`, `「${M.ja.sameRemove}」`],
+      { ja: [`${uc4.people}人`, `${uc4.total}通り`, `${uc4.increase}通り`, `外す${uc4.removals}通り`, `追加${uc4.pairs.add}通り`,
+        `切り替え${uc4.pairs.replace}通り`, `「${M.ja.sameRemove}」`],
       en: [kindNum(uc4.total, 'change'), num(uc4.increase), kindNum(uc4.removals, 'removal'), kindNum(uc4.pairs.add, 'addition'),
         kindNum(uc4.pairs.replace, 'replacement'), new RegExp(`\\b(?:${uc4.people}|${WORDS[uc4.people]}) people\\b`, 'i')],
       allowed: [1, 2, uc4.people, uc4.total, uc4.increase, uc4.removals, uc4.pairs.add, uc4.pairs.replace],
-      units: { 人: [uc4.people], 手: [uc4.total, uc4.increase, uc4.removals, uc4.pairs.add, uc4.pairs.replace], つ: [1, 2],
+      units: { 人: [uc4.people], 通り: [uc4.total, uc4.increase, uc4.removals, uc4.pairs.add, uc4.pairs.replace], つ: [1, 2],
         change: [uc4.total], removal: [uc4.removals], addition: [uc4.pairs.add], replacement: [uc4.pairs.replace] } },
       { ja: [`入口が${uc5.entrances}つ`, uc5.cell.ja], en: [num(uc5.entrances), uc5.cell.en], allowed: [1, uc5.entrances],
         units: { つ: [1, uc5.entrances] } },
-      // The one change goes to documents: 書類の確認へ付け替える1手, "One change, moving … to a document check, …" (in one clause)
-      { ja: [`${sim}${uc6.cards}枚`, `${uc6.to.ja}の確認へ付け替える${uc6.moves}手`],
+      // The one change goes to documents: 書類に切り替える1つの変更, "One change, switching … to a document check, …" (in one clause)
+      { ja: [`${sim}${uc6.cards}枚`, `${uc6.to.ja}に切り替える${uc6.moves}つの変更`],
         en: [new RegExp(`\\b(?:${uc6.moves}|${WORDS[uc6.moves]}) change\\b[^.;(]*\\bto ${escaped(uc6.to.en)}\\b`, 'i')],
         allowed: [1, uc6.cards, uc6.moves],
-        units: { 枚: [uc6.cards], 手: [uc6.moves], 本: [1], card: [uc6.cards], change: [uc6.moves] } },
+        units: { 枚: [uc6.cards], つ: [uc6.moves], 本: [1], card: [uc6.cards], change: [uc6.moves] } },
     ];
     assert.deepEqual([uc1.cards, uc1.accounts, uc1.fell, uc1.through, uc2.step, uc2.cards, uc3.cards, uc4.total, uc4.removals,
       uc4.increase, uc4.pairs, uc5.entrances], [4, 9, [6, 7], [3, 5], 2, 1, 2, 89, 24, 10, { add: 3, replace: 15, remove: 0 }, 2],
@@ -442,10 +442,10 @@ function readmeFacts() {
   return { P, pv, moves, total: all.length, people: D.personas.length, kinds, twoRemoved, toward: towardCounts, widths, screen };
 }
 // The four notes of the Rules tab, as app.js builds them (the paper note names Day124 and Day125 with their links)
-const NOTE_KEYS = ['noteSms', 'notePasskey', 'noteDesk', 'notePaperRules'];
+const NOTE_KEYS = ['ruleNoteSms', 'notePasskey', 'noteDesk', 'notePaperRules'];
 function rulesNotes(lang) {
   const tool = (id) => V.relatedTools.find((x) => x.id === id), link = (id) => `[${M[lang][tool(id).name]}](${tool(id).href})`;
-  return [M[lang].noteSms, fill(M[lang].notePasskey, { sync: M[lang].lockNoteSync }), M[lang].noteDesk,
+  return [M[lang].ruleNoteSms, fill(M[lang].notePasskey, { sync: M[lang].lockNoteSync }), M[lang].noteDesk,
     fill(M[lang].notePaperRules, { paper: M[lang].notePaper, day124: link('day124'), day125: link('day125') })]
     // The READMEs write straight double quotes where the screen has curly ones
     .map((note) => note.replace(/[“”]/g, '"'));
@@ -456,27 +456,30 @@ test('I: the feature table, the technical notes and the screen layout give the n
   const roles = (lang) => ['worker', 'parent', 'student'].map((id) => `${ROLES[lang][id]}${lang === 'ja' ? '' : ' '}${f.moves[id]}`);
   const want = {
     ja: {
-      '✨': [...D.personas.map((p) => `${M.ja[PERSON_KEYS[p.id]]}（アカウント${V.counts(p).accounts}・パスワードの系統${V.counts(p).families}）`),
-        `${roles('ja').join('・')}、合わせて${f.total}`, `規則${s.rules}行`, `注記${s.notes}つ`, `入れていないもの${s.notInModel}項目`,
+      '✨': [...D.personas.map((p) => `${M.ja[PERSON_KEYS[p.id]]}（アカウント${V.counts(p).accounts}つ・パスワード${V.counts(p).families}つ）`),
+        `${roles('ja').join('・')}、合わせて${f.total}`, `規則${s.rules}行`, `注記${s.notes}つ`, `扱わないもの${s.notInModel}項目`,
         `人物ごとに${s.perPerson}つ、合わせて${s.highlights}つ`, `用語${s.terms}語`, `座学${s.lessons}節`],
-      '🔬': [`${roles('ja').join('・')}、合わせて${f.total}手`, `${f.people}人で${f.kinds.add}手`, `${f.people}人で${f.kinds.replace}手`,
-        `${f.people}人で${f.kinds.remove}手。そのうち条件が2つの入口を外す手は${f.twoRemoved}手`,
-        `書類へ付け替える${t.doc}手・紙へ付け替える${t.paper}手・スマホを足す${t.addPhone}手・スマホへ付け替える${t.toPhone}手の${t.total}手`,
-        `新たに倒れるアカウントが0`, `攻撃の結果が何も変わらない手が${t.same}手`, `紙へ付け替える${t.pairPaper}手とスマホを足す${t.pairAddPhone}手`,
+      '🔬': [`${roles('ja').join('・')}、合わせて${f.total}通り`, `${f.people}人で${f.kinds.add}通り`, `${f.people}人で${f.kinds.replace}通り`,
+        `${f.people}人で${f.kinds.remove}通り。そのうち条件が2つの入口を外す変更は${f.twoRemoved}通り`,
+        `書類に切り替える${t.doc}通り・紙の回復コードに切り替える${t.paper}通り・認証アプリかパスキーを追加する${t.addPhone}通り・`
+        + `スマホに切り替える${t.toPhone}通りの${t.total}通り`,
+        `新たに倒れるアカウントが0`, `攻撃の結果が何も変わらない変更が${t.same}通り`,
+        `紙の回復コードに切り替える${t.pairPaper}通りと認証アプリかパスキーを追加する${t.pairAddPhone}通り`,
         `図の幅は${ROLES.ja.worker}と${ROLES.ja.student}が${w.worker}、${ROLES.ja.parent}が${w.parent}`, `${s.rules}行です`],
       '📐': [`${ROLES.ja.worker}と${ROLES.ja.student}の図（幅${w.worker}）`],
     },
     en: {
-      '✨': [...D.personas.map((p) => `${M.en[PERSON_KEYS[p.id]]} (${V.counts(p).accounts} accounts, ${V.counts(p).families} password `
-        + `${V.counts(p).families === 1 ? 'family' : 'families'})`), `${roles('en').join(', ')}; ${f.total} in all`,
+      '✨': [...D.personas.map((p) => `${M.en[PERSON_KEYS[p.id]]} (${V.counts(p).accounts} accounts, ${V.counts(p).families} `
+        + `${V.counts(p).families === 1 ? 'password' : 'passwords'})`), `${roles('en').join(', ')}; ${f.total} in all`,
       `The ${s.rules} rules`, `${s.notes} notes`, `the ${s.notInModel} items not in this model`,
       `${upper(WORDS[s.perPerson])} per person, ${WORDS[s.highlights]} in all`, `${s.terms} terms`, `${s.lessons} lessons`],
       '🔬': [`${roles('en').join(', ')}; ${f.total} changes in all`, `(${f.kinds.add} changes for the ${WORDS[f.people]} people)`,
         `(${f.kinds.replace} changes for the ${WORDS[f.people]} people)`,
         `(${f.kinds.remove} changes for the ${WORDS[f.people]} people, ${f.twoRemoved} of which remove an entrance with two requirements)`,
-        `(${t.total} changes: ${t.doc} replacing with a document check, ${t.paper} replacing with paper codes, ${t.addPhone} adding the phone `
-        + `and ${t.toPhone} replacing with the phone)`, 'make no new account fall', `${t.same} of them change nothing in the attack`,
-        `${t.pairPaper} of the changes to paper codes and ${t.pairAddPhone} of the changes that add the phone`,
+        `(${t.total} changes: ${t.doc} replacing with a document check, ${t.paper} replacing with paper codes, ${t.addPhone} adding an `
+        + `authenticator app or passkey and ${t.toPhone} replacing with the phone)`, 'make no new account fall',
+        `${t.same} of them change nothing in the attack`,
+        `${t.pairPaper} of the changes to paper codes and ${t.pairAddPhone} of the changes that add an authenticator app or passkey`,
         `the diagrams are ${w.worker} wide for the ${ROLES.en.worker} and the ${ROLES.en.student}, and ${w.parent} for the ${ROLES.en.parent}`,
         `the same ${s.rules} rows`],
       '📐': [`the diagrams of the ${ROLES.en.worker} and the ${ROLES.en.student} (${w.worker} wide)`],
@@ -552,9 +555,9 @@ test('I: the highlights table of the use section is the nine highlights of the s
   }
 });
 
-// The first of the candidates, under the heading この模型での上位の手 / "Top changes in this model": the screen gives it no word or tag
+// The first of the candidates, under the heading このシミュレーションでの上位の変更 / "Top changes in this model": the screen gives it no word or tag
 // of its own, so the READMEs name it with the words of that heading (and the use section says that it ranks first in this model)
-const TOP_FIRST = { ja: '上位の手の先頭', en: 'the first of the top changes' };
+const TOP_FIRST = { ja: '上位の変更の先頭', en: 'the first of the top changes' };
 const OWN_WORD = { ja: /おすすめ|オススメ/, en: /suggest/i };
 
 test('I: the use section opens with "First time here" of the help, and it and the screen layout name the candidates and the line '
@@ -582,7 +585,7 @@ test('I: the use section opens with "First time here" of the help, and it and th
   if (!Object.values(M.ja).some((value) => String(value).includes('延べ'))) {
     assert.doesNotMatch(doc('ja'), /延べ/, `README.md: ${M.ja.termSum}, the word of the screen, not 延べ`);
   }
-  // The first of the candidates: 上位の手の先頭 / "the first of the top changes" (the screenshot captions check where), never a word
+  // The first of the candidates: 上位の変更の先頭 / "the first of the top changes" (the screenshot captions check where), never a word
   // that the screen does not show, such as おすすめ or "suggested change"
   for (const lang of LANGS) {
     assert.ok(!Object.values(M[lang]).some((value) => OWN_WORD[lang].test(String(value))), `${lang}: the screen has no such word`);
@@ -697,7 +700,7 @@ test('I: the screenshot captions give the people, cards, steps, counts and sente
   assert.ok(plus.length === 2 && plus.every((l) => table.cells[l].bank.plus.join() === 'number'));
   // 3: the parent's first of the top changes for the SIM swap, named with the words of the screen
   const pvp = C.personaVectors(pa), p3 = pvp.moves.find((mv) => mv.id === pvp.best.simswap);
-  assert.ok(M.ja.candidatesHeading.endsWith('上位の手') && M.en.candidatesHeading.startsWith('Top changes'), 'the heading of the candidates');
+  assert.ok(M.ja.candidatesHeading.endsWith('上位の変更') && M.en.candidatesHeading.startsWith('Top changes'), 'the heading of the candidates');
   // The line under the lockout table as the screen draws it: the SMS requirement names the phone number (lockTagPhone)
   const lockLine = Object.fromEntries(LANGS.map((lang) => [lang, { ...M[lang], tagPhone: M[lang].lockTagPhone }]));
   for (const lang of LANGS) {
@@ -966,13 +969,13 @@ test('I: the about section of both READMEs links the series page and ends with t
 const SECURITY = {
   ja: ['使い回しの情報は、パスワードそのものがなくても攻撃者の役に立ちうるものとして扱われています（MozillaのPassword Reuse Visualizerのwiki）。'
     + 'アカウントのつながりの形そのものを、パスワードとは別に守る対象とする道具もあります（LatticeのREADME）。'
-    + 'このため、画面には本物の構成を入れる欄を置かず、自分の構成は印刷した用紙に記号で書く形にしました。',
+    + 'このため、画面には本物のアカウントの情報を入れる欄を置かず、自分のアカウントは印刷した用紙に記号で書く形にしました。',
   '公開ページの読み込みと、出典へのリンクを開く操作には通常の通信が発生します。入力を送る機能はありません（入力欄もありません）。'],
   // The quotations of the sources, the conclusion drawn from them (the same as the Japanese third sentence: no fields for real
-  // setups, your own setup written in symbols on a printed sheet) and the paragraph on requests
+  // account details, your own accounts written in symbols on a printed sheet) and the paragraph on requests
   en: ['Password reuse data, even if unaccompanied by actual passwords or password hashes, can be of use to attackers.',
     'The graph topology (which nodes connect to which) is treated as sensitive on its own, not just individual passwords.',
-    'the screen has no fields for real setups', 'your own setup is written in symbols on a printed sheet',
+    'the screen has no fields for real account details', 'your own accounts are written in symbols on a printed sheet',
     'Loading the published page and opening source links involve normal network requests. The tool has no feature that sends '
       + 'anything you enter, and there are no input fields.'],
 };

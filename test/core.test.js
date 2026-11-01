@@ -14,7 +14,7 @@ const sampleRaw = fs.readFileSync(path.join(__dirname, 'sample.json'));
 const vectorsRaw = fs.readFileSync(path.join(__dirname, 'vectors.json'));
 const sample = JSON.parse(sampleRaw.toString('utf8'));
 const vectors = JSON.parse(vectorsRaw.toString('utf8'));
-const VECTORS_SHA256 = 'ec98f2a1da86dfa5c654ef3ee8e5187aa62e04af20dbd650deee77740d56f379';
+const VECTORS_SHA256 = 'cdba12e88e7183704728032deb028f97497360ebd57d195e917161e5d0f5310d';
 const PEOPLE = ['worker', 'parent', 'student'];
 const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
 const clone = (value) => JSON.parse(JSON.stringify(value));
