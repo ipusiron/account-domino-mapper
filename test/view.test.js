@@ -18,56 +18,59 @@ const cache = {};
 const pv = (id) => (cache[id] ||= C.personaVectors(persona(id)));
 
 // The candidates table of the spec: per person and mode, [move id, effect (ja), effect (en)] in order, or the reason when empty.
+// A change to an email the person loses (the old email, the university email: a column of the lockout tab) is left out of the
+// top changes: the office worker's breach no. 3 and SIM swap nos. 2 and 3, and the student's SIM swap nos. 2 and 3
+// were such changes; the next changes of the ranking take their places (LOST_MAIL_DROPPED below)
 const CANDIDATES = {
   worker: {
-    leak: [['replace:points.login:pw:red>pw:own-points', '守れる5（★1）', 'Saves: 5 (★1)'],
-      ['add:mailMain.login:+device', '守れる4（★1）', 'Saves: 4 (★1)'],
-      ['replace:sns.recMail:mailMain>mailOld', '守れる1・2つ同時で新たに×1', 'Saves: 1 · New two-at-once lockouts: 1']],
-    simswap: [['replace:mailMain.recSms:phone>paper:mailMain', '守れる6（★2）', 'Saves: 6 (★2)'],
-      ['replace:sec.recMailSms:mailMain>mailOld', '守れる1（★1）・2つ同時で新たに×1', 'Saves: 1 (★1) · New two-at-once lockouts: 1'],
-      ['replace:points.recMail:mailMain>mailOld', '守れる1', 'Saves: 1']],
-    mail: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（★1）', 'Saves: 6 (★1)'],
-      ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1'],
-      ['replace:sns.recMail:mailMain>paper:sns', '守れる1・2つ同時で新たに×1', 'Saves: 1 · New two-at-once lockouts: 1']],
-    desk: [['replace:mailOld.recDesk:info>idcheck', '守れる7（★1）', 'Saves: 7 (★1)'],
-      ['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（★1）', 'Saves: 6 (★1)'],
+    leak: [['replace:points.login:pw:red>pw:own-points', '守れる5（うち★1）', 'Saves: 5 (including ★1)'],
+      ['add:mailMain.login:+device', '守れる4（うち★1）', 'Saves: 4 (including ★1)'],
+      ['replace:sns.recMail:mailMain>paper:sns', '守れる1・閉め出し（2つ同時）が1つ増える', 'Saves: 1 · Two-at-once lockouts added: 1']],
+    simswap: [['replace:mailMain.recSms:phone>paper:mailMain', '守れる6（うち★2）', 'Saves: 6 (including ★2)'],
+      ['replace:sec.recMailSms:mailMain>paper:sec', '守れる1（うち★1）・閉め出し（2つ同時）が1つ増える', 'Saves: 1 (including ★1) · Two-at-once lockouts added: 1'],
       ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1']],
-    all: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる（4枚の合計）12（★2）', 'Saves (sum over 4 cards): 12 (★2)'],
-      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（4枚の合計）6（★2）', 'Saves (sum over 4 cards): 6 (★2)'],
-      ['replace:mailOld.recDesk:info>idcheck', '守れる（4枚の合計）7（★1）', 'Saves (sum over 4 cards): 7 (★1)']],
+    mail: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（うち★1）', 'Saves: 6 (including ★1)'],
+      ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1'],
+      ['replace:sns.recMail:mailMain>paper:sns', '守れる1・閉め出し（2つ同時）が1つ増える', 'Saves: 1 · Two-at-once lockouts added: 1']],
+    desk: [['replace:mailOld.recDesk:info>idcheck', '守れる7（うち★1）', 'Saves: 7 (including ★1)'],
+      ['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（うち★1）', 'Saves: 6 (including ★1)'],
+      ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1']],
+    all: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる（4枚の合計）12（うち★2）', 'Saves (sum over 4 cards): 12 (including ★2)'],
+      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（4枚の合計）6（うち★2）', 'Saves (sum over 4 cards): 6 (including ★2)'],
+      ['replace:mailOld.recDesk:info>idcheck', '守れる（4枚の合計）7（うち★1）', 'Saves (sum over 4 cards): 7 (including ★1)']],
     lockout: 'noLockout',
   },
   parent: {
-    leak: [['replace:points.login:pw:yellow>pw:own-points', '守れる3（★1）', 'Saves: 3 (★1)'],
-      ['replace:mailIsp.login:pw:yellow>pw:own-mailIsp', '守れる1（★1）', 'Saves: 1 (★1)']],
-    simswap: [['replace:bank.recSms:phone>idcheck', '守れる1（★1）', 'Saves: 1 (★1)']],
+    leak: [['replace:points.login:pw:yellow>pw:own-points', '守れる3（うち★1）', 'Saves: 3 (including ★1)'],
+      ['replace:mailIsp.login:pw:yellow>pw:own-mailIsp', '守れる1（うち★1）', 'Saves: 1 (including ★1)']],
+    simswap: [['replace:bank.recSms:phone>idcheck', '守れる1（うち★1）', 'Saves: 1 (including ★1)']],
     mail: [['replace:shop.recMail:mailIsp>paper:shop', '守れる1', 'Saves: 1'],
       ['replace:photo.recMail:mailIsp>paper:photo', '守れる1', 'Saves: 1'], ['remove:points.recMail', '守れる1', 'Saves: 1']],
-    desk: [['replace:mailIsp.recDesk:info>idcheck', '守れる4（★1）', 'Saves: 4 (★1)'],
+    desk: [['replace:mailIsp.recDesk:info>idcheck', '守れる4（うち★1）', 'Saves: 4 (including ★1)'],
       ['replace:shop.recMail:mailIsp>paper:shop', '守れる1', 'Saves: 1'], ['replace:photo.recMail:mailIsp>paper:photo', '守れる1', 'Saves: 1']],
-    all: [['replace:mailIsp.recDesk:info>idcheck', '守れる（4枚の合計）4（★1）', 'Saves (sum over 4 cards): 4 (★1)'],
-      ['replace:points.login:pw:yellow>pw:own-points', '守れる（4枚の合計）3（★1）', 'Saves (sum over 4 cards): 3 (★1)'],
-      ['replace:bank.recSms:phone>idcheck', '守れる（4枚の合計）1（★1）', 'Saves (sum over 4 cards): 1 (★1)']],
-    lockout: [['replace:bank.recSms:phone>idcheck', '閉め出しが解ける1', 'Unlocks: 1'],
-      ['replace:bank.login:phone>device', '閉め出しが解ける1', 'Unlocks: 1']],
+    all: [['replace:mailIsp.recDesk:info>idcheck', '守れる（4枚の合計）4（うち★1）', 'Saves (sum over 4 cards): 4 (including ★1)'],
+      ['replace:points.login:pw:yellow>pw:own-points', '守れる（4枚の合計）3（うち★1）', 'Saves (sum over 4 cards): 3 (including ★1)'],
+      ['replace:bank.recSms:phone>idcheck', '守れる（4枚の合計）1（うち★1）', 'Saves (sum over 4 cards): 1 (including ★1)']],
+    lockout: [['replace:bank.recSms:phone>idcheck', '閉め出しが1つなくなる', 'Lockouts removed: 1'],
+      ['replace:bank.login:phone>device', '閉め出しが1つなくなる', 'Lockouts removed: 1']],
   },
   student: {
-    leak: [['replace:game.login:pw:green>pw:own-game', '守れる4（★3）', 'Saves: 4 (★3)'],
-      ['add:mailFree.login:+device', '守れる3（★2）', 'Saves: 3 (★2)'],
-      ['add:sns.login:+device', '守れる1（★1）・2つ同時で新たに×1', 'Saves: 1 (★1) · New two-at-once lockouts: 1']],
-    simswap: [['replace:mailFree.recSms:phone>paper:mailFree', '守れる3（★2）', 'Saves: 3 (★2)'],
-      ['replace:sec.recMail:mailFree>mailUni', '守れる1（★1）・2つ同時で新たに×1', 'Saves: 1 (★1) · New two-at-once lockouts: 1'],
-      ['replace:game.recMail:mailFree>mailUni', '守れる1', 'Saves: 1']],
-    mail: [['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる4（★2）', 'Saves: 4 (★2)'],
-      ['replace:sns.recMail:mailUni>paper:sns', '守れる1（★1）', 'Saves: 1 (★1)'],
-      ['replace:sec.recMail:mailFree>paper:sec', '守れる1（★1）・2つ同時で新たに×1', 'Saves: 1 (★1) · New two-at-once lockouts: 1']],
+    leak: [['replace:game.login:pw:green>pw:own-game', '守れる4（うち★3）', 'Saves: 4 (including ★3)'],
+      ['add:mailFree.login:+device', '守れる3（うち★2）', 'Saves: 3 (including ★2)'],
+      ['add:sns.login:+device', '守れる1（うち★1）・閉め出し（2つ同時）が1つ増える', 'Saves: 1 (including ★1) · Two-at-once lockouts added: 1']],
+    simswap: [['replace:mailFree.recSms:phone>paper:mailFree', '守れる3（うち★2）', 'Saves: 3 (including ★2)'],
+      ['replace:sec.recMail:mailFree>paper:sec', '守れる1（うち★1）・閉め出し（2つ同時）が1つ増える', 'Saves: 1 (including ★1) · Two-at-once lockouts added: 1'],
+      ['remove:game.recMail', '守れる1', 'Saves: 1']],
+    mail: [['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる4（うち★2）', 'Saves: 4 (including ★2)'],
+      ['replace:sns.recMail:mailUni>paper:sns', '守れる1（うち★1）', 'Saves: 1 (including ★1)'],
+      ['replace:sec.recMail:mailFree>paper:sec', '守れる1（うち★1）・閉め出し（2つ同時）が1つ増える', 'Saves: 1 (including ★1) · Two-at-once lockouts added: 1']],
     desk: 'noFall',
-    all: [['replace:game.login:pw:green>pw:own-game', '守れる（4枚の合計）4（★3）', 'Saves (sum over 4 cards): 4 (★3)'],
-      ['replace:sec.recMail:mailFree>paper:sec', '守れる（4枚の合計）3（★3）・2つ同時で新たに×1',
-        'Saves (sum over 4 cards): 3 (★3) · New two-at-once lockouts: 1'],
-      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（4枚の合計）4（★2）', 'Saves (sum over 4 cards): 4 (★2)']],
-    lockout: [['replace:sub.login:mailUni>mailFree', '閉め出しが解ける1・新たに倒れる（4枚の合計）2',
-      'Unlocks: 1 · Newly fallen (sum over 4 cards): 2']],
+    all: [['replace:game.login:pw:green>pw:own-game', '守れる（4枚の合計）4（うち★3）', 'Saves (sum over 4 cards): 4 (including ★3)'],
+      ['replace:sec.recMail:mailFree>paper:sec', '守れる（4枚の合計）3（うち★3）・閉め出し（2つ同時）が1つ増える',
+        'Saves (sum over 4 cards): 3 (including ★3) · Two-at-once lockouts added: 1'],
+      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（4枚の合計）4（うち★2）', 'Saves (sum over 4 cards): 4 (including ★2)']],
+    lockout: [['replace:sub.login:mailUni>mailFree', '閉め出しが1つなくなる・新たに倒れる（4枚の合計）2',
+      'Lockouts removed: 1 · Newly fallen (sum over 4 cards): 2']],
   },
 };
 
@@ -110,8 +113,101 @@ test('F: candidates (up to three, one per entrance, the suggestion first) and th
     }
   }
   // The effect numbers behind one button: the worker's two-at-once side effect under the SIM swap.
-  assert.deepEqual(V.effect(persona('worker'), pv('worker'), 'replace:sec.recMailSms:mailMain>mailOld', 'simswap'),
-    { saved: 1, imp: 1, unlocked: 0, newly: 0, exposedAll: 0, pairNew: 1 });
+  assert.deepEqual(V.effect(persona('worker'), pv('worker'), 'replace:sec.recMailSms:mailMain>paper:sec', 'simswap'),
+    { saved: 1, imp: 1, unlocked: 0, newly: 0, exposedCard: 0, exposedAll: 0, pairNew: 1 });
+});
+
+// The changes to an email the person loses that the ranking would put among the top changes, and what takes their place.
+// Per person and mode: [the change left out, the change in its place] (the ranking itself, in domino-core.js, is unchanged)
+const LOST_MAIL_DROPPED = {
+  worker: { leak: [['replace:sns.recMail:mailMain>mailOld', 'replace:sns.recMail:mailMain>paper:sns']],
+    simswap: [['replace:sec.recMailSms:mailMain>mailOld', 'replace:sec.recMailSms:mailMain>paper:sec'],
+      ['replace:points.recMail:mailMain>mailOld', 'replace:shop.recMail:mailMain>paper:shop']] },
+  student: { simswap: [['replace:sec.recMail:mailFree>mailUni', 'replace:sec.recMail:mailFree>paper:sec'],
+    ['replace:game.recMail:mailFree>mailUni', 'remove:game.recMail']] },
+};
+
+test('F: the top changes leave out the changes to an email the person loses (the old email, the university email), which the '
+  + 'select still lists; the first of the top changes stays the suggestion of the known vectors', () => {
+  assert.deepEqual(PEOPLE.map((id) => V.lostMails(persona(id))), [['mailOld'], ['mailIsp'], ['mailUni']]);
+  for (const id of PEOPLE) {
+    const lost = V.lostMails(persona(id));
+    const toLost = pv(id).moves.filter((mv) => mv.kind === 'replace' && lost.includes(mv.to)).map((mv) => mv.id);
+    // 6 for the office worker, none for the parent (her only email is the ISP email), 3 for the student; every one a recovery entrance
+    assert.equal(toLost.length, { worker: 6, parent: 0, student: 3 }[id], id);
+    for (const moveId of toLost) {
+      const mv = pv(id).moves.find((m) => m.id === moveId);
+      assert.equal(persona(id).services.find((s) => s.id === mv.service).methods.find((m) => m.id === mv.method).role, 'recovery', moveId);
+    }
+    const listed = V.moveOptions(persona(id), pv(id), M, 'ja').flatMap((g) => g.moves.map((m) => m.id));
+    for (const moveId of toLost) assert.ok(listed.includes(moveId), 'the select lists ' + moveId);
+    for (const mode of MODES) {
+      const ids = V.candidates(persona(id), pv(id), mode).ids;
+      for (const moveId of toLost) assert.ok(!ids.includes(moveId), id + ' ' + mode + ' leaves out ' + moveId);
+      // The ranking puts the dropped change before the one in its place, which the candidates now show in that slot
+      for (const [dropped, instead] of (LOST_MAIL_DROPPED[id] || {})[mode] || []) {
+        const ranking = pv(id).ranking[mode];
+        assert.ok(ranking.indexOf(dropped) < ranking.indexOf(instead), id + ' ' + mode + ' ' + dropped);
+        assert.ok(ids.includes(instead), id + ' ' + mode + ' ' + instead);
+      }
+      assert.equal(ids[0] ?? null, vectors.personas[id].best[mode], id + ' ' + mode + ': the first is still the suggestion');
+    }
+  }
+});
+
+test('F: the line above the parent\'s candidates: her bank change is no. 3 for the sum of the four cards, and no line '
+  + 'when it is first (SIM swap, lockouts), absent (the other cards) or for the other people', () => {
+  const note = (id, mode, lang) => V.storyMoveNote(persona(id), V.candidates(persona(id), pv(id), mode).ids, M, lang);
+  assert.equal(note('parent', 'all', 'ja'), 'シズエのネットバンキングの変更は3位です（「連鎖を追う」の見どころの3つ目と同じ変更）。');
+  assert.equal(note('parent', 'all', 'en'), 'Shizue\'s online banking change is number 3 in this list (the same change as highlight 3 in “Follow the chain”).');
+  // The change of that line is the change of the highlight P3, the third highlight of the parent
+  assert.equal(V.candidates(persona('parent'), pv('parent'), 'all').ids[2], V.highlights.find((h) => h.id === 'P3').state.move);
+  for (const mode of ['leak', 'simswap', 'mail', 'desk', 'lockout']) assert.equal(note('parent', mode, 'ja'), null, mode);
+  for (const id of ['worker', 'student']) for (const mode of MODES) assert.equal(note(id, mode, 'ja'), null, id + ' ' + mode);
+});
+
+test('F: why the accounts are saved: one of three sentences when a change saves an account, and the entrance it names is the '
+  + 'entrance the attacker used before the change (every change of the three people, every mode)', () => {
+  const counts = { spread: 0, single: 0, own: 0, none: 0 };
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const mv of pv(id).moves) {
+      const savedAny = Object.values(mv.cards).some((c) => c.saved.length);
+      for (const mode of MODES) {
+        const ja = V.whyLine(p, pv(id), mv, mode, M, 'ja'), en = V.whyLine(p, pv(id), mv, mode, M, 'en');
+        assert.equal(ja === null, !savedAny, id + ' ' + mv.id + ' ' + mode);
+        assert.equal(en === null, ja === null, id + ' ' + mv.id + ' ' + mode);
+        if (ja === null) { counts.none++; continue; }
+        assert.doesNotMatch(ja + en, /[{}]|undefined|null/, ja + ' / ' + en);
+        assert.doesNotMatch(en, /[぀-ヿ㐀-䶿一-鿿]/, en);
+        // The card the sentence speaks of: the mode's card when it saves something, else the card that saves the most
+        const cards = p.cards.map((c) => c.id).filter((c) => mv.cards[c].saved.length);
+        const card = cards.includes(mode) ? mode : cards.sort((a, b) => mv.cards[b].saved.length - mv.cards[a].saved.length)[0];
+        if (mv.cards[card].saved.includes(mv.service)) {
+          assert.equal(pv(id).cards[card].via[mv.service], mv.service + '.' + mv.method, 'the entrance the attacker used: ' + ja);
+          const m = p.services.find((s) => s.id === mv.service).methods.find((x) => x.id === mv.method);
+          assert.ok(ja.includes('「' + m.label.ja + '」から倒れ'), ja);
+          counts[mv.cards[card].saved.length > 1 ? 'spread' : 'single']++;
+        } else {
+          assert.ok(ja.startsWith('変更前は、漏れたパスワード'), ja);
+          counts.own++;
+        }
+      }
+    }
+  }
+  // 534 = 89 changes × 6 modes: 33 changes save nothing with any card (198), the 3 passwords of their own save only from the breach
+  // (18), and the others name the entrance that was changed, with or without the accounts that fell from it
+  assert.deepEqual(counts, { spread: 96, single: 222, own: 18, none: 198 });
+  // The examples of the proposal: W2 (two cards with the same accounts saved), P3, and the worker's breach suggestion
+  const why = (id, moveId, mode, lang) => V.whyLine(persona(id), pv(id), pv(id).moves.find((m) => m.id === moveId), mode, M, lang);
+  assert.equal(why('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'all', 'ja'), '変更前は、メールの乗っ取りでもソーシャルエンジニアリングでも、'
+    + 'メインのメールが復旧の「予備のメールで再設定」から倒れ、そこからポイントアプリなど5つも倒れていました。変更後は、メインのメールを含むこの6つが倒れません。');
+  assert.equal(why('parent', 'replace:bank.recSms:phone>idcheck', 'simswap', 'ja'),
+    '変更前は、SIMスワップのカードで、銀行のネットバンキングが復旧の「SMSで再設定」から倒れていました。変更後は、このカードでは倒れません。');
+  assert.equal(why('worker', 'replace:points.login:pw:red>pw:own-points', 'leak', 'ja'), '変更前は、漏れたパスワードAをほかのアカウントでも使っていたため、'
+    + 'ポイントアプリのほかに5つが倒れていました。変更後に漏れるのはポイントアプリだけのパスワードDなので、この5つは倒れません。');
+  assert.equal(why('parent', 'replace:bank.recSms:phone>idcheck', 'simswap', 'en'), 'Before the change, with the SIM swap card, Online banking fell '
+    + 'through the recovery entrance “Reset by SMS”. After the change, it no longer falls to this card.');
 });
 
 test('F: the map after a change uses the person after the change (89 changes × 4 cards)', () => {
@@ -202,22 +298,27 @@ test('F: the same-entrance table for W3 (the worker\'s brokerage re-registration
   assert.deepEqual(ids, ['replace:sec.recMailSms:mailMain>mailOld', 'replace:sec.recMailSms:mailMain>paper:sec',
     'replace:sec.recMailSms:phone>paper:sec', 'replace:sec.recMailSms:phone>idcheck', 'remove:sec.recMailSms']);
   const ja = V.sameRows(persona('worker'), pv('worker'), 'remove:sec.recMailSms', M, 'ja');
-  assert.equal(ja.heading, 'ネット証券の復旧（メール＋SMSでパスキーを再登録）を変える手（5）');
+  assert.equal(ja.heading, 'ネット証券の復旧「メール＋SMSでパスキーを再登録」の変え方（5つ）');
+  // The change names are sentences like the change titles; the lockout cells say in words what is lost and which account
+  // it locks out (or no longer locks out), one line each, and "no change" when nothing changes
   assert.deepEqual(ja.rows.map((r) => [r.move, r.saved, r.newly, r.lock, r.pair]), [
-    ['メインのメール→古いメール', 1, 0, '－', '新たに：スマホと古いメール'],
-    ['メインのメール→紙', 1, 0, '－', '新たに：スマホと紙'],
-    ['SMS→紙', 1, 0, '－', 'スマホと番号→スマホと紙'],
-    ['SMS→書類', 1, 0, '－', '解ける：スマホと番号'],
-    ['外す', 1, 0, '新たに×：ネット証券（スマホ）', '－'],
+    ['メインのメールを、古いメールに切り替える', 1, 0, ['変わらない'], ['スマホと古いメールを一緒に失うと入れない：ネット証券']],
+    ['メインのメールを、紙の回復コードに切り替える', 1, 0, ['変わらない'], ['スマホと紙の回復コードを一緒に失うと入れない：ネット証券']],
+    ['電話番号（SMS）を、紙の回復コードに切り替える', 1, 0, ['変わらない'], ['一緒に失うと入れなくなる組：スマホと番号→スマホと紙の回復コード（ネット証券）']],
+    ['電話番号（SMS）を、書類での本人確認に切り替える', 1, 0, ['変わらない'], ['スマホと番号を一緒に失っても入れる：ネット証券']],
+    ['この復旧の入口を外す', 1, 0, ['スマホを失うと入れない：ネット証券'], ['変わらない']],
   ]);
   const en = V.sameRows(persona('worker'), pv('worker'), 'remove:sec.recMailSms', M, 'en');
-  assert.equal(en.heading, 'Online brokerage: changes to recovery (Re-register passkey by email + SMS) (5)');
+  assert.equal(en.heading, 'Ways to change the recovery entrance “Re-register passkey by email + SMS” of Online brokerage (5)');
   assert.deepEqual(en.rows.map((r) => [r.move, r.saved, r.newly, r.lock, r.pair]), [
-    ['Main email → Old email', 1, 0, '–', 'New: Phone and Old email'],
-    ['Main email → Paper codes', 1, 0, '–', 'New: Phone and Paper codes'],
-    ['SMS → Paper codes', 1, 0, '–', 'Phone and Number → Phone and Paper codes'],
-    ['SMS → Documents', 1, 0, '–', 'Unlocked: Phone and Number'],
-    ['Remove', 1, 0, 'Newly locked out: Online brokerage (Phone)', '–'],
+    ['Use the old email instead of the main email', 1, 0, ['No change'], ['Locked out after losing the phone and the old email together: Online brokerage']],
+    ['Use paper recovery codes instead of the main email', 1, 0, ['No change'],
+      ['Locked out after losing the phone and the paper codes together: Online brokerage']],
+    ['Use paper recovery codes instead of the phone number (SMS)', 1, 0, ['No change'],
+      ['Pair that locks you out: the phone and the number → the phone and the paper codes (Online brokerage)']],
+    ['Use a document check instead of the phone number (SMS)', 1, 0, ['No change'],
+      ['Can get in even after losing the phone and the number together: Online brokerage']],
+    ['Remove this recovery entrance', 1, 0, ['Locked out after losing the phone: Online brokerage'], ['No change']],
   ]);
 });
 
@@ -232,24 +333,31 @@ test('F: the same-entrance table names accounts in full (the parent\'s brokerage
   assert.deepEqual(removal.losses.device.newlyLocked, ['sec']);
   assert.ok(/）$/.test(sec.label.ja) && /\)$/.test(sec.label.en));
   const ja = V.sameRows(p, pv('parent'), removal.id, M, 'ja');
-  assert.equal(ja.heading, sec.label.ja + 'の復旧（' + method.label.ja + '）を変える手（' + moves.length + '）');
-  assert.equal(ja.rows.find((r) => r.id === removal.id).lock, '新たに×：' + sec.label.ja + '（スマホ）');
+  assert.equal(ja.heading, sec.label.ja + 'の復旧「' + method.label.ja + '」の変え方（' + moves.length + 'つ）');
+  assert.deepEqual(ja.rows.find((r) => r.id === removal.id).lock, ['スマホを失うと入れない：' + sec.label.ja]);
   const en = V.sameRows(p, pv('parent'), removal.id, M, 'en');
-  assert.equal(en.heading, sec.label.en + ': changes to recovery (' + method.label.en + ') (' + moves.length + ')');
-  assert.equal(en.rows.find((r) => r.id === removal.id).lock, 'Newly locked out: ' + sec.label.en + ' (Phone)');
+  assert.equal(en.heading, 'Ways to change the recovery entrance “' + method.label.en + '” of ' + sec.label.en + ' (' + moves.length + ')');
+  assert.deepEqual(en.rows.find((r) => r.id === removal.id).lock, ['Locked out after losing the phone: ' + sec.label.en]);
 });
 
-test('F: the select of tab 3 lists every change of the person, grouped by account, without the account at the head', () => {
-  // The change sentences of the spec (W2, W3, P3 and the office worker's breach suggestion), less "{account}：" / "{account}: "
+test('F: the select of tab 3 lists every change of the person, grouped by account, each option named by the change itself', () => {
+  // The optgroup names the account; the option is the heading of the change without the account at its head — the full
+  // sentence that appears right under the select, less the account prefix. The option and heading read the same.
   const known = {
-    worker: [['replace:mailMain.recMail:mailOld>paper:mailMain', '復旧（予備のメールで再設定）の古いメールを紙の回復コードに付け替える',
-      'in recovery (Reset via backup email), replace the old email with paper recovery codes'],
+    worker: [['replace:mailMain.recMail:mailOld>paper:mailMain', '復旧で使う古いメールを、紙の回復コードに切り替える',
+      'for recovery, use paper recovery codes instead of the old email'],
     ['remove:sec.recMailSms', '復旧（メール＋SMSでパスキーを再登録）を外す', 'remove recovery (Re-register passkey by email + SMS)'],
-    ['replace:points.login:pw:red>pw:own-points', 'ログイン（パスワード）のパスワード 赤Aをこのアカウントだけの系統に付け替える',
-      'in log-in (Password), replace Password Red A with a family used only here']],
-    parent: [['replace:bank.recSms:phone>idcheck', '復旧（SMSで再設定）の電話番号（SMS）を書類での本人確認に付け替える',
-      'in recovery (Reset by SMS), replace the phone number (SMS) with a document check']],
-    student: [],
+    ['add:mailMain.login:+device', 'ログイン（パスワード）に、スマホの認証アプリかパスキーを追加する',
+      'add an authenticator app or passkey on the phone to log-in (Password)'],
+    ['replace:points.login:pw:red>pw:own-points', 'ログインで使うパスワードAを、このアカウントだけのパスワードDに切り替える',
+      'for log-in, use a new Password D (this account only) instead of Password A']],
+    // A password of its own takes the letter after the person's passwords (D for the office worker, B for the parent, C for the student)
+    parent: [['replace:bank.recSms:phone>idcheck', '復旧で使う電話番号（SMS）を、書類での本人確認に切り替える',
+      'for recovery, use a document check instead of the phone number (SMS)'],
+    ['replace:points.login:pw:yellow>pw:own-points', 'ログインで使うパスワードAを、このアカウントだけのパスワードBに切り替える',
+      'for log-in, use a new Password B (this account only) instead of Password A']],
+    student: [['replace:game.login:pw:green>pw:own-game', 'ログインで使うパスワードAを、このアカウントだけのパスワードCに切り替える',
+      'for log-in, use a new Password C (this account only) instead of Password A']],
   };
   const total = { worker: 41, parent: 24, student: 24 };
   for (const id of PEOPLE) {
@@ -257,13 +365,15 @@ test('F: the select of tab 3 lists every change of the person, grouped by accoun
     for (const lang of ['ja', 'en']) {
       const groups = V.moveOptions(p, pv(id), M, lang);
       // one group per account that has a change, in the order of the data, named by the full name
-      const accounts = p.services.filter((s) => vectors.personas[id].moves.some((m) => m.service === s.id));
-      assert.deepEqual(groups.map((g) => [g.account, g.label]), accounts.map((s) => [s.id, s.label[lang]]), id + ' ' + lang);
+      assert.deepEqual(groups.map((g) => [g.account, g.label]), p.services.filter((s) => vectors.personas[id].moves.some((m) => m.service === s.id))
+        .map((s) => [s.id, s.label[lang]]), id + ' ' + lang);
       // every change of the person once, in the order of the list
       assert.deepEqual(groups.flatMap((g) => g.moves.map((m) => m.id)), vectors.personas[id].moves.map((m) => m.id), id + ' ' + lang);
       assert.equal(groups.flatMap((g) => g.moves).length, total[id]);
       for (const g of groups) {
-        for (const m of g.moves) assert.ok(m.text && !m.text.startsWith(g.label) && !/^[：:]/.test(m.text), id + ' ' + m.id + ': ' + m.text);
+        // The option does not start with the account (the optgroup label does); no two options of one account read the same
+        for (const m of g.moves) assert.ok(!m.text.startsWith(g.label + (lang === 'ja' ? '：' : ': ')), id + ' ' + m.id + ': ' + m.text);
+        assert.equal(new Set(g.moves.map((m) => m.text)).size, g.moves.length, id + ' ' + g.account + ' ' + lang);
       }
       const text = (moveId) => groups.flatMap((g) => g.moves).find((m) => m.id === moveId).text;
       for (const [moveId, ja, en] of known[id]) assert.equal(text(moveId), lang === 'ja' ? ja : en, moveId);
@@ -273,10 +383,10 @@ test('F: the select of tab 3 lists every change of the person, grouped by accoun
 
 // The cell of a lockout table from the known vectors and the cell types of the screen text (tab 2), for comparison.
 const LOCK_CELL = {
-  ja: { ok: '○', locked: '×', gone: '消', partner: { device: 'スマホ', number: '番号', paper: '紙' },
-    plus: (ps) => '○（＋' + ps.join('か＋') + 'で×）' },
+  ja: { ok: '○', locked: '×', gone: '消えた', partner: { device: 'スマホ', number: '番号', paper: '紙の回復コード' },
+    plus: (ps) => '△（' + ps.join('か') + 'も失うと×）' },
   en: { ok: '○', locked: '×', gone: 'gone', partner: { device: 'the phone', number: 'the number', paper: 'the paper codes' },
-    plus: (ps, last) => '○ (× if ' + ps.join(' or ') + (last === 'paper' ? ' go too)' : ' goes too)') },
+    plus: (ps, last) => '△ (× if ' + ps.join(' or ') + (last === 'paper' ? ' go too)' : ' goes too)') },
 };
 const lockText = (id, cell, lang) => {
   const f = LOCK_CELL[lang];
@@ -311,12 +421,13 @@ test('F: the lockout table before and after a change: only the accounts whose ce
   assert.ok(tables > 0 && rows >= tables);
   // Headings: each loss card before and after; W3 (the worker's brokerage, removed re-registration)
   const ja = V.lockChanges(persona('worker'), pv('worker'), 'remove:sec.recMailSms', M, 'ja');
-  assert.deepEqual(ja.columns.map((c) => c.head), ['スマホ（前）', 'スマホ（後）', '番号（前）', '番号（後）', '古いメール（前）', '古いメール（後）']);
+  assert.deepEqual(ja.columns.map((c) => c.head), ['スマホ（変更前）', 'スマホ（変更後）', '番号（変更前）', '番号（変更後）', '古いメール（変更前）',
+    '古いメール（変更後）']);
   assert.deepEqual(ja.rows.map((r) => [r.id, r.name, r.cells.map((c) => c.text)]),
-    [['sec', 'ネット証券', ['○（＋番号で×）', '×', '○（＋スマホで×）', '○（＋スマホで×）', '○', '○（＋スマホで×）']]]);
+    [['sec', 'ネット証券', ['△（番号も失うと×）', '×', '△（スマホも失うと×）', '△（スマホも失うと×）', '○', '△（スマホも失うと×）']]]);
   const en = V.lockChanges(persona('worker'), pv('worker'), 'remove:sec.recMailSms', M, 'en');
-  assert.deepEqual(en.columns.map((c) => c.head), ['Phone (Before)', 'Phone (After)', 'Number (Before)', 'Number (After)',
-    'Old email (Before)', 'Old email (After)']);
+  assert.deepEqual(en.columns.map((c) => c.head), ['Phone (before)', 'Phone (after)', 'Number (before)', 'Number (after)',
+    'Old email (before)', 'Old email (after)']);
   // W2 changes nothing in the lockout table; P3 unlocks the bank when the number is given up (× before, ○ after)
   assert.deepEqual(V.lockChanges(persona('worker'), pv('worker'), 'replace:mailMain.recMail:mailOld>paper:mailMain', M, 'ja').rows, []);
   const p3 = V.lockChanges(persona('parent'), pv('parent'), 'replace:bank.recSms:phone>idcheck', M, 'ja').rows;
@@ -447,9 +558,9 @@ test('F: the diagram layout (columns, lines from left to right, no drawn line un
     student: [credentials('student'), ['mailUni'], ['mailFree'], ['sns', 'game', 'flea', 'sub', 'sec']],
   };
   assert.deepEqual(PEOPLE.map((id) => expectedColumns[id][0].length), [7, 5, 6]);
-  // The parent's three columns are wider than the average gap would make them (512), so that the vertical lanes keep 4px
-  // between them (see the lane test)
-  const limit = { worker: 704, parent: 532, student: 704 };
+  // The width of a diagram is set by its number of columns (four: 960, three: 800), the same in both languages and before and
+  // after every change; the boxes and cards stay inside it with the margin of 12 (narrower frames show the diagram smaller)
+  const limit = { worker: 960, parent: 800, student: 960 };
   const near = (a, b) => Math.abs(a - b) < 0.01;
   let afterLines = 0, layouts = 0;
   const inspect = (L, lines, id, label) => {
@@ -494,7 +605,20 @@ test('F: the diagram layout (columns, lines from left to right, no drawn line un
       assert.equal(off, null, name + ': the point ' + off + ' is off the drawn path');
       assert.equal(away, null, name + ': the drawn path at ' + away + ' is away from the points');
     }
-    assert.ok(L.width <= limit[id], label + ': width ' + L.width);
+    assert.equal(L.width, limit[id], label + ': width ' + L.width);
+    // Every box, card and entrance row inside the diagram; no text cut with … (a long requirement wraps at ＋ instead)
+    for (const [key, b] of Object.entries(L.box)) {
+      assert.ok(b.x >= 12 && b.x + b.w <= L.width - 12 && b.y >= 0 && b.y + b.h <= L.height, label + ': ' + key + ' inside');
+      assert.ok(b.lines.every((line) => !line.value.endsWith('…')), label + ': ' + key + ' ' + b.lines.map((line) => line.value));
+    }
+    for (const [key, r] of Object.entries(L.rows)) {
+      for (const text of [r.before, r.after]) if (text) assert.equal(text.title, null, label + ': ' + key + ' cut');
+    }
+    // One line per column heading, each starting at its column
+    assert.ok(L.heads.every((head) => head.lines.length === 1), label + ': the column headings take one line');
+    // The email columns start under the first card of the other accounts (the lines to that card pass over the emails)
+    const last = L.columns.length - 1, first = L.box[L.columns[last][0]];
+    for (let k = 1; k < last; k++) assert.ok(L.box[L.columns[k][0]].y > first.y + first.h, label + ': column ' + k + ' under the first card');
     layouts++;
   };
   // The points of the lines are made only when asked for (the screen never uses them)
@@ -509,7 +633,6 @@ test('F: the diagram layout (columns, lines from left to right, no drawn line un
       for (const move of C.enumerateMoves(p)) {
         const L = V.layout(p, C.applyMove(p, move), M, lang, sampled);
         assert.deepEqual(L.columns.slice(1), expectedColumns[id].slice(1), move.id);
-        for (const [key, row] of Object.entries(base.rows)) assert.equal(L.rows[key].x, row.x, move.id);
         inspect(L, L.lines, id, id + ' ' + lang + ' after ' + move.id);
         inspect(L, L.linesBefore, id, id + ' ' + lang + ' before ' + move.id);
         if (lang === 'ja') afterLines += L.lines.length;
@@ -606,11 +729,17 @@ test('F: no two lines lie on top of each other, and the vertical lanes stay insi
     const p = persona(id);
     for (const lang of ['ja', 'en']) {
       const base = V.layout(p, null, M, lang);
-      assert.equal(base.gaps.reduce((a, b) => a + b, 0) + 2 * 12 + 104 + 160 * (base.columns.length - 1), base.width, id);
+      // The columns and the gaps between them add up within the width (what is left goes to both sides equally)
+      const fits = (L) => {
+        const last = L.columns.length - 1;
+        assert.equal(L.widths.reduce((a, b) => a + b, 0) + L.gaps.reduce((a, b) => a + b, 0), L.left[last] + L.widths[last] - L.left[0], id);
+        assert.ok(L.left[0] >= 12 && L.left[last] + L.widths[last] + 12 <= L.width, id + ' ' + L.left + ' ' + L.widths);
+      };
+      fits(base);
       inspect(base, base.lines, id + ' ' + lang);
       for (const move of C.enumerateMoves(p)) {
         const L = V.layout(p, C.applyMove(p, move), M, lang);
-        assert.deepEqual(L.gaps, base.gaps, move.id + ': the columns stay put before and after a change');
+        fits(L);
         inspect(L, L.lines, id + ' ' + lang + ' after ' + move.id);
         inspect(L, L.linesBefore, id + ' ' + lang + ' before ' + move.id);
       }
@@ -636,49 +765,43 @@ function laneSpacing(L, lines) {
   });
 }
 
-test('F: the lanes of the usual diagrams: 4px apart for the parent (its diagram is made wider for that); worker and student', () => {
-  // worker: 704 wide with 3.5px in the outer gaps; student: 704 wide with 4px; parent: 532 wide (within the 649px that a
-  // 720px screen shows without scrolling the figure) with 4px in both gaps
-  const expected = { worker: [704, [3.5, 4, 3.5]], parent: [532, [4, 4]], student: [704, [4, 4, 4]] };
+test('F: the lanes of the diagrams: 6px apart in the gap after the left column, never closer than 4px anywhere', () => {
+  // The lines from the left column (passwords, the phone and so on) go down a lane of their own in the gap after it, 6px apart,
+  // in the usual diagrams of the three people in both languages
   for (const id of PEOPLE) {
     for (const lang of ['ja', 'en']) {
       const L = V.layout(persona(id), null, M, lang);
-      const [width, spacing] = expected[id];
-      assert.equal(L.width, width, id + ' ' + lang);
-      assert.deepEqual(laneSpacing(L, L.lines).map((s) => (s === null ? null : Math.round(s * 100) / 100)), spacing, id + ' ' + lang);
+      assert.equal(L.width, id === 'parent' ? 800 : 960, id + ' ' + lang);
+      assert.equal(laneSpacing(L, L.lines)[0], 6, id + ' ' + lang);
     }
   }
-  assert.ok(expected.parent[0] <= 649);
-  // The parent's diagrams before and after every change keep the width of the usual diagram, and every lane spacing of each of
-  // them (per change, before and after, language and gap) is more than 2.5px and at most 4px. Both gaps of all of them have two
-  // lanes or more (24 changes × before and after × ja and en × 2 gaps), so that no diagram passes for want of a spacing.
+  // Before and after every change of the three people, in both languages, no two lanes of a gap are closer than 4px
   let checked = 0;
-  for (const lang of ['ja', 'en']) {
-    const p = persona('parent');
-    const usual = V.layout(p, null, M, lang);
-    for (const move of C.enumerateMoves(p)) {
-      const L = V.layout(p, C.applyMove(p, move), M, lang);
-      assert.equal(L.width, usual.width, move.id);
-      for (const [side, lines] of [['after', L.lines], ['before', L.linesBefore]]) {
-        laneSpacing(L, lines).forEach((s, gap) => {
-          const label = 'parent ' + move.id + ' ' + lang + ' ' + side + ' gap ' + gap + ': ' + s;
-          assert.ok(s !== null, label);
-          assert.ok(s > 2.5 && s <= 4 + 1e-9, label);
-          checked++;
-        });
+  for (const id of PEOPLE) {
+    for (const lang of ['ja', 'en']) {
+      for (const move of C.enumerateMoves(persona(id))) {
+        const L = V.layout(persona(id), C.applyMove(persona(id), move), M, lang);
+        for (const lines of [L.lines, L.linesBefore]) {
+          for (const s of laneSpacing(L, lines)) {
+            if (s === null) continue;
+            assert.ok(s >= 4, id + ' ' + move.id + ' ' + lang + ': ' + s);
+            checked++;
+          }
+        }
       }
     }
   }
-  assert.equal(checked, 24 * 2 * 2 * 2);
+  assert.ok(checked > 89 * 2 * 2);
 });
 
 // The four-cards table: per person, every account (row) and every card (column): ●step or – and the sentence read aloud.
 // The expected cells are built from the ranks of the known vectors and the sentence types of the screen text.
 const FOUR = {
-  ja: { heads: [['leak', '漏えい', '漏えい'], ['simswap', 'SIM', 'SIMスワップ'], ['mail', 'メール', 'メールの乗っ取り'],
-    ['desk', '窓口', '窓口のなりすまし']], none: '－', readNone: '倒れない', readGiven: 'カードが直接渡した', readFalls: (r) => '段' + r + 'で倒れる' },
-  en: { heads: [['leak', 'Breach', 'Breach'], ['simswap', 'SIM', 'SIM swap'], ['mail', 'Email', 'Email takeover'],
-    ['desk', 'Desk', 'Help-desk impersonation']], none: '–', readNone: 'Does not fall', readGiven: 'Given directly by the card',
+  ja: { heads: [['leak', '漏えい', '漏えい'], ['simswap', 'SIMスワップ', 'SIMスワップ'], ['mail', 'メールの乗っ取り', 'メールの乗っ取り'],
+    ['desk', 'ソーシャルエンジニアリング', 'ソーシャルエンジニアリング']], none: '－', readNone: '倒れない', readGiven: '最初に乗っ取られた',
+  readFalls: (r) => '段' + r + 'で倒れる' },
+  en: { heads: [['leak', 'Breach', 'Breach'], ['simswap', 'SIM swap', 'SIM swap'], ['mail', 'Email takeover', 'Email takeover'],
+    ['desk', 'Social engineering', 'Social engineering']], none: '–', readNone: 'Does not fall', readGiven: 'Taken over first',
   readFalls: (r) => 'Falls at step ' + r },
 };
 const shortLabel = (label) => label.replace(/\s*[（(][^（）()]*[）)]$/, '');
@@ -716,10 +839,19 @@ test('F: the nine highlights (three per person) and the counts in their titles',
     const h = V.highlights.find((x) => x.id === hid);
     return V.highlightTitle(h, pv(h.person), M, lang);
   };
-  assert.equal(title('W1', 'ja'), '漏えい1枚で、6つのアカウントが倒れるまで');
-  assert.equal(title('W1', 'en'), 'One breach, 6 accounts falling');
-  assert.equal(title('S2', 'ja'), '大学のメールの乗っ取りで、7つすべて');
-  assert.equal(title('S2', 'en'), 'University email taken over: all 7');
+  assert.equal(title('W1', 'ja'), 'ポイントアプリの漏えいから、6つのアカウントが倒れるまで');
+  assert.equal(title('W1', 'en'), 'From the points-app breach to 6 fallen accounts');
+  assert.equal(title('S2', 'ja'), '大学のメールを乗っ取られると、7つのアカウントがすべて倒れる');
+  assert.equal(title('S2', 'en'), 'University email taken over: all 7 accounts fall');
+  // Where each highlight takes you: a line to look at there, with the words of that screen filled in
+  for (const h of V.highlights) {
+    for (const lang of ['ja', 'en']) {
+      const look = V.highlightLook(h, M, lang);
+      assert.ok(look.length > 20 && !/\{\w+\}/.test(look), h.id + ' ' + lang + ': ' + look);
+    }
+  }
+  assert.ok(V.highlightLook(V.highlights.find((h) => h.id === 'W2'), M, 'ja').includes('「' + (M.ja.attackColBeforeAfter || M.ja.attackColAfter) + '」'));
+  assert.ok(V.highlightLook(V.highlights.find((h) => h.id === 'W3'), M, 'ja').includes('「' + M.ja.lockOneHeading + '」'));
   // The person and the whole state of each highlight are the column 状態 of the spec's table (3人の見せ場の置き場所):
   // tab 1 = chain, tab 2 = lockout, tab 3 = compare; 4枚の合計 = all; 段0 = 0, 最後の段 = last; 選ぶ = the account chosen
   const STATES = {
@@ -746,8 +878,8 @@ test('F: the nine highlights (three per person) and the counts in their titles',
 
 // The marks of the printed tables, written out per language: a card's step and the backdoor mark, and a lockout cell
 const PRINT_MARK = {
-  ja: { none: '－', backdoor: (rank) => '●' + rank + '裏', ok: '○', locked: '×', gone: '消', plus: '○（＋' },
-  en: { none: '–', backdoor: (rank) => '●' + rank + ' bd', ok: '○', locked: '×', gone: 'gone', plus: '○ (× if ' },
+  ja: { none: '－', backdoor: (rank) => '●' + rank + '裏口', ok: '○', locked: '×', gone: '消えた', plus: '△（' },
+  en: { none: '–', backdoor: (rank) => '●' + rank + ' backdoor', ok: '○', locked: '×', gone: 'gone', plus: '△ (× if ' },
 };
 
 test('F: the printed tables follow the known vectors: one row per account (9, 7, 7), the cards at their last step, the lockout cells', () => {
@@ -783,13 +915,26 @@ test('F: the printed tables follow the known vectors: one row per account (9, 7,
   assert.deepEqual(sizes, { worker: 9, parent: 7, student: 7 });
 });
 
-test('F: the symbols table has nine rows of five columns, the blank cells of the spec left empty', () => {
+test('F: the symbols tables: what an entrance needs (seven rows of four columns) and the marks and lines (fifteen rows of two '
+  + 'columns), no blank cell; a mark is named by the key the screen draws it with', () => {
   for (const lang of ['ja', 'en']) {
-    const symbols = V.symbolTable(M, lang);
-    assert.equal(symbols.caption, M[lang].symbolCaption);
-    assert.equal(symbols.rows.length, 9);
-    assert.ok(symbols.rows.every((row) => row.cells.length === 5));
-    assert.deepEqual(symbols.rows.map((row) => row.cells.filter((cell) => cell !== null).length), [5, 5, 5, 5, 5, 5, 5, 3, 2]);
+    const T = M[lang], symbols = V.symbolTable(M, lang), marks = V.markTable(M, lang);
+    assert.equal(symbols.caption, T.symbolCaption);
+    assert.deepEqual(symbols.rows.map((row) => row.id), ['Family', 'Phone', 'Sms', 'Info', 'Doc', 'Paper', 'Mail']);
+    assert.ok(symbols.rows.every((row) => row.cells.length === 4 && row.cells.every((cell) => typeof cell === 'string' && cell.trim())));
+    assert.equal(marks.caption, T.markCaption);
+    assert.deepEqual(marks.columns, [T.symbolColSymbol, T.symbolColMeaning]);
+    assert.deepEqual(marks.rows.map((row) => row.id), ['Role', 'Lines', 'Step', 'Open', 'Backdoor', 'ThisStep', 'Earlier', 'None', 'Star', 'Saved', 'Newly',
+      'Changed', 'Ok', 'Plus', 'Locked', 'Gone']);
+    assert.ok(marks.rows.every((row) => row.cells.length === 2 && row.cells.every((cell) => typeof cell === 'string' && cell.trim())));
+    // The marks are those drawn on the screen: the diagram's tag, the cells of the map table and of the lockout table, and the tags of
+    // the map after a change (守れた, 新たに倒れる, and the tags of the changed entrance before and after it)
+    const name = Object.fromEntries(marks.rows.map((row) => [row.id, row.cells[0]]));
+    assert.deepEqual([name.Open, name.Backdoor, name.ThisStep, name.None, name.Ok, name.Plus, name.Locked, name.Gone, name.Star],
+      [T.openTag, T.cellBackdoor, T.cellThisStep, T.cellNone, T.cellOk, T.cellPlusMark, T.cellLocked, T.cellGone, '★']);
+    assert.deepEqual([name.Saved, name.Newly], [T.mapBadgeSaved, T.mapBadgeNewly]);
+    assert.ok(name.Changed.includes(T.changedTagBefore) && name.Changed.includes(T.changedTagAfter), lang + ': ' + name.Changed);
+    assert.ok(V.fill(T.cellPlus1, { p: T.partnerNumber }).startsWith(T.cellPlusMark), lang + ': △ starts the cell of one more loss');
   }
 });
 
@@ -802,13 +947,12 @@ const samplePerson = (id) => sample.personas.find((p) => p.id === id);
 const PERSON_NAMES = { ja: { worker: '会社員 ハルト', parent: '高齢の親 シズエ', student: '学生 ミオ' },
   en: { worker: 'Haruto, office worker', parent: 'Shizue, older parent', student: 'Mio, student' } };
 const fillText = (template, values) => template.replace(/\{(\w+)\}/g, (m, name) => (name in values ? String(values[name]) : m));
-const COLOR_KEYS = { red: 'colorRed', blue: 'colorBlue', gray: 'colorGray', yellow: 'colorYellow', green: 'colorGreen', purple: 'colorPurple' };
 const TAG_KEYS = { device: 'tagDevice', phone: 'tagPhone', info: 'tagInfo', idcheck: 'tagIdcheck' };
 // The short tag of a requirement, written from the data and the message templates (not from DominoView)
 const tagOf = (id, person, lang) => {
   const c = person.credentials.find((x) => x.id === id);
   if (!c) return shortLabel(person.services.find((s) => s.id === id).label[lang]);
-  if (c.type === 'pw') return fillText(M[lang].tagFamily, { color: M[lang][COLOR_KEYS[c.family]], symbol: c.symbol });
+  if (c.type === 'pw') return fillText(M[lang].tagFamily, { symbol: c.symbol });
   return M[lang][TAG_KEYS[c.type]];
 };
 const entranceOf = (m, person, lang) => fillText(M[lang][m.role === 'login' ? 'entranceLogin' : 'entranceRecovery'],
@@ -817,7 +961,7 @@ const entranceOf = (m, person, lang) => fillText(M[lang][m.role === 'login' ? 'e
 test('F: lesson 1, the social media of the office worker under the breach card (step by step) and AND / OR for the bank', () => {
   const k = known('worker').cards.leak, worker = samplePerson('worker');
   const sns = worker.services.find((s) => s.id === 'sns');
-  // The known scene of the spec: log-in Red A + SMS, recovery by the main email, falls at step 2 through the recovery entrance
+  // The known scene of the spec: log-in Password A + SMS, recovery by the main email, falls at step 2 through the recovery entrance
   assert.deepEqual(sns.methods.map((m) => [m.role, m.requires]), [['login', ['pw:red', 'phone']], ['recovery', ['mailMain']]]);
   assert.equal(k.rank.sns, 2);
   assert.equal(k.via.sns, 'sns.recMail');
@@ -837,16 +981,17 @@ test('F: lesson 1, the social media of the office worker under the breach card (
       });
       return [fillText(T.lessonStep, { step }), added.join(T.sepList), ...sns.methods.map((m) => {
         const missing = m.requires.filter((r) => !held.has(r));
-        return missing.length ? fillText(T.lessonMissing, { items: missing.map((r) => tagOf(r, worker, lang)).join(T.sepList) }) : T.lessonMet;
+        return missing.length ? fillText(T.lessonMissing, { items: missing.map((r) => tagOf(r, worker, lang)).join(T.sepList) })
+          : step < 2 ? T.lessonMetNext : T.lessonMet;
       }), step < 2 ? T.srNotYet : fillText(T.srFallen, { rank: 2, via: sns.methods[1].label[lang] })];
     });
     assert.deepEqual(table.rows, expected, lang);
   }
   // Written out once in Japanese: the flow of the spec
   assert.deepEqual(lessonTable('flow', 'ja').rows, [
-    ['段0', 'パスワード 赤A', '足りない：SMS', '足りない：メインのメール', 'まだ倒れていない'],
-    ['段1', 'メインのメール・ポイントアプリ・通販', '足りない：SMS', 'そろった', 'まだ倒れていない'],
-    ['段2', 'SNS・フリマアプリ・写真のクラウド', '足りない：SMS', 'そろった', '段2で倒れる。開けた入口：登録メールで再設定']]);
+    ['段0', 'パスワードA', '足りない：SMS', '足りない：メインのメール', 'まだ倒れていない'],
+    ['段1', 'メインのメール・ポイントアプリ・通販', '足りない：SMS', 'そろった（次の段で開く）', 'まだ倒れていない'],
+    ['段2', 'SNS・フリマアプリ・写真のクラウド', '足りない：SMS', 'そろった', '段2で倒れる。攻撃者が使った入口：登録メールで再設定']]);
   // The bank and the SIM-swap card: AND / OR keeps it standing, counting every line as OR makes it fall (test B of the spec)
   const s = known('worker').cards.simswap;
   assert.ok(!s.services.includes('bank') && s.naiveServices.includes('bank') && s.naiveExtra.includes('bank'));
@@ -858,10 +1003,10 @@ test('F: lesson 1, the social media of the office worker under the breach card (
       [T.lesson1CountAllOr, fillText(T.lesson1OpensWith, { items: tagOf('phone', worker, lang) }), T.lessonFalls]], lang);
   }
   assert.deepEqual(lessonTable('andOr', 'ja').rows, [['かつ・または（この教材）', '足りない：個人情報', '倒れない'],
-    ['すべての線を「または」として数える', 'SMSだけで開く', '倒れる']]);
+    ['「かつ」も「または」として数える', 'SMSだけで開く', '倒れる']]);
 });
 
-test('F: lesson 2, the accounts of each password family (counted from the data)', () => {
+test('F: lesson 2, the accounts of each password (counted from the data)', () => {
   for (const lang of ['ja', 'en']) {
     const table = lessonTable('families', lang);
     const expected = [];
@@ -874,11 +1019,12 @@ test('F: lesson 2, the accounts of each password family (counted from the data)'
     }
     assert.deepEqual(table.rows, expected, lang);
   }
-  // The known values of the spec: Red A on five accounts, one family for the parent, Green A on the free email, social media and a game
+  // The known values of the spec: Password A on five accounts (office worker), one password for the parent, Password A on the
+  // free email, social media and a game (student)
   const rows = lessonTable('families', 'ja').rows;
-  assert.deepEqual(rows[0].slice(1), ['赤A', '5', 'メインのメール・ポイントアプリ・通販・SNS・写真のクラウド']);
+  assert.deepEqual(rows[0].slice(1), ['パスワードA', '5', 'メインのメール・ポイントアプリ・通販・SNS・写真のクラウド']);
   assert.equal(rows.filter((row) => row[0] === '高齢の親 シズエ').length, 1);
-  assert.deepEqual(rows.find((row) => row[1] === '緑A').slice(2), ['3', 'フリーメール・SNS・ゲーム']);
+  assert.deepEqual(rows.find((row) => row[0] === '学生 ミオ' && row[1] === 'パスワードA').slice(2), ['3', 'フリーメール・SNS・ゲーム']);
 });
 
 test('F: lessons 3, 4 and 5, the backdoors of every card and the results of the SIM swap and the help desk (from the vectors)', () => {
@@ -888,11 +1034,12 @@ test('F: lessons 3, 4 and 5, the backdoors of every card and the results of the 
   for (const lang of ['ja', 'en']) {
     const T = M[lang], table = lessonTable('backdoors', lang);
     assert.equal(table.grid, true);
-    assert.deepEqual(table.heads, [T.attackColCard, ...PEOPLE.map((id) => PERSON_NAMES[lang][id])]);
+    assert.equal(table.rowHeads, 2);
+    assert.deepEqual(table.heads, [T.attackColCard, T.lessonColPerson, T.lessonColFallen, T.lessonColBackdoor]);
     const shortCard = { leak: T.fourCardsColLeak, simswap: T.fourCardsColSimswap, mail: T.fourCardsColMail, desk: T.fourCardsColDesk };
     const fullCard = { leak: T.cardLeak, simswap: T.cardSimswap, mail: T.cardMail, desk: T.cardDesk };
-    assert.deepEqual(table.rows, CARDS.map((card, i) => [{ text: shortCard[card], sr: fullCard[card] },
-      ...PEOPLE.map((id) => String(BACKDOORS[id][i]))]), lang);
+    assert.deepEqual(table.rows, CARDS.flatMap((card, i) => PEOPLE.map((id, k) => [k ? null : { text: shortCard[card], sr: fullCard[card], span: 3 },
+      PERSON_NAMES[lang][id], String(known(id).cards[card].services.length), String(BACKDOORS[id][i])])), lang);
   }
   // SIM swap: worker 7, parent 1, student 4 accounts fall; help desk: 7, 4 and 0 (the spec), each with its backdoors
   const FALLS = { simswap: { worker: 7, parent: 1, student: 4 }, desk: { worker: 7, parent: 4, student: 0 } };
@@ -923,7 +1070,7 @@ test('F: lesson 6, the brokerage of the three people: entrances and the cards it
   }
   // The spec's known values: the worker's brokerage falls to the SIM swap alone; the parent's to two cards together (with the SIM swap)
   assert.deepEqual(lessonTable('brokerage', 'ja').rows.map((row) => row.slice(2)), [['SIMスワップ', 'なし'],
-    ['なし', '漏えいとSIMスワップ、SIMスワップとメールの乗っ取り、SIMスワップと窓口のなりすまし'], ['漏えい・SIMスワップ・メールの乗っ取り', 'なし']]);
+    ['なし', '漏えいとSIMスワップ、SIMスワップとメールの乗っ取り、SIMスワップとソーシャルエンジニアリング'], ['漏えい・SIMスワップ・メールの乗っ取り', 'なし']]);
 });
 
 test('F: lesson 7, the accounts with × or one more loss in the lockout tables of the three people (from the vectors)', () => {
@@ -946,31 +1093,32 @@ test('F: lesson 7, the accounts with × or one more loss in the lockout tables o
   const shown = lessonTable('lockout', 'ja').rows.map((row) => [row[0], (row[1].important ? '★' : '') + row[1].name,
     ...row.slice(2).map((c) => c.text)]);
   assert.deepEqual(shown, [
-    ['会社員 ハルト', '★ネット銀行', '○（＋番号で×）', '○（＋スマホで×）', '○'],
-    ['会社員 ハルト', '★ネット証券', '○（＋番号で×）', '○（＋スマホで×）', '○'],
-    ['高齢の親 シズエ', '★銀行のネットバンキング', '○（＋番号で×）', '×', '○（＋番号で×）'],
-    ['高齢の親 シズエ', 'メッセージアプリ（家族との連絡）', '○（＋番号で×）', '○（＋スマホで×）', '○'],
-    ['高齢の親 シズエ', '★ネット証券（NISA）', '○（＋番号か＋プロバイダーのメールで×）', '○（＋スマホで×）', '○（＋スマホで×）'],
-    ['学生 ミオ', '動画のサブスク（学割）', '○（＋大学のメールで×）', '○（＋大学のメールで×）', '×']]);
+    ['会社員 ハルト', '★ネット銀行', '△（番号も失うと×）', '△（スマホも失うと×）', '○'],
+    ['会社員 ハルト', '★ネット証券', '△（番号も失うと×）', '△（スマホも失うと×）', '○'],
+    ['高齢の親 シズエ', '★銀行のネットバンキング', '△（番号も失うと×）', '×', '△（番号も失うと×）'],
+    ['高齢の親 シズエ', 'メッセージアプリ（家族との連絡）', '△（番号も失うと×）', '△（スマホも失うと×）', '○'],
+    ['高齢の親 シズエ', '★ネット証券（NISA）', '△（番号かプロバイダーのメールも失うと×）', '△（スマホも失うと×）', '△（スマホも失うと×）'],
+    ['学生 ミオ', '動画のサブスク（学割）', '△（大学のメールも失うと×）', '△（大学のメールも失うと×）', '×']]);
 });
 
-// The five rows of lesson 8 (the spec's lessons table, row 8 = research 03 §4-5: the worker's brokerage re-registration and main
+// The five rows of lesson 8 (the spec's lessons table, row 8: the worker's brokerage re-registration and main
 // email SMS, the parent's bank SMS, the student's brokerage re-registration and university email help desk): the person, the change
 // that removes the entrance, the change that moves it to paper codes or a document check (none for the help desk) and the tag of
 // that change in Japanese and English
 const LESSON8 = [
-  ['worker', 'remove:sec.recMailSms', 'replace:sec.recMailSms:phone>paper:sec', 'SMS→紙', 'SMS → Paper codes'],
-  ['worker', 'remove:mailMain.recSms', 'replace:mailMain.recSms:phone>paper:mailMain', 'SMS→紙', 'SMS → Paper codes'],
+  ['worker', 'remove:sec.recMailSms', 'replace:sec.recMailSms:phone>paper:sec', 'SMS→回復コード（紙）', 'SMS → Paper codes'],
+  ['worker', 'remove:mailMain.recSms', 'replace:mailMain.recSms:phone>paper:mailMain', 'SMS→回復コード（紙）', 'SMS → Paper codes'],
   ['parent', 'remove:bank.recSms', 'replace:bank.recSms:phone>idcheck', 'SMS→書類', 'SMS → Documents'],
-  ['student', 'remove:sec.recMail', 'replace:sec.recMail:mailFree>paper:sec', 'フリーメール→紙', 'Free email → Paper codes'],
+  ['student', 'remove:sec.recMail', 'replace:sec.recMail:mailFree>paper:sec', 'フリーメール→回復コード（紙）', 'Free email → Paper codes'],
   ['student', 'remove:mailUni.recDesk', null, null, null],
 ];
 const LOSS_WORDS = { device: 'Phone', number: 'Number', mail: 'Mail' };
 // The summary of a change (tab 3, and the cells of lesson 8), written from the vectors and the sentence types of the spec, for the
 // forms that the changes of lesson 8 take (asserted, so that another form is not written wrongly here): the attack line
-// (sumAttackSaved for one set of accounts saved from one card or more, with accountsMany from four accounts, or sumAttackNone;
-// nothing newly falls), the lockout line (lossOneNew and lossOneUnlocked for the phone and the number, in sumLock, or sumLockNone)
-// and the line of two at once (pairMoved or pairNew per account, one pair each, in sumPair) when there is one
+// (sumSaved in sumAttack for one set of accounts saved from one card or more — the account first, then the cards: one card,
+// AでもBでも, A・B・Cのどれでも or all four —, with accountsMany from four accounts, or sumNoChangeAttack; nothing newly falls), the
+// lockout line (lossOneNew and lossOneUnlocked for the phone and the number, in sumLock, or "no change") and the line of two at once
+// (pairMoved or pairNew per account, one pair each, in sumPair) when there is one
 function summaryOf(id, mv, lang) {
   const T = M[lang], person = samplePerson(id), label = id + ' ' + mv.id + ' ' + lang;
   const full = (s) => person.services.find((x) => x.id === s).label[lang];
@@ -979,10 +1127,14 @@ function summaryOf(id, mv, lang) {
   assert.ok(cards.every((c) => !mv.cards[c].exposed.length), label + ': nothing newly falls');
   const savedTo = cards.filter((c) => mv.cards[c].saved.length), saved = savedTo.length ? mv.cards[savedTo[0]].saved : [];
   assert.ok(savedTo.every((c) => mv.cards[c].saved.join() === saved.join()), label + ': one set of accounts saved');
-  const accounts = saved.length >= 4 ? fillText(T.accountsMany, { first: shortLabel(full(saved[0])), n: saved.length })
-    : saved.map((s) => shortLabel(full(s))).join(T.sepList);
-  const lines = [savedTo.length ? fillText(T.sumAttackSaved, { cards: savedTo.map((c) => cardName[c]).join(T.sepAnd), accounts })
-    : T.sumAttackNone];
+  const shorts = saved.map((s) => shortLabel(full(s)));
+  const accounts = saved.length >= 4 ? fillText(T.accountsMany, { first: shorts[0], n: saved.length })
+    : shorts.length < 2 ? shorts.join('') : shorts.slice(0, -1).join(T.sepList) + T.sumSepLast + shorts[shorts.length - 1];
+  const [a, b, c] = savedTo.map((card) => cardName[card]);
+  const phrase = [null, fillText(T.sumCardsOneSaved, { a }), fillText(T.sumCardsTwo, { a, b }), fillText(T.sumCardsThree, { a, b, c }),
+    T.sumCardsAll][savedTo.length];
+  const lines = [fillText(T.sumAttack, { lines: savedTo.length
+    ? fillText(T[saved.length > 1 ? 'sumSavedPlural' : 'sumSaved'], { accounts, cards: phrase }) : T.sumNoChangeAttack })];
   const one = [];
   for (const loss of mv.lossTable.columns) {
     const { newlyLocked, unlocked } = mv.losses[loss];
@@ -997,7 +1149,7 @@ function summaryOf(id, mv, lang) {
       one.push(fillText(T.lossOneUnlocked, { lossEven: T['lossEven' + LOSS_WORDS[loss]], accounts: unlocked.map(full).join(T.sepList) }));
     }
   }
-  lines.push(one.length ? fillText(T.sumLock, { lines: one.join(T.sepLines) }) : T.sumLockNone);
+  lines.push(fillText(T.sumLock, { lines: one.length ? one.join(T.sepLines) : T.sumNoChange }));
   const partner = { device: T.partnerPhone, number: T.partnerNumber, paper: T.partnerPaper };
   const pairName = (pair) => {
     const [a, b] = pair.split('+');
@@ -1050,29 +1202,29 @@ test('F: lesson 8, every cell of the five rows (the entrance, removing it, repla
         : T.lesson8NoReplace, label);
     });
   }
-  // Written out once in Japanese (research 03 §4-5 and the vectors): every line of the removing and replacing columns
+  // Written out once in Japanese (from the vectors): every line of the removing and replacing columns
   assert.deepEqual(lessonTable('removeReplace', 'ja').rows.map((row) => [row[1].lines, typeof row[2] === 'string' ? row[2] : row[2].lines]), [
-    [['攻撃：SIMスワップでネット証券を守れる', '閉め出し：スマホをなくすと、ネット証券に入れなくなる'],
-      ['SMS→紙', '攻撃：SIMスワップでネット証券を守れる', '閉め出し：変わらない',
-        '2つ同時：ネット証券：入れなくなる2つの組み合わせが「スマホと番号」から「スマホと紙」に移る']],
-    [['攻撃：SIMスワップでメインのメールなど6つを守れる', '閉め出し：変わらない'],
-      ['SMS→紙', '攻撃：SIMスワップでメインのメールなど6つを守れる', '閉め出し：変わらない']],
-    [['攻撃：SIMスワップで銀行のネットバンキングを守れる', '閉め出し：変わらない'],
-      ['SMS→書類', '攻撃：SIMスワップで銀行のネットバンキングを守れる', '閉め出し：番号を手放しても、銀行のネットバンキングに入れるようになる']],
-    [['攻撃：漏えいとSIMスワップとメールの乗っ取りでネット証券を守れる', '閉め出し：スマホをなくすと、ネット証券（つみたて）に入れなくなる'],
-      ['フリーメール→紙', '攻撃：漏えいとSIMスワップとメールの乗っ取りでネット証券を守れる', '閉め出し：変わらない',
-        '2つ同時：ネット証券（つみたて）：スマホと紙を一緒になくすと入れなくなる']],
-    [['攻撃：どのカードでも変わらない', '閉め出し：スマホをなくすと、大学のメール・動画のサブスク（学割）に入れなくなる'], '付け替える先はない'],
+    [['攻撃：ネット証券は、SIMスワップでは倒れなくなる', '閉め出し：スマホをなくすと、ネット証券に入れなくなる'],
+      ['SMS→回復コード（紙）', '攻撃：ネット証券は、SIMスワップでは倒れなくなる', '閉め出し：変わらない',
+        '2つ同時：一緒に失うとネット証券に入れなくなる組み合わせが、「スマホと番号」から「スマホと紙の回復コード」に変わる']],
+    [['攻撃：メインのメールなど6つは、SIMスワップでは倒れなくなる', '閉め出し：変わらない'],
+      ['SMS→回復コード（紙）', '攻撃：メインのメールなど6つは、SIMスワップでは倒れなくなる', '閉め出し：変わらない']],
+    [['攻撃：銀行のネットバンキングは、SIMスワップでは倒れなくなる', '閉め出し：変わらない'],
+      ['SMS→書類', '攻撃：銀行のネットバンキングは、SIMスワップでは倒れなくなる', '閉め出し：銀行のネットバンキングは、番号を手放しても入れる（変更前は入れなかった）']],
+    [['攻撃：ネット証券は、漏えい・SIMスワップ・メールの乗っ取りのどれでも倒れなくなる', '閉め出し：スマホをなくすと、ネット証券（つみたて）に入れなくなる'],
+      ['フリーメール→回復コード（紙）', '攻撃：ネット証券は、漏えい・SIMスワップ・メールの乗っ取りのどれでも倒れなくなる', '閉め出し：変わらない',
+        '2つ同時：スマホと紙の回復コードを一緒に失うと、ネット証券（つみたて）に入れなくなる']],
+    [['攻撃：どのカードでも変わらない', '閉め出し：スマホをなくすと、大学のメール・動画のサブスク（学割）に入れなくなる'], '切り替える先はない'],
   ]);
   // Known lines in English: W3 removed, P3 replaced, and the two lines of two at once of the spec
   const en = lessonTable('removeReplace', 'en').rows;
-  assert.deepEqual(en[0][1].lines, ['Attack (saved from SIM swap): Online brokerage',
+  assert.deepEqual(en[0][1].lines, ['Attack: Online brokerage no longer falls to SIM swap',
     'Lockout: If you lose the phone, you can no longer get into: Online brokerage']);
-  assert.equal(en[2][2].lines[2], 'Lockout: Even after giving up the number, you can now get into: Online banking');
-  assert.equal(en[0][2].lines[3], 'Two at once: Online brokerage: the pair of losses that locks you out moves from the phone and the number '
+  assert.equal(en[2][2].lines[2], 'Lockout: Even after giving up the number, you can now get into Online banking; before the change, you could not');
+  assert.equal(en[0][2].lines[3], 'Two at once: The pair of losses that locks you out of Online brokerage changes from the phone and the number '
     + 'to the phone and the paper codes');
-  assert.equal(en[3][2].lines[3], 'Two at once: Online brokerage (monthly investing): losing the phone and the paper codes together now '
-    + 'locks you out');
+  assert.equal(en[3][2].lines[3], 'Two at once: Losing the phone and the paper codes together now locks you out of Online brokerage (monthly '
+    + 'investing)');
 });
 
 test('F: lesson 9, the cycle of the paper (complement of reach versus the least fixed point of definition 18, from the vectors)', () => {
@@ -1087,7 +1239,7 @@ test('F: lesson 9, the cycle of the paper (complement of reach versus the least 
     assert.deepEqual(table.rows, [[T.lesson9PwA, list(cycle.lostA.complementLocked), list(cycle.lostA.def18Locked)],
       [[T.lesson9PwA, T.lesson9PwB].join(T.sepList), list(cycle.lostBoth.complementLocked), list(cycle.lostBoth.def18Locked)]], lang);
   }
-  assert.deepEqual(lessonTable('cycle', 'ja').rows[1], ['パスワードa・パスワードb', 'メールA・メールB', 'なし']);
+  assert.deepEqual(lessonTable('cycle', 'ja').rows[1], ['メール1のパスワード・メール2のパスワード', 'メール1・メール2', 'なし']);
 });
 
 test('F: lesson 10 and the sources: the related tools and their pages, the sources of lessons 1 to 9, DOI links', () => {
@@ -1124,14 +1276,14 @@ test('F: lesson 10 and the sources: the related tools and their pages, the sourc
   assert.equal(Object.values(V.lessonRefs).filter((href) => href.startsWith('https://doi.org/')).length, Object.keys(DOIS).length);
 });
 
-// The blocks of the ten lessons in the order of the screen (kind:key): the paragraphs (p), the tables, the legend of the short card
-// names under the backdoor table, the notes on the brokerage (noteBrokerage, noteBrokerageStudent) and the paragraph with the
+// The blocks of the ten lessons in the order of the screen (kind:key): the paragraphs (p), the tables (the card names are written out,
+// so the backdoor table needs no legend), the notes on the brokerage (noteBrokerage, noteBrokerageStudent) and the paragraph with the
 // links to Day124 and Day125. The spec's lessons table gives what each lesson holds (lesson 1 the flow and the AND / OR tables,
 // lesson 9 one sentence above its table and one below it); the paragraph keys are those of the screen text.
 const LESSON_BLOCKS = {
   1: ['p:lesson1Text1', 'p:lesson1Text2', 'p:lesson1Text3', 'table:flow', 'p:lesson1Text4', 'table:andOr'],
   2: ['p:lesson2Text1', 'p:lesson2Text2', 'p:lesson2Text3', 'p:lesson2Text4', 'table:families'],
-  3: ['p:lesson3Text1', 'p:lesson3Text2', 'p:lesson3Text3', 'p:lesson3Text4', 'table:backdoors', 'legend:fourCardsLegend'],
+  3: ['p:lesson3Text1', 'p:lesson3Text2', 'p:lesson3Text3', 'p:lesson3Text4', 'table:backdoors'],
   4: ['p:lesson4Text1', 'p:lesson4Text2', 'p:lesson4Text3', 'p:lesson4Text4', 'table:simswap'],
   5: ['p:lesson5Text1', 'p:lesson5Text2', 'p:lesson5Text3', 'table:desk'],
   6: ['p:lesson6Text1', 'p:lesson6Text2', 'p:lesson6Text3', 'table:brokerage', 'note:noteBrokerage', 'note:noteBrokerageStudent'],
@@ -1178,20 +1330,21 @@ const lockTagOf = (id, person, lang) => (person.credentials.some((c) => c.id ===
 test('F: the line under the lockout table names the entrances of the account chosen, written as the map table writes them '
   + 'except that SMS names the phone number', () => {
   // Written with the dictionary as it is, the entrances read as in the map table. Known: the parent's bank leans on the phone
-  // number at both entrances (log-in Yellow A + SMS, recovery SMS), and the messaging app on the phone (log-in) and on the SMS
-  // with Yellow A (recovery). In English the account's name heads the line.
-  assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'ja'), '銀行のネットバンキングの入口：ログイン：黄A＋SMS／復旧：SMS');
-  assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'en'), 'Online banking: Log-in: Yellow A + SMS / Recovery: SMS');
-  assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'ja'), 'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS＋黄A');
-  assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'en'), 'Messaging app (family chats): Log-in: Phone / Recovery: SMS + Yellow A');
+  // number at both entrances (log-in Password A + SMS, recovery SMS), and the messaging app on the phone (log-in) and on the SMS
+  // with Password A (recovery). In English the account's name heads the line.
+  assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'ja'), '銀行のネットバンキングの入口：ログイン：パスワードA＋SMS／復旧：SMS');
+  assert.equal(V.lockEntrances(persona('parent'), 'bank', M, 'en'), 'Online banking: Log-in: Password A + SMS / Recovery: SMS');
+  assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'ja'), 'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS＋パスワードA');
+  assert.equal(V.lockEntrances(persona('parent'), 'msg', M, 'en'), 'Messaging app (family chats): Log-in: Phone / Recovery: SMS + Password A');
   // The line drawn under the lockout table says SMS (phone number), the column the line explains (the number lost)
   assert.equal(V.lockEntrances(persona('parent'), 'bank', LOCK_LINE, 'ja'),
-    '銀行のネットバンキングの入口：ログイン：黄A＋SMS（電話番号）／復旧：SMS（電話番号）');
+    '銀行のネットバンキングの入口：ログイン：パスワードA＋SMS（電話番号）／復旧：SMS（電話番号）');
   assert.equal(V.lockEntrances(persona('parent'), 'bank', LOCK_LINE, 'en'),
-    'Online banking: Log-in: Yellow A + SMS (phone number) / Recovery: SMS (phone number)');
-  assert.equal(V.lockEntrances(persona('parent'), 'msg', LOCK_LINE, 'ja'), 'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS（電話番号）＋黄A');
+    'Online banking: Log-in: Password A + SMS (phone number) / Recovery: SMS (phone number)');
+  assert.equal(V.lockEntrances(persona('parent'), 'msg', LOCK_LINE, 'ja'),
+    'メッセージアプリ（家族との連絡）の入口：ログイン：スマホ／復旧：SMS（電話番号）＋パスワードA');
   assert.equal(V.lockEntrances(persona('parent'), 'msg', LOCK_LINE, 'en'),
-    'Messaging app (family chats): Log-in: Phone / Recovery: SMS (phone number) + Yellow A');
+    'Messaging app (family chats): Log-in: Phone / Recovery: SMS (phone number) + Password A');
   for (const id of PEOPLE) {
     const person = samplePerson(id);
     for (const lang of ['ja', 'en']) {
@@ -1205,7 +1358,22 @@ test('F: the line under the lockout table names the entrances of the account cho
       }
     }
   }
-  // Only that line: the SMS tag of the map tables, the details, the diagram and the same-entrance table stays SMS
+  // The lockout table shows the same entrances under the row chosen, one per line under a heading (lockDetail)
+  assert.deepEqual(V.lockDetail(persona('parent'), 'bank', LOCK_LINE, 'ja'),
+    { heading: '銀行のネットバンキングの入口', entrances: ['ログイン：パスワードA＋SMS（電話番号）', '復旧：SMS（電話番号）'] });
+  assert.deepEqual(V.lockDetail(persona('parent'), 'bank', LOCK_LINE, 'en'),
+    { heading: 'Entrances of Online banking', entrances: ['Log-in: Password A + SMS (phone number)', 'Recovery: SMS (phone number)'] });
+  for (const id of PEOPLE) {
+    for (const s of samplePerson(id).services) {
+      for (const lang of ['ja', 'en']) {
+        const d = V.lockDetail(persona(id), s.id, LOCK_LINE, lang);
+        assert.equal(d.heading, fillText(M[lang].lockDetailHead, { account: s.label[lang] }), id + ' ' + s.id);
+        assert.equal(fillText(M[lang].lockEntrances, { account: s.label[lang], entrances: d.entrances.join(M[lang].sepLines) }),
+          V.lockEntrances(persona(id), s.id, LOCK_LINE, lang), id + ' ' + s.id + ': the line and the rows say the same');
+      }
+    }
+  }
+  // Only there: the SMS tag of the map tables, the details, the diagram and the same-entrance table stays SMS
   assert.deepEqual([M.ja.tagPhone, M.en.tagPhone], ['SMS', 'SMS']);
 });
 
@@ -1231,4 +1399,188 @@ test('F: the note on removals goes under the same-entrance table when the table 
   assert.equal(V.sameRows(persona('worker'), pv('worker'), 'replace:mailMain.recMail:mailOld>paper:mailMain', M, 'en').removeNote,
     M.en.noteRemove);
   assert.equal(V.sameRows(persona('worker'), pv('worker'), 'remove:sec.recMailSms', M, 'ja').removeNote, null);
+});
+
+// ===== 変更後の地図：地図のカードの選び方・カードについての文・箱の印・表の行・選んだアカウントの前後・凡例・足した箱 =====
+// The map after a change has its own card: the card this change saves the most accounts from; on a tie, the mode's card when
+// it is among them, otherwise the first in the order of the cards. Without any account saved, the card with the most accounts newly
+// fallen (a difference the map shows); without any difference, the mode's card (a card mode) or the first card.
+test('F: the card of the map after a change is the one it saves the most accounts from (89 changes × 6 modes), W2 the email takeover', () => {
+  let ties = 0, newlyOnly = 0, none = 0;
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const mv of known(id).moves) {
+      const saved = CARDS.map((c) => mv.cards[c].saved.length), newly = CARDS.map((c) => mv.cards[c].exposed.length);
+      for (const mode of MODES) {
+        const card = V.afterCardFor(p, pv(id), mv.id, mode), at = CARDS.indexOf(card);
+        const count = Math.max(...saved) > 0 ? saved : Math.max(...newly) > 0 ? newly : null;
+        if (!count) {
+          assert.equal(card, CARDS.includes(mode) ? mode : 'leak', id + ' ' + mv.id + ' ' + mode);
+          if (mode === 'all') none++;
+          continue;
+        }
+        const tops = CARDS.filter((c, i) => count[i] === Math.max(...count));
+        assert.equal(count[at], Math.max(...count), id + ' ' + mv.id + ' ' + mode);
+        assert.equal(card, tops.includes(mode) ? mode : tops[0], id + ' ' + mv.id + ' ' + mode + ' (the tie)');
+        if (mode === 'all' && tops.length > 1) ties++;
+        if (mode === 'all' && count === newly) newlyOnly++;
+      }
+    }
+  }
+  assert.deepEqual({ ties, newlyOnly, none }, { ties: 23, newlyOnly: 2, none: 31 });
+  // The highlights that move to tab 3, and the first change of each person for the sum over the four cards
+  const card = (id, moveId, mode) => V.afterCardFor(persona(id), pv(id), moveId, mode);
+  assert.equal(card('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'all'), 'mail', 'W2: the email takeover (a tie with the help desk)');
+  assert.equal(card('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'desk'), 'desk', 'the card of the mode on a tie');
+  assert.equal(card('worker', 'remove:sec.recMailSms', 'simswap'), 'simswap', 'W3');
+  assert.equal(card('parent', 'replace:bank.recSms:phone>idcheck', 'simswap'), 'simswap', 'P3');
+  assert.equal(card('parent', 'replace:bank.recSms:phone>idcheck', 'lockout'), 'simswap', 'P3 from the lockout mode');
+  assert.equal(card('student', 'replace:sub.login:mailUni>mailFree', 'lockout'), 'leak', 'nothing saved: the first card with an account newly fallen');
+  for (const id of PEOPLE) {
+    for (const mode of MODES) {
+      for (const moveId of V.candidates(persona(id), pv(id), mode).ids) {
+        const mv = known(id).moves.find((x) => x.id === moveId), chosen = card(id, moveId, mode);
+        // A top change of a card mode is shown with that card (it saves the most accounts from it); a top change that saves accounts
+        // (every mode but the lockouts, whose changes may leave the attacks as they are) is shown with a card where the map changes
+        if (CARDS.includes(mode)) assert.equal(chosen, mode, id + ' ' + mode + ' ' + moveId);
+        if (mode !== 'lockout') assert.ok(mv.cards[chosen].saved.length > 0, id + ' ' + mode + ' ' + moveId + ': the map shows a difference');
+      }
+    }
+  }
+});
+
+test('F: the line on the card of the map after a change: how the count changes, the cards to switch to, or no card', () => {
+  const kinds = { diff: 0, other: 0, none: 0 };
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const mv of known(id).moves) {
+      const differs = CARDS.filter((c) => mv.cards[c].saved.length + mv.cards[c].exposed.length > 0);
+      for (const card of CARDS) {
+        for (const lang of ['ja', 'en']) {
+          const n = V.afterCardNotice(p, pv(id), mv.id, card, M, lang);
+          assert.deepEqual(n.cards, differs, id + ' ' + mv.id + ' ' + card);
+          const kind = !differs.length ? 'none' : differs.includes(card) ? 'diff' : 'other';
+          assert.equal(n.kind, kind, id + ' ' + mv.id + ' ' + card);
+          if (lang === 'ja') kinds[kind]++;
+          if (kind !== 'diff') {
+            assert.equal(n.text, M[lang][kind === 'none' ? 'afterNoneAny' : 'afterNoneHere']);
+            continue;
+          }
+          // The count before and after with this card, from the vectors (never "0つ": none before or none after has a sentence of its own)
+          const before = known(id).cards[card].services.length, after = before - mv.cards[card].saved.length + mv.cards[card].exposed.length;
+          assert.ok(n.text.includes(V.names(p, M, lang).card[card]), n.text);
+          if (before && after && before !== after) assert.ok(n.text.includes(String(before)) && n.text.includes(String(after)), n.text);
+          assert.doesNotMatch(n.text, /0つ|\{/, n.text);
+          assert.equal(n.line, V.fill(M[lang].afterCardsLine, { cards: differs.map((c) => V.names(p, M, lang).card[c]).join(M[lang].sepList) }));
+        }
+      }
+    }
+  }
+  assert.deepEqual(kinds, { diff: 95, other: 137, none: 124 });
+  const notice = (id, moveId, card, lang = 'ja') => V.afterCardNotice(persona(id), pv(id), moveId, card, M, lang);
+  const w2 = notice('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'mail');
+  assert.equal(w2.text, 'メールの乗っ取りでは、倒れるアカウントが7つから1つに減ります。');
+  assert.equal(w2.line, 'この変更で倒れ方が変わるカード：メールの乗っ取り・ソーシャルエンジニアリング');
+  assert.deepEqual(notice('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'leak').cards, ['mail', 'desk']);
+  assert.equal(notice('parent', 'replace:bank.recSms:phone>idcheck', 'simswap').text, 'SIMスワップでは、変更前に倒れていた1つのアカウントが、変更後は倒れなくなります。');
+  assert.equal(notice('student', 'replace:sub.login:mailUni>mailFree', 'leak').text, '漏えいでは、倒れるアカウントが5つから6つに増えます。');
+  assert.equal(notice('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'mail', 'en').text,
+    'With Email takeover, the number of accounts that fall goes down from 7 to 1.');
+});
+
+test('F: the map after a change: the tags of its boxes, the rows of its table before and after (89 changes × 4 cards × 2), and the '
+  + 'detail of the chosen account', () => {
+  let removed = 0;
+  const order = (p, ids) => p.services.map((s) => s.id).filter((s) => ids.includes(s));
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const mv of known(id).moves) {
+      for (const card of CARDS) {
+        const after = V.afterMap(p, mv.id, card);
+        const badges = V.afterBadges(p, pv(id), mv.id, card, M, 'ja');
+        assert.deepEqual(badges.map((b) => b.node + ':' + b.kind),
+          [...mv.cards[card].saved.map((s) => s + ':saved'), ...mv.cards[card].exposed.map((s) => s + ':newly')], id + ' ' + mv.id + ' ' + card);
+        for (const phase of ['before', 'after']) {
+          const table = V.afterRows(p, pv(id), after, card, phase, M, 'ja');
+          const name = id + ' ' + mv.id + ' ' + card + ' ' + phase;
+          assert.deepEqual(table.rows.map((r) => r.id), p.services.map((s) => s.id), name);
+          // The entrances of every row in the order of the person before the change; the changed one marked once; a removed one
+          // only after the change (with its old text)
+          assert.deepEqual(table.rows.map((r) => r.items.length), p.services.map((s) => s.methods.length), name);
+          const changed = [];
+          for (const r of table.rows) {
+            const methods = p.services.find((s) => s.id === r.id).methods;
+            r.items.forEach((item, i) => { if (item.changed) changed.push([r.id + '.' + methods[i].id, item]); });
+          }
+          assert.deepEqual(changed.map(([key]) => key), [mv.service + '.' + mv.method], name);
+          assert.equal(changed[0][1].removed, phase === 'after' && mv.kind === 'remove', name);
+          if (changed[0][1].removed) removed++;
+          assert.equal(table.tag, M.ja[(mv.kind === 'remove' ? 'removedTag' : 'changedTag') + (phase === 'after' ? 'After' : 'Before')], name);
+          // The marks follow the vectors on both maps; no row is marked as falling "at this step" (the map is at its last step)
+          const marks = Object.fromEntries(table.rows.filter((r) => r.mark).map((r) => [r.id, r.mark]));
+          assert.deepEqual(Object.keys(marks), order(p, [...mv.cards[card].saved, ...mv.cards[card].exposed]), name);
+          for (const s of mv.cards[card].saved) assert.equal(marks[s], 'saved', name + ' ' + s);
+          for (const s of mv.cards[card].exposed) assert.equal(marks[s], 'newly', name + ' ' + s);
+          assert.ok(table.rows.every((r) => !r.cell.thisStep), name);
+          const fallen = table.rows.filter((r) => r.cell.fallen).map((r) => r.id);
+          assert.deepEqual(fallen, phase === 'before' ? order(p, known(id).cards[card].services) : after.services, name);
+        }
+      }
+    }
+  }
+  assert.equal(removed, 24 * 4, 'the 24 removals, each with four cards, after the change');
+  // The detail of the account chosen in the table: W2 with the email takeover, the changed account first
+  const p = persona('worker'), w2 = V.afterMap(p, 'replace:mailMain.recMail:mailOld>paper:mailMain', 'mail');
+  assert.deepEqual(V.afterDetail(p, pv('worker'), w2, 'mail', 'mailMain', M, 'ja'), {
+    heading: 'メインのメールの倒れ方（メールの乗っ取り）', mark: 'saved', rows: [
+      { label: '変えた入口', text: '復旧の「予備のメールで再設定」：古いメール → 回復コード（紙）' },
+      { label: '変更前', text: '段1で倒れる。攻撃者が使った入口：復旧の「予備のメールで再設定」' },
+      { label: '変更後', text: '倒れない' }] });
+  assert.deepEqual(V.afterDetail(p, pv('worker'), w2, 'mail', 'mailOld', M, 'ja').rows.map((r) => r.text),
+    ['最初に乗っ取られる（段0）', '最初に乗っ取られる（段0）']);
+  // A removal names the entrance removed; the changed entrance after the change is named by its requirement (the data's name of a
+  // changed entrance can still name the old requirement)
+  const w3 = V.afterMap(p, 'remove:sec.recMailSms', 'simswap');
+  assert.deepEqual(V.afterDetail(p, pv('worker'), w3, 'simswap', 'sec', M, 'ja').rows[0],
+    { label: '外した入口', text: '復旧の「メール＋SMSでパスキーを再登録」（必要だったもの：メインのメール＋SMS）' });
+  const s = persona('student'), sub = V.afterMap(s, 'replace:sub.login:mailUni>mailFree', 'leak');
+  assert.deepEqual(V.afterDetail(s, pv('student'), sub, 'leak', 'sub', M, 'ja').rows.map((r) => r.text),
+    ['ログインの「大学のメールに届くコード」：大学のメール → フリーメール', '倒れない', '段2で倒れる。攻撃者が使った入口：ログイン（フリーメール）']);
+  assert.equal(V.afterDetail(s, pv('student'), sub, 'leak', 'sub', M, 'ja').mark, 'newly');
+  // The legend of the table: the tag of the change follows the phase, and what the change adds is told after it only
+  const legend = (move, phase) => V.afterLegend(p, pv('worker'), V.afterMap(p, move, 'leak'), phase, M, 'ja')[0].items.map((item) => item.text);
+  assert.ok(legend('replace:points.login:pw:red>pw:own-points', 'after').includes('パスワードD＝この変更で増える、ポイントアプリだけのパスワード'));
+  assert.ok(!legend('replace:points.login:pw:red>pw:own-points', 'before').some((text) => text.startsWith('パスワードD')));
+  assert.ok(legend('replace:mailMain.recMail:mailOld>paper:mailMain', 'after').includes('回復コード（紙）＝紙の回復コード（変更で増える）'));
+  assert.equal(legend('remove:sec.recMailSms', 'before').at(-1), M.ja.afterLegendRemovedBefore);
+  assert.equal(legend('remove:sec.recMailSms', 'after').at(-1), M.ja.afterLegendRemovedAfter);
+});
+
+// A box the change adds (a password of its own, the paper codes) keeps its short name and has its account under it, on one line
+// when it fits (the box widens up to its limit), never cut with …
+test('F: a box that a change adds names its account under its name, in both languages, never cut', () => {
+  let boxes = 0;
+  for (const id of PEOPLE) {
+    const p = persona(id);
+    for (const move of C.enumerateMoves(p)) {
+      const q = C.applyMove(p, move);
+      for (const lang of ['ja', 'en']) {
+        const L = V.layout(p, q, M, lang);
+        for (const box of Object.values(L.box).filter((b) => b.added)) {
+          const owner = move.service, nm = V.names(q, M, lang);
+          const text = String(move.to).startsWith('paper:') ? V.fill(M[lang].boxPaperSub, { account: nm.mid[owner] })
+            : V.fill(M[lang].boxOwnSub, { account: nm.short[owner] });
+          assert.equal(box.sub.map((line) => line.value).join(lang === 'ja' ? '' : ' '), text, id + ' ' + move.id + ' ' + lang);
+          assert.ok(box.sub.every((line) => !line.value.endsWith('…')), id + ' ' + move.id + ' ' + lang);
+          boxes++;
+        }
+      }
+    }
+  }
+  const added = PEOPLE.flatMap((id) => C.enumerateMoves(persona(id))).filter((m) => /^(?:paper:|pw:own-)/.test(String(m.to)));
+  assert.equal(boxes, 2 * added.length);
+  const w = persona('worker');
+  const L = V.layout(w, C.applyMove(w, C.enumerateMoves(w).find((m) => m.id === 'replace:points.login:pw:red>pw:own-points')), M, 'ja');
+  const box = Object.values(L.box).find((b) => b.added);
+  assert.deepEqual([box.lines.map((line) => line.value), box.sub.map((line) => line.value)], [['パスワードD'], ['ポイントアプリだけ']]);
 });

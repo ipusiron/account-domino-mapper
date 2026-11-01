@@ -52,8 +52,17 @@ test('H: no random numbers, network, HTML injection, inline styles or URL state 
     const code = read(file);
     assert.doesNotMatch(code, /Math\.random\s*\(|fetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|innerHTML/, file);
     assert.doesNotMatch(code, /\.style\.|setAttribute\(\s*['"]style['"]/, file);
-    assert.doesNotMatch(code, /history\.(?:pushState|replaceState)|location\.hash\s*=/, file);
+    assert.doesNotMatch(code, /location\.hash\s*=|location\.(?:assign|replace)\s*\(|location\.href\s*=/, file);
+    if (file !== 'app.js') assert.doesNotMatch(code, /history\.(?:pushState|replaceState)/, file);
   }
+  // The address keeps the tab only (#chain, #lockout, #compare or #rules), so that the
+  // browser's back button returns to the tab before. app.js writes the history in one function: a new entry with the tab in the
+  // address, or the current entry without changing the address. The highlight, the place and the focus stay in the entry (never
+  // stored, never in the address).
+  const app = read('app.js');
+  assert.deepEqual([...app.matchAll(/history\.(pushState|replaceState)\(([^)]*)\)/g)].map((m) => m[1] + '(' + m[2] + ')'),
+    ["pushState(entry, '', '#' + entry.tab)", "replaceState(entry, '')"]);
+  assert.match(app, /const hashTab = \(\) => \(TABS\.includes\(location\.hash\.slice\(1\)\) \? location\.hash\.slice\(1\) : null\);/);
 });
 
 test('H: only the language and theme preferences are stored', () => {
@@ -272,21 +281,48 @@ test('H: app.js keeps the steps and the diagram after a change in two caches of 
   assert.ok(app.includes('layoutCache.set(key, View.layout(persona(id), null, Messages, language))'), 'the diagram without a change');
   assert.equal([...app.matchAll(/\bnew (?:Weak)?Map\(/g)].length, 2, 'no other Map');
   assert.deepEqual([...app.matchAll(/\bconst (\w+) = new Map\(\);/g)].map((m) => m[1]), ['vectorsCache', 'layoutCache']);
-  // Tab 3 draws the map after a change from them
-  assert.match(app, /= afterFor\(state\.persona, state\.move, state\.card\);/);
+  // Tab 3 draws the map after a change from them, with the map's own card (state.mapCard, apart from the card of tab 1)
+  assert.match(app, /= afterFor\(state\.persona, state\.move, state\.mapCard\);/);
   assert.match(app, /= afterLayoutFor\(state\.persona, state\.move, state\.language, after\.person\);/);
 });
 
-test('H: the help has, in order, the first steps, the controls, the 22 terms, the ten lessons and the note on this learning aid', () => {
+// The map after a change keeps its own card and its own chosen account. Nothing in tab 3
+// writes the card or the account of "Follow the chain": the card is set in setCard only (tab 1's cards, a highlight of tab 1), the
+// account by the person, a name of tab 1 and a highlight; the map's card and account are set when a change is shown (setMove) and by
+// the map's own controls
+test('H: the map after a change has its own card and account; tab 3 never changes the card or the account of "Follow the chain"', () => {
+  const app = read('app.js');
+  const assigned = (name) => [...app.matchAll(new RegExp('state\\.' + name + ' = ([^;]+);', 'g'))].map((m) => m[1]);
+  assert.deepEqual(assigned('card'), ['card']);
+  assert.deepEqual(assigned('account'), ['DEFAULT_ACCOUNT[id]', 'id', 's.account']);
+  assert.deepEqual(assigned('mapCard'), ['View.afterCardFor(p, pv, id, state.mode)', 'card']);
+  assert.deepEqual(assigned('mapAccount'), ['pv.moves.find((mv) => mv.id === id).service', 'id']);
+  // setCard is called by tab 1's card buttons and by a highlight that names a card (W1, P1, S1, S2: none of them in tab 3)
+  assert.equal((app.match(/\bsetCard\(/g) || []).length, 3, 'the definition, selectCard and pressHighlight');
+  const view = require('../domino-view.js');
+  for (const h of view.highlights.filter((x) => x.state.tab === 'compare')) assert.equal(h.state.card, undefined, h.id);
+  // The four card buttons of the map are its own (after-card-…), in the order of tab 1's
+  const cards = (prefix) => [...html.matchAll(new RegExp('<button id="' + prefix + '-(\\w+)"', 'g'))].map((m) => m[1]);
+  assert.deepEqual(cards('after-card'), cards('card'));
+  assert.deepEqual(cards('after-card'), ['leak', 'simswap', 'mail', 'desk']);
+});
+
+test('H: the help has, in order, the buttons to its sections, the first steps, the controls, the 22 terms, the ten lessons and the note '
+  + 'on this learning aid', () => {
   const body = html.match(/<div class="help-body"[^>]*>([\s\S]*?)<\/div>\s*<\/dialog>/)[1];
   const order = [...body.matchAll(/data-i18n="(help\w+|lessonsHeading)"|<dl id="help-terms"|<div id="lessons"/g)].map((m) => m[1] || m[0]);
-  assert.deepEqual(order, ['helpFirst', 'helpFirstText', 'helpKeysHeading', 'helpKeys', 'helpTermsHeading', '<dl id="help-terms"',
-    'lessonsHeading', '<div id="lessons"', 'helpAboutHeading', 'helpAbout']);
+  assert.deepEqual(order, ['helpNavLabel', 'helpNavFirst', 'helpNavOps', 'helpNavTerms', 'helpNavLessons', 'helpNavAbout', 'helpFirst',
+    'helpFirstText', 'helpKeysHeading', 'helpOpsPerson', 'helpOpsChain', 'helpOpsLockout', 'helpOpsCompare', 'helpOpsRules', 'helpOpsHelp', 'helpKeys',
+    'helpTermsHeading', '<dl id="help-terms"', 'lessonsHeading', '<div id="lessons"', 'helpAboutHeading', 'helpAbout']);
+  // Each button at the top moves to a heading of the help (the heading can take the focus)
+  const targets = [...body.matchAll(/<button type="button" data-target="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(targets, ['help-first', 'help-ops', 'help-terms-heading', 'lessons-heading', 'help-about']);
+  for (const id of targets) assert.match(body, new RegExp('<h3 id="' + id + '" tabindex="-1"'), id);
   // Ten <details>, each with a summary (its title is written by app.js in the current language) and a body filled by app.js
   const lesson = /<details id="lesson-(\d+)" class="lesson"><summary><\/summary>\s*<div id="lesson-(\d+)-body" class="lesson-body"><\/div><\/details>/g;
   const lessons = [...body.matchAll(lesson)];
   assert.deepEqual(lessons.map((m) => [m[1], m[2]]), Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)]));
-  assert.match(html, /<h3 id="lessons-heading" data-i18n="lessonsHeading">座学<\/h3>/);
+  assert.match(html, /<h3 id="lessons-heading" tabindex="-1" data-i18n="lessonsHeading">座学<\/h3>/);
 });
 
 test('H: the header has no decorative Day line, and the footer has the GitHub link only', () => {
@@ -303,9 +339,9 @@ test('H: the header has no decorative Day line, and the footer has the GitHub li
 
 // The shared summary (OGP) read by sites that do not run JavaScript: the six tags, each once in <head>. The description is the
 // description_ja of the README front matter, the same as the meta description. The scripts never rewrite them.
-const DESCRIPTION_JA = '架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・'
-  + '窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手'
-  + '（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。';
+const DESCRIPTION_JA = '架空の3人のアカウントで、1つの攻撃（漏えい・SIMスワップ・メールの乗っ取り・ソーシャルエンジニアリング）が、ログインや復旧を'
+  + '通じて広がる様子を順に見る教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変えたとき（認証アプリかパスキーを追加する・必要なものを'
+  + '切り替える・復旧の入口を外す）の前後も比べられる。自分のアカウントの情報は入力せず、外部へは何も送らない。日英対応。';
 const OGP = [['property', 'og:title', 'Account Domino Mapper'], ['property', 'og:description', DESCRIPTION_JA],
   ['property', 'og:url', 'https://ipusiron.github.io/account-domino-mapper/'],
   ['property', 'og:image', 'https://ipusiron.github.io/account-domino-mapper/assets/screenshot.png'],
@@ -395,4 +431,20 @@ test('H: no forbidden wording, history words, ripple or local paths in README.md
   t.diagnostic(`patterns: README.md ${FORBIDDEN_JA.length + README_COMMON.length}, README.en.md ${FORBIDDEN_EN.length
     + README_COMMON.length}; no line left out`);
   assert.deepEqual(hits, [], 'forbidden wording in the READMEs:\n' + hits.join('\n'));
+});
+
+// ===== タブ2・タブ4・ヘルプ・印刷 =====
+test('H: the buttons at the top of the rules tab move to its sections, each of which can take the focus; the print button and the '
+  + 'lockout legend are in place', () => {
+  const start = html.indexOf('<section id="panel-rules"');
+  const panel = html.slice(start, html.indexOf('</section>', start));
+  const targets = [...panel.matchAll(/<button type="button"[^>]*\bdata-target="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(targets, ['rules-table', 'symbol-table', 'notes-heading', 'paper-heading']);
+  for (const id of targets) {
+    assert.match(panel, new RegExp('\\bid="' + id + '"[^>]*\\btabindex="-1"|\\btabindex="-1"[^>]*\\bid="' + id + '"'), id);
+  }
+  assert.match(panel, /<button id="print-button" class="print-button"/);
+  const lockout = html.slice(html.indexOf('<section id="panel-lockout"'), html.indexOf('<section id="panel-compare"'));
+  for (const id of ['lock-legend-mail', 'lock-legend-marks', 'lock-story', 'lock-map']) assert.ok(lockout.includes('id="' + id + '"'), id);
+  assert.ok(!html.includes('id="lock-entrances"'), 'the entrances go under the row chosen, not under the table');
 });

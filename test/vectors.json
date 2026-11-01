@@ -1,6 +1,6 @@
 {
  "schema": "account-domino-mapper/vectors@1",
- "sampleSha256": "f8496198f0ad0e145e29a1470bc10b6f6ff9b5bd429e9614a6831d8c0841e0ac",
+ "sampleSha256": "c45e8bfe920462330957d34cb6e1d55bdccca0e84559662438cb368c644ea4f5",
  "personas": {
   "worker": {
    "services": ["mailMain","mailOld","points","shop","sns","flea","cloud","bank","sec"],

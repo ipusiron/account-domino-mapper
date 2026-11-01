@@ -27,10 +27,10 @@ PREFIX = "account-domino-mapper."
 SOURCES = ("index.html", "style.css", "theme-init.js", "domino-core.js", "domino-data.js", "domino-view.js", "messages.js",
            "app.js", "test/startup.browser.py")
 SCRIPTS = ["theme-init.js", "domino-core.js", "domino-data.js", "domino-view.js", "messages.js", "app.js"]
-TABS_JA = ["連鎖を追う", "閉め出し", "1手で比べる", "規則表"]
+TABS_JA = ["連鎖を追う", "閉め出し", "1つ変えて比べる", "規則表"]
 # The places where a static Japanese tab name may break (between its words)
 TAB_SPLITS = {"連鎖を追う": (("連鎖を追う",), ("連鎖を", "追う")), "閉め出し": (("閉め出し",),),
-              "1手で比べる": (("1手で比べる",), ("1手で", "比べる")), "規則表": (("規則表",),)}
+              "1つ変えて比べる": (("1つ変えて比べる",), ("1つ変えて", "比べる")), "規則表": (("規則表",),)}
 # Each tab: the lines its text shows (characters grouped by their line)
 TAB_LINES = """() => Array.from(document.querySelectorAll('[role="tab"]'), tab => {
   const chars = [];
@@ -74,7 +74,7 @@ PROBE = """(() => {
   let previous = '';
   const sample = () => {
     const ready = document.documentElement.dataset.appReady;
-    const state = {ready, rows: document.querySelectorAll('#chain-map tbody tr').length,
+    const state = {ready, rows: document.querySelectorAll('#chain-map tbody tr:not(.detail-row)').length,
       summary: !!(document.querySelector('#step-summary') || {}).textContent,
       detail: !!(document.querySelector('#detail-heading') || {}).textContent,
       note: !!document.querySelector('#startup-note'),
@@ -90,21 +90,26 @@ SNAPSHOT = """() => {
   const text = selector => (document.querySelector(selector) || {}).textContent || '';
   return {readyState: document.readyState, ready: document.documentElement.dataset.appReady,
     lang: document.documentElement.lang, theme: document.documentElement.dataset.theme || null,
-    h1: text('h1'), intro: text('.intro'), chainIntro: text('#panel-chain [data-i18n="chainIntro"]'),
+    h1: text('h1'),
+    // the short intro (always visible) and the long intro (inside the <details id="intro-more">, which starts open) read together
+    intro: Array.from(document.querySelectorAll('.intro'), el => el.textContent).join(' '),
+    chainIntro: text('#panel-chain [data-i18n="chainIntro"]'),
     tabs: Array.from(document.querySelectorAll('[role="tab"]'), tab => tab.textContent.trim()),
     personHeading: text('#person-heading'), persons: Array.from(document.querySelectorAll('.person-buttons button'), b => b.textContent),
     counts: text('#person-counts'),
     note: note ? note.innerText : '', noteVisible: !!note && note.getClientRects().length > 0,
     toolsDisabled: (document.querySelector('#startup-tools') || {}).disabled,
     controlsDisabled: (document.querySelector('#startup-controls') || {}).disabled,
-    // every control of the two guarded groups (a disabled fieldset does not stop a summary from opening its details box)
+    // every control of the two guarded groups is disabled or hidden (a disabled fieldset does not stop a summary from opening
+    // its details box); the "くわしい説明を読む" summary of #intro-more only expands static Japanese text and is allowed open
     allDisabled: Array.from(document.querySelectorAll(['#startup-tools', '#startup-controls']
       .map(group => ['button', 'summary', 'a[href]', 'select', 'input'].map(tag => group + ' ' + tag).join(', ')).join(', ')))
+      .filter(control => !control.closest('#intro-more'))
       .every(control => control.matches(':disabled') || !control.getClientRects().length),
     fourCards: (box => box ? {shown: box.getClientRects().length > 0, open: box.open} : null)(document.querySelector('#four-cards')),
     unnamed: Array.from(document.querySelectorAll('button')).filter(b => b.getClientRects().length && !b.textContent.trim()
       && !b.getAttribute('aria-label')).map(b => b.id),
-    rows: document.querySelectorAll('#chain-map tbody tr').length,
+    rows: document.querySelectorAll('#chain-map tbody tr:not(.detail-row)').length,
     summary: text('#step-summary'), detail: text('#detail-heading'), detailBody: text('#detail-body'),
     startHere: !!document.querySelector('#start-here') && document.querySelector('#start-here').getClientRects().length > 0,
     caption: text('#chain-map caption'),
@@ -132,9 +137,14 @@ PRINTED = """() => {
   while ((node = walker.nextNode())) {
     if (node.data.trim() && shown(node.parentElement)) texts.push(getComputedStyle(node.parentElement).color);
   }
-  return {heading: shown(document.querySelector('h1')), intro: shown(document.querySelector('.intro')),
+  // the short intro is hidden on narrow screens (and in print), the long intro inside <details id="intro-more"> is open — either
+  // one shown means the introductory Japanese is on screen
+  const anyIntro = Array.from(document.querySelectorAll('.intro')).some(el => shown(el));
+  const visibleIntro = Array.from(document.querySelectorAll('.intro')).find(el => shown(el));
+  return {heading: shown(document.querySelector('h1')), intro: anyIntro,
     chain: shown(document.querySelector('#panel-chain')), sheet: document.querySelector('#print-sheet').children.length,
-    colors: ['h1 span', '.intro', '#person-heading', '#person-counts', '#person-worker', '#panel-chain h2'].map(color),
+    colors: ['h1 span', '#person-heading', '#person-counts', '#person-worker', '#panel-chain h2']
+      .map(color).concat(visibleIntro ? [getComputedStyle(visibleIntro).color] : []),
     textNodes: texts.length, textColors: Array.from(new Set(texts)),
     pressed: ['#person-worker', '#card-leak'].map(sel => (el => [sel, el.getAttribute('aria-pressed'),
       getComputedStyle(el).color, getComputedStyle(el).backgroundColor])(document.querySelector(sel)))};

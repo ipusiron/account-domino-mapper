@@ -1,5 +1,6 @@
 /* Account Domino Mapper - MIT (c) 2026 ipusiron. */
-// 架空の3人のデータ。実在の人物・サービス・会社とは関係なく、パスワードの文字列は持たない（系統の色と英字だけ）。
+// 架空の3人のデータ。実在の人物・サービス・会社とは関係なく、パスワードの文字列は持たない（パスワードA・B・Cの記号だけ。
+// family は図の内部の区別に使う名前で、画面には出さない）。
 (function (root, factory) {
   'use strict';
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -13,13 +14,14 @@
         id: "worker",
         label: { ja: "会社員 ハルト（仮）", en: "Haruto, office worker (provisional)" },
         story: {
-          ja: "復旧の線がメインのメールに集まっている。パスワードは赤Aを5つの口座で使い回し、銀行だけ青B。",
-          en: "Recovery lines converge on the main email. Red A is reused on five accounts; only the bank uses Blue B.",
+          ja: "多くのアカウントで、パスワードの再設定のメールがメインのメールに届く。パスワードAを5つのアカウントで使い回し、銀行はパスワードB、古いメールはパスワードC。",
+          en: "Many accounts send their password reset emails to the main email. Password A is reused on five accounts; "
+            + "the bank uses Password B and the old email Password C.",
         },
         credentials: [
-          { id: "pw:red", type: "pw", family: "red", symbol: "A", label: { ja: "パスワード 赤A", en: "Password Red A" } },
-          { id: "pw:blue", type: "pw", family: "blue", symbol: "B", label: { ja: "パスワード 青B", en: "Password Blue B" } },
-          { id: "pw:gray", type: "pw", family: "gray", symbol: "C", label: { ja: "パスワード 灰C", en: "Password Gray C" } },
+          { id: "pw:red", type: "pw", family: "red", symbol: "A", label: { ja: "パスワードA", en: "Password A" } },
+          { id: "pw:blue", type: "pw", family: "blue", symbol: "B", label: { ja: "パスワードB", en: "Password B" } },
+          { id: "pw:gray", type: "pw", family: "gray", symbol: "C", label: { ja: "パスワードC", en: "Password C" } },
           { id: "device", type: "device", label: { ja: "スマホ（認証アプリ・パスキー）", en: "Phone (authenticator app, passkey)" } },
           { id: "phone", type: "phone", label: { ja: "電話番号（SMS）", en: "Phone number (SMS)" } },
           { id: "info", type: "info", label: { ja: "個人情報（電話の窓口で答える）", en: "Personal details (phone help desk)" } },
@@ -79,7 +81,7 @@
           {
             id: "shop",
             offers: ["mfa", "paper"],
-            label: { ja: "通販（カード登録あり）", en: "Online shop (card saved)" },
+            label: { ja: "通販（クレジットカード登録あり）", en: "Online shop (credit card saved)" },
             methods: [
               { id: "login", role: "login", requires: ["pw:red"], label: { ja: "パスワード", en: "Password" } },
               {
@@ -158,7 +160,7 @@
                 id: "recSmsDesk",
                 role: "recovery",
                 requires: ["phone", "info"],
-                label: { ja: "SMS＋登録情報で再設定", en: "Reset by SMS + registered details" },
+                label: { ja: "SMS＋個人情報で再設定", en: "Reset by SMS + personal details" },
               },
             ],
           },
@@ -182,14 +184,17 @@
           {
             id: "leak",
             leaks: "points",
-            label: { ja: "ポイントアプリの漏えい（そのパスワードの系統が漏れた）", en: "Points-app breach (its password family leaked)" },
+            label: { ja: "ポイントアプリの漏えい（IDとパスワードが漏れた）", en: "Points-app breach (ID and password leaked)" },
           },
-          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（番号を乗っ取られた）", en: "SIM swap (number hijacked)" } },
+          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（電話番号を乗っ取られた）", en: "SIM swap (phone number hijacked)" } },
           { id: "mail", gives: ["mailOld"], label: { ja: "古いメールの乗っ取り", en: "Old email taken over" } },
           {
             id: "desk",
             gives: ["info"],
-            label: { ja: "窓口のなりすまし（漏れた個人情報で）", en: "Help-desk impersonation (with leaked details)" },
+            label: {
+              ja: "ソーシャルエンジニアリング（漏れた個人情報を使い、電話の窓口で本人になりすます）",
+              en: "Social engineering (posing as the owner at a phone help desk with leaked personal details)",
+            },
           },
         ],
         losses: [
@@ -198,7 +203,7 @@
           {
             id: "mail",
             lost: ["mailOld"],
-            label: { ja: "古いメールが消えた（プロバイダーの解約）", en: "Old email gone (ISP cancelled)" },
+            label: { ja: "古いメールが消えた（プロバイダーの解約）", en: "Old email gone (ISP canceled)" },
           },
           {
             id: "paper",
@@ -212,9 +217,9 @@
         id: "parent",
         label: { ja: "高齢の親 シズエ（仮）", en: "Shizue, older parent (provisional)" },
         story: {
-          ja: "パスワードは全部同じ黄A。銀行はSMSのワンタイムパスワードとSMSでの再設定で、電話番号1本に寄りかかっている。",
-          en: "Every account uses Yellow A. The bank leans on one phone number for both its SMS one-time password and "
-            + "its SMS reset.",
+          ja: "パスワードを使うアカウントは、すべて同じパスワードA。銀行は、ログインのワンタイムパスワードも再設定もSMSで、電話番号1本に頼っている。",
+          en: "Every account that uses a password uses the same Password A. The bank relies on one phone number for both its SMS "
+            + "one-time password at log-in and its SMS reset.",
         },
         credentials: [
           {
@@ -222,7 +227,7 @@
             type: "pw",
             family: "yellow",
             symbol: "A",
-            label: { ja: "パスワード 黄A", en: "Password Yellow A" },
+            label: { ja: "パスワードA", en: "Password A" },
           },
           { id: "device", type: "device", label: { ja: "スマホ（認証アプリ・パスキー）", en: "Phone (authenticator app, passkey)" } },
           { id: "phone", type: "phone", label: { ja: "電話番号（SMS）", en: "Phone number (SMS)" } },
@@ -246,7 +251,7 @@
                 id: "recDesk",
                 role: "recovery",
                 requires: ["info"],
-                label: { ja: "電話のサポートで再設定", en: "Reset via phone support" },
+                label: { ja: "電話の窓口で再設定", en: "Reset via phone help desk" },
               },
             ],
           },
@@ -341,14 +346,17 @@
           {
             id: "leak",
             leaks: "points",
-            label: { ja: "ポイントアプリの漏えい（そのパスワードの系統が漏れた）", en: "Points-app breach (its password family leaked)" },
+            label: { ja: "ポイントアプリの漏えい（IDとパスワードが漏れた）", en: "Points-app breach (ID and password leaked)" },
           },
-          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（番号を乗っ取られた）", en: "SIM swap (number hijacked)" } },
+          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（電話番号を乗っ取られた）", en: "SIM swap (phone number hijacked)" } },
           { id: "mail", gives: ["mailIsp"], label: { ja: "プロバイダーのメールの乗っ取り", en: "ISP email taken over" } },
           {
             id: "desk",
             gives: ["info"],
-            label: { ja: "窓口のなりすまし（漏れた個人情報で）", en: "Help-desk impersonation (with leaked details)" },
+            label: {
+              ja: "ソーシャルエンジニアリング（漏れた個人情報を使い、電話の窓口で本人になりすます）",
+              en: "Social engineering (posing as the owner at a phone help desk with leaked personal details)",
+            },
           },
         ],
         losses: [
@@ -367,9 +375,9 @@
         id: "student",
         label: { ja: "学生 ミオ（仮）", en: "Mio, student (provisional)" },
         story: {
-          ja: "大学のメールを予備や登録先に使っている。卒業で消える。パスワードは緑Aをフリーメール・SNS・ゲームで使い回し。",
-          en: "The university email serves as backup and sign-up address, and disappears at graduation. Green A is "
-            + "reused on free email, social media and a game.",
+          ja: "大学のメールを、ほかのアカウントの予備のメールや登録先に使っている。大学のメールは卒業すると消える。パスワードAを、フリーメール・SNS・ゲームで使い回している。",
+          en: "The university email serves as the backup and sign-up address of other accounts, and disappears at graduation. "
+            + "Password A is reused on the free email, social media and a game.",
         },
         credentials: [
           {
@@ -377,14 +385,14 @@
             type: "pw",
             family: "green",
             symbol: "A",
-            label: { ja: "パスワード 緑A", en: "Password Green A" },
+            label: { ja: "パスワードA", en: "Password A" },
           },
           {
             id: "pw:purple",
             type: "pw",
             family: "purple",
             symbol: "B",
-            label: { ja: "パスワード 紫B（大学）", en: "Password Purple B (university)" },
+            label: { ja: "パスワードB（大学）", en: "Password B (university)" },
           },
           { id: "device", type: "device", label: { ja: "スマホ（認証アプリ・パスキー）", en: "Phone (authenticator app, passkey)" } },
           { id: "phone", type: "phone", label: { ja: "電話番号（SMS）", en: "Phone number (SMS)" } },
@@ -412,7 +420,7 @@
                 id: "recDesk",
                 role: "recovery",
                 requires: ["idcheck"],
-                label: { ja: "学生証を窓口へ", en: "Student card at the office" },
+                label: { ja: "学生証を大学の窓口へ", en: "Student card at the university office" },
               },
             ],
           },
@@ -509,14 +517,17 @@
           {
             id: "leak",
             leaks: "game",
-            label: { ja: "ゲームの漏えい（そのパスワードの系統が漏れた）", en: "Game breach (its password family leaked)" },
+            label: { ja: "ゲームの漏えい（IDとパスワードが漏れた）", en: "Game breach (ID and password leaked)" },
           },
-          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（番号を乗っ取られた）", en: "SIM swap (number hijacked)" } },
+          { id: "simswap", gives: ["phone"], label: { ja: "SIMスワップ（電話番号を乗っ取られた）", en: "SIM swap (phone number hijacked)" } },
           { id: "mail", gives: ["mailUni"], label: { ja: "大学のメールの乗っ取り", en: "University email taken over" } },
           {
             id: "desk",
             gives: ["info"],
-            label: { ja: "窓口のなりすまし（漏れた個人情報で）", en: "Help-desk impersonation (with leaked details)" },
+            label: {
+              ja: "ソーシャルエンジニアリング（漏れた個人情報を使い、電話の窓口で本人になりすます）",
+              en: "Social engineering (posing as the owner at a phone help desk with leaked personal details)",
+            },
           },
         ],
         losses: [

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; connect-src 'none'">
   <meta name="referrer" content="no-referrer">
-  <meta name="description" content="架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。">
+  <meta name="description" content="架空の3人のアカウントで、1つの攻撃（漏えい・SIMスワップ・メールの乗っ取り・ソーシャルエンジニアリング）が、ログインや復旧を通じて広がる様子を順に見る教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変えたとき（認証アプリかパスキーを追加する・必要なものを切り替える・復旧の入口を外す）の前後も比べられる。自分のアカウントの情報は入力せず、外部へは何も送らない。日英対応。">
   <meta property="og:title" content="Account Domino Mapper">
-  <meta property="og:description" content="架空の3人のアカウントを、ログインと復旧の入口（かつ・または）の地図で表し、漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすましの4枚のカードで、倒れていく順を段ごとに再生する教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変える1手（スマホを足す・条件を付け替える・復旧の入口を外す）の前後を並べて比べる。本物の構成は入れず、外部へは何も送らない。日英対応。">
+  <meta property="og:description" content="架空の3人のアカウントで、1つの攻撃（漏えい・SIMスワップ・メールの乗っ取り・ソーシャルエンジニアリング）が、ログインや復旧を通じて広がる様子を順に見る教材。スマホ・電話番号・メールを失ったときの閉め出しと、入口を1つ変えたとき（認証アプリかパスキーを追加する・必要なものを切り替える・復旧の入口を外す）の前後も比べられる。自分のアカウントの情報は入力せず、外部へは何も送らない。日英対応。">
   <meta property="og:url" content="https://ipusiron.github.io/account-domino-mapper/">
   <meta property="og:image" content="https://ipusiron.github.io/account-domino-mapper/assets/screenshot.png">
   <meta property="og:type" content="website">
@@ -27,9 +27,9 @@
     <div class="masthead">
       <h1>Account Domino <span>Mapper</span></h1>
       <fieldset id="startup-tools" class="header-tools startup-control-group" disabled aria-label="表示 / Display" data-i18n-aria="displayControls">
-        <button id="theme" class="icon-button" type="button" data-i18n-aria="themeToggle" aria-label="明暗を切り替える">◐</button>
-        <button id="language" class="icon-button" type="button" data-i18n-aria="languageToggle" aria-label="EN：英語の表示にする">EN</button>
-        <button id="help" class="icon-button" type="button" data-i18n-aria="help" aria-haspopup="dialog" aria-label="ヘルプと座学">?</button>
+        <button id="theme" class="tool-button" type="button"><span class="tool-icon" aria-hidden="true">◐</span><span id="theme-label">暗くする</span></button>
+        <button id="language" class="tool-button" type="button" data-i18n-aria="languageToggle" aria-label="EN：英語の表示にする">EN</button>
+        <button id="help" class="tool-button" type="button" aria-haspopup="dialog"><span class="tool-icon" aria-hidden="true">?</span><span data-i18n="helpButton">ヘルプ・座学</span></button>
       </fieldset>
     </div>
   </header>
@@ -44,17 +44,29 @@
       </details>
     </aside>
     <noscript>JavaScriptを有効にしてください。 / Please enable JavaScript.</noscript>
-    <p class="intro" data-i18n="intro">架空の3人のアカウントの地図で、1つの漏えいがログインと復旧の線を伝って広がる様子と、入口を1つ変えたときの違いを確かめる教材です。アカウントの強さは、ログインと復旧のうち、いちばん弱い入口で決まります。漏えいは防げなくても、連鎖は自分で断てます。</p>
     <fieldset id="startup-controls" class="startup-control-group" disabled aria-label="教材 / Learning aid" data-i18n-aria="learningControls">
-      <section id="person-band" class="person-band" aria-labelledby="person-heading">
-        <h2 id="person-heading" data-i18n="personHeading">人物（架空）</h2>
-        <div class="person-buttons" role="group" aria-labelledby="person-heading">
-          <button id="person-worker" type="button" data-key="persona:worker" aria-pressed="true" data-i18n="personWorker">会社員 ハルト</button>
-          <button id="person-parent" type="button" data-key="persona:parent" aria-pressed="false" data-i18n="personParent">高齢の親 シズエ</button>
-          <button id="person-student" type="button" data-key="persona:student" aria-pressed="false" data-i18n="personStudent">学生 ミオ</button>
+      <div class="top-band">
+        <div class="top-intro">
+          <p class="intro intro-short" data-i18n="introShort">1つの攻撃が、ログインや復旧を通じて、ほかのアカウントへ広がる様子を見る教材です。</p>
+          <details id="intro-more" class="intro-more" open>
+            <summary data-i18n="introMore">くわしい説明を読む</summary>
+            <p class="intro" data-i18n="intro">架空の3人のアカウントで、1つの攻撃（パスワードの漏えい・SIMスワップなど）が、ログインや復旧（パスワードの再設定など）を通じて、ほかのアカウントへ広がる様子を見る教材です。</p>
+            <p class="intro" data-i18n="intro2">入口（ログインや復旧の方法）を1つ変えたとき、広がり方がどう変わるかも比べられます。アカウントの強さは、ログインと復旧のうち、いちばん弱い入口で決まります。よそのサービスからの漏えいは防げなくても、連鎖は自分で断てます。タブは左から順に見ます（攻撃の広がり→本人の閉め出し→入口を1つ変えた前後）。規則表のタブには、数え方の決まりと印刷用の用紙があります。</p>
+          </details>
         </div>
-        <p id="person-counts" class="person-counts">アカウント9・パスワードの系統3。架空の人物で、本物のアカウントの情報を入れる欄はありません。</p>
-      </section>
+        <section id="person-band" class="person-band" aria-labelledby="person-heading">
+          <div class="person-row">
+            <h2 id="person-heading" data-i18n="personHeading">人物（架空）</h2>
+            <div class="person-buttons" role="group" aria-labelledby="person-heading">
+              <button id="person-worker" type="button" data-key="persona:worker" aria-pressed="true" data-i18n="personWorker">会社員 ハルト</button>
+              <button id="person-parent" type="button" data-key="persona:parent" aria-pressed="false" data-i18n="personParent">高齢の親 シズエ</button>
+              <button id="person-student" type="button" data-key="persona:student" aria-pressed="false" data-i18n="personStudent">学生 ミオ</button>
+            </div>
+          </div>
+          <p id="story" class="story"></p>
+          <p id="person-counts" class="person-counts">アカウント9つ・パスワード3つ（A・B・C）。架空の人物で、本物のアカウントの情報を入れる欄はありません。</p>
+        </section>
+      </div>
       <p id="person-status" class="visually-hidden" role="status" aria-live="polite"></p>
       <nav class="tabs" role="tablist" aria-label="学ぶ順番" data-i18n-aria="tablist">
         <button id="tab-chain" role="tab" type="button" aria-controls="panel-chain"
@@ -62,184 +74,267 @@
         <button id="tab-lockout" role="tab" type="button" aria-controls="panel-lockout"
           aria-selected="false" tabindex="-1" data-i18n="tabLockout">閉め出し</button>
         <button id="tab-compare" role="tab" type="button" aria-controls="panel-compare"
-          aria-selected="false" tabindex="-1" data-i18n="tabCompare">1手で<wbr>比べる</button>
+          aria-selected="false" tabindex="-1" data-i18n="tabCompare">1つ変えて<wbr>比べる</button>
         <button id="tab-rules" role="tab" type="button" aria-controls="panel-rules"
           aria-selected="false" tabindex="-1" data-i18n="tabRules">規則表</button>
       </nav>
       <section id="panel-chain" class="panel" role="tabpanel" aria-labelledby="tab-chain" tabindex="0">
-        <h2 data-i18n="tabChain">連鎖を追う</h2>
-        <p data-i18n="chainIntro">攻撃カードを1枚選ぶと、攻撃者がそこから入れるアカウントを段ごとに数えます。攻撃者が入れるようになることを「倒れる」と呼びます。段0はカードが渡したもの、段1はそれだけで入口が開くアカウント、段2はさらにその先です。</p>
-        <p id="start-here" class="start-here" data-i18n="startHere">はじめに：「見どころ」の1つ目を押し、「次の段 ▶」で1段ずつ進めます。</p>
-        <p id="story" class="story"></p>
-        <h3 id="highlights-heading" data-i18n="highlightsHeading">見どころ</h3>
-        <div id="highlights" class="highlights" role="group" aria-labelledby="highlights-heading"></div>
-        <h3 id="cards-heading" data-i18n="cardsHeading">攻撃カード</h3>
-        <div class="card-buttons" role="group" aria-labelledby="cards-heading">
-          <button id="card-leak" type="button" data-key="card:leak" aria-pressed="true" data-i18n="cardLeak">漏えい</button>
-          <button id="card-simswap" type="button" data-key="card:simswap" aria-pressed="false" data-i18n="cardSimswap">SIMスワップ</button>
-          <button id="card-mail" type="button" data-key="card:mail" aria-pressed="false" data-i18n="cardMail">メールの乗っ取り</button>
-          <button id="card-desk" type="button" data-key="card:desk" aria-pressed="false" data-i18n="cardDesk">窓口のなりすまし</button>
+        <h2 class="visually-hidden" data-i18n="tabChain">連鎖を追う</h2>
+        <p class="panel-intro" data-i18n="chainIntro">攻撃カードは、攻撃者が最初に手にするもの（漏れたパスワード、乗っ取った電話番号など）です。カードを1枚選ぶと、攻撃者がそれを使って入れるアカウントを、広がる順に段ごとに示します。攻撃者が入れることを「倒れる」と呼びます。段0は攻撃者が最初に手にしたもの、段1はそれだけで入れるアカウント、段2は段1までに倒れたアカウントも使って入れるアカウントです（段3からも同じです）。</p>
+        <div id="highlights-block" class="highlights-block">
+          <div class="highlights-head">
+            <h3 id="highlights-heading" data-i18n="highlightsHeading">見どころ</h3>
+            <p id="start-here" class="start-here" data-i18n="startHere">はじめに：「見どころ」の1つ目を押し、「次の段 ▶」で1段ずつ進めます。</p>
+          </div>
+          <p class="highlights-note" data-i18n="highlightsNote">押すと、その場面のタブ・カード・段に切り替わり、見るところへ移ります。</p>
+          <div id="highlights" class="highlights" role="group" aria-labelledby="highlights-heading"></div>
         </div>
-        <p id="card-line" class="card-line"></p>
-        <div class="step-controls">
-          <button id="step-first" type="button" data-key="step:first">最初から</button>
-          <button id="step-next" type="button" data-key="step:next">次の段 ▶</button>
-          <button id="step-last" type="button" data-key="step:last">最後まで</button>
-          <button id="step-play" type="button" data-key="step:play" aria-pressed="false">▶ 再生</button>
+        <div id="chain-stage" class="chain-stage">
+          <div class="stage-band">
+            <div class="cards-row">
+              <h3 id="cards-heading" data-i18n="cardsHeading">攻撃カード</h3>
+              <div class="card-buttons keep-words" role="group" aria-labelledby="cards-heading">
+                <button id="card-leak" type="button" data-key="card:leak" aria-pressed="true" data-i18n="cardLeak">漏えい</button>
+                <button id="card-simswap" type="button" data-key="card:simswap" aria-pressed="false" data-i18n="cardSimswap">SIMスワップ</button>
+                <button id="card-mail" type="button" data-key="card:mail" aria-pressed="false">メールの乗っ取り（古いメール）</button>
+                <button id="card-desk" type="button" data-key="card:desk" aria-pressed="false" data-i18n="cardDesk">ソーシャルエンジニアリング</button>
+              </div>
+            </div>
+            <p id="card-line" class="card-line"></p>
+            <p id="card-note" class="card-note" hidden></p>
+            <div id="step-bar" class="step-bar">
+              <div class="step-controls" role="group" aria-label="段の操作" data-i18n-aria="stepControls">
+                <button id="step-first" type="button" data-key="step:first">最初から</button>
+                <button id="step-prev" type="button" data-key="step:prev">◀ 前の段</button>
+                <button id="step-next" class="step-next" type="button" data-key="step:next">次の段 ▶</button>
+                <button id="step-last" type="button" data-key="step:last">最後まで</button>
+                <button id="step-play" type="button" data-key="step:play" aria-pressed="false">▶ 再生</button>
+              </div>
+              <p id="step-line" class="step-line"></p>
+              <p id="step-hint" class="step-hint"></p>
+            </div>
+            <p id="step-summary" class="step-summary"></p>
+            <p id="step-status" class="visually-hidden" role="status" aria-live="polite"></p>
+            <figure id="chain-figure" class="map-figure">
+              <figcaption id="chain-key" class="map-key"></figcaption>
+              <p id="chain-howto" class="key-howto"></p>
+            </figure>
+          </div>
+          <p class="map-narrow-note" data-i18n="mapNarrowNote">幅の広い画面（720px以上）では、表の上に地図の図も出ます。</p>
+          <p class="table-howto" data-i18n="tableHowto">アカウントの名前を押すと、その行のすぐ下に入口と倒れ方が出ます（広い画面では、図のその箱を点線で囲みます）。</p>
+          <div id="chain-legend" class="map-legend-groups"></div>
+          <div id="chain-map" class="table-frame"></div>
         </div>
-        <p id="step-line" class="step-line"></p>
-        <p id="step-hint" class="step-hint" data-i18n="stepHint" hidden>「最初から」を押すと、段0から1段ずつ追えます。</p>
-        <p id="step-summary" class="step-summary"></p>
-        <p id="step-status" class="visually-hidden" role="status" aria-live="polite"></p>
-        <figure id="chain-figure" class="map-figure">
-          <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
-        </figure>
-        <p class="map-legend" data-i18n="mapLegend">★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
-        <div id="chain-map" class="table-frame"></div>
         <div id="detail" class="detail" hidden>
           <h3 id="detail-heading" tabindex="-1"></h3>
           <div id="detail-body"></div>
-          <button id="back-to-map" class="back-to-map" type="button" data-key="back-to-map" data-i18n="backToMap">地図の表へ戻る</button>
         </div>
         <details id="four-cards" class="four-cards" hidden>
           <summary data-i18n="fourCards">4枚のカードをまとめて見る</summary>
-          <p class="map-legend" data-i18n="fourCardsLegend">SIM＝SIMスワップ、メール＝メールの乗っ取り、窓口＝窓口のなりすまし</p>
+          <p class="note" data-i18n="fourCardsNote">カードごとに、そのカード1枚で何段目に倒れるかを並べます（段の操作に関係なく、最後の段の結果）。行を横に見ると、そのアカウントがどのカードに弱いかがわかります。</p>
           <div id="four-cards-table" class="table-frame"></div>
         </details>
-        <p id="card-note" class="note" hidden></p>
-        <button id="print-guide" class="guide-button" type="button" data-key="print-guide" data-i18n="printGuide">自分の構成に当てはめるときは、画面には入れず、規則表のタブから空欄の用紙を印刷して記号で書きます。</button>
+        <p class="print-guide-text" data-i18n="printGuideText">自分のアカウントで確かめるときは、この画面には入力せず、印刷した用紙に記号で書きます。</p>
+        <button id="print-guide" class="guide-button" type="button" data-key="print-guide" data-i18n="printGuide">用紙を印刷する所へ移る（規則表のタブ）</button>
       </section>
       <section id="panel-lockout" class="panel" role="tabpanel" aria-labelledby="tab-lockout" tabindex="0" hidden>
         <h2 data-i18n="tabLockout">閉め出し</h2>
-        <p data-i18n="lockIntro">本人がスマホ・電話番号・メールのどれかを失ったとき、手元に残ったもので入れるかを並べます。○の横の「＋番号で×」は、それも一緒に失うと入れなくなる、という意味です。</p>
-        <ul class="legend-list">
-          <li data-i18n="lockLegendPhone">スマホ＝スマホをなくした</li>
-          <li data-i18n="lockLegendNumber">番号＝電話番号を手放した</li>
-          <li id="lock-legend-mail"></li>
-        </ul>
+        <p data-i18n="lockIntro">閉め出しは、攻撃とは逆に、本人が自分のアカウントに入れなくなることです。スマホ・電話番号・メールのどれか1つを失ったとき、手元に残ったもので各アカウントに入れるかを表にしました。</p>
+        <div class="lock-legend">
+          <div class="lock-legend-group">
+            <p class="lock-legend-head" data-i18n="lockLegendColumns">列：失ったもの</p>
+            <ul class="legend-list">
+              <li data-i18n="lockLegendPhone">スマホ＝スマホをなくした</li>
+              <li data-i18n="lockLegendNumber">番号＝電話番号を手放した</li>
+              <li id="lock-legend-mail"></li>
+            </ul>
+          </div>
+          <div class="lock-legend-group">
+            <p class="lock-legend-head" data-i18n="lockLegendMarks">印：入れるかどうか</p>
+            <ul id="lock-legend-marks" class="legend-list lock-legend-marks"></ul>
+          </div>
+        </div>
+        <p id="lock-story" class="lock-story"></p>
+        <p class="lock-howto" data-i18n="lockHowTo">アカウントの名前を押すと、その行のすぐ下に、そのアカウントの入口が出ます。×になるのは、すべての入口が、失ったもの（または、それで入れなくなったメール）を必要とするときです。</p>
         <div id="lock-map" class="table-frame"></div>
-        <p id="lock-entrances" class="lock-entrances"></p>
         <ul class="note-list">
-          <li data-i18n="lockNotePassword">この模型では、パスワードを忘れることは喪失カードに入れていません。</li>
-          <li data-i18n="lockNoteNumber">「スマホをなくした」では電話番号は失いません（SIMを再発行できる前提）。</li>
-          <li data-i18n="lockNoteSync">「スマホをなくした」の値は、認証アプリやパスキーを、ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。</li>
+          <li data-i18n="lockNotePassword">このシミュレーションでは、パスワードを忘れた場合は数えていません（失うものは、スマホ・電話番号・メールの3つです）。</li>
+          <li data-i18n="lockNoteNumber">スマホを失っても、電話番号は失いません（SIMを再発行できる前提です）。</li>
+          <li data-i18n="lockNoteSync">スマホを失ったときの結果は、認証アプリやパスキーを、ほかの端末やクラウドに同期・バックアップしていない場合のものです。</li>
         </ul>
       </section>
       <section id="panel-compare" class="panel" role="tabpanel" aria-labelledby="tab-compare" tabindex="0" hidden>
-        <h2 data-i18n="tabCompare">1手で比べる</h2>
-        <p data-i18n="compareIntro">ログインか復旧の入口を1つだけ変えて、攻撃の広がりと閉め出しを前後で比べます。1手は3種類です。ログインにスマホを足す・条件を1つ付け替える・復旧の入口を1つ外す（条件が2つある入口を外すと、線は2本なくなります）。</p>
-        <h3 id="mode-heading" data-i18n="modeHeading">何に備えるか</h3>
-        <div class="mode-buttons" role="group" aria-labelledby="mode-heading">
-          <button id="mode-leak" type="button" data-key="mode:leak" aria-pressed="false" data-i18n="modeLeak">漏えい</button>
-          <button id="mode-simswap" type="button" data-key="mode:simswap" aria-pressed="false" data-i18n="modeSimswap">SIMスワップ</button>
-          <button id="mode-mail" type="button" data-key="mode:mail" aria-pressed="false" data-i18n="modeMail">メールの乗っ取り</button>
-          <button id="mode-desk" type="button" data-key="mode:desk" aria-pressed="false" data-i18n="modeDesk">窓口のなりすまし</button>
-          <button id="mode-all" type="button" data-key="mode:all" aria-pressed="true" data-i18n="modeAll">4枚の合計</button>
-          <button id="mode-lockout" type="button" data-key="mode:lockout" aria-pressed="false" data-i18n="modeLockout">閉め出しを減らす</button>
+        <h2 data-i18n="tabCompare">1つ変えて比べる</h2>
+        <p id="compare-person-note" class="compare-person-note" hidden></p>
+        <p data-i18n="compareIntro">ログインか復旧の入口を1つだけ変えて、攻撃で倒れるアカウントと閉め出しが、変更前と変更後でどう変わるかを比べます。変え方は次の3種類です。</p>
+        <ul class="compare-kinds keep-words">
+          <li data-i18n="compareKindAdd">ログインに、スマホの認証アプリかパスキーを追加する</li>
+          <li data-i18n="compareKindReplace">入口に必要なもの（パスワード・SMSなど）を1つ、別のものに切り替える</li>
+          <li data-i18n="compareKindRemove">復旧の入口を1つ外す</li>
+        </ul>
+        <h3 id="mode-heading" data-i18n="modeHeading">並べ替えの基準</h3>
+        <p id="mode-help" class="tab3-help keep-words" data-i18n="modeHelp">減らしたい攻撃（または閉め出し）を選ぶと、下の上位の変更がその基準で並び替わり、1位の変更が選ばれます。</p>
+        <!-- The four attack cards on the first row (as in tab 1), the sum and the lockouts on the second -->
+        <div class="mode-buttons keep-words" role="group" aria-labelledby="mode-heading">
+          <div class="mode-row">
+            <button id="mode-leak" type="button" data-key="mode:leak" aria-pressed="false" data-i18n="modeLeak">漏えい</button>
+            <button id="mode-simswap" type="button" data-key="mode:simswap" aria-pressed="false" data-i18n="modeSimswap">SIMスワップ</button>
+            <button id="mode-mail" type="button" data-key="mode:mail" aria-pressed="false">メールの乗っ取り（古いメール）</button>
+            <button id="mode-desk" type="button" data-key="mode:desk" aria-pressed="false" data-i18n="modeDesk">ソーシャルエンジニアリング</button>
+          </div>
+          <div class="mode-row mode-row-sums">
+            <button id="mode-all" type="button" data-key="mode:all" aria-pressed="true" data-i18n="modeAll">4枚の合計</button>
+            <button id="mode-lockout" type="button" data-key="mode:lockout" aria-pressed="false" data-i18n="modeLockout">閉め出し</button>
+          </div>
         </div>
-        <h3 id="candidates-heading" data-i18n="candidatesHeading">この模型での上位の手</h3>
-        <p id="candidates-legend" class="map-legend keep-words" data-i18n="candidatesLegend">★＝重要なアカウント。4枚の合計＝4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）</p>
+        <div class="candidates-head">
+          <h3 id="candidates-heading" data-i18n="candidatesHeading">このシミュレーションでの上位の変更</h3>
+          <button id="ranking-toggle" class="ranking-toggle" type="button" data-key="ranking-toggle" aria-expanded="false" aria-controls="ranking">並べ方</button>
+        </div>
+        <p id="candidates-help" class="tab3-help keep-words"></p>
+        <ul id="candidates-legend" class="tab3-legend keep-words"></ul>
+        <p id="candidates-story" class="candidates-story keep-words" hidden></p>
         <div id="candidates" class="candidates" role="group" aria-labelledby="candidates-heading"></div>
         <div id="candidates-status" role="status" aria-live="polite"><p id="candidates-none" class="candidates-none" hidden></p></div>
-        <details id="ranking" class="ranking">
-          <summary data-i18n="rankingSummary">並べ方</summary>
-          <p id="ranking-text"></p>
-        </details>
+        <!-- How changes are ranked: opened by the small button beside the heading, shown under the list of changes -->
+        <div id="ranking" class="ranking keep-words" hidden></div>
         <div class="choose">
-          <label for="choose-move" data-i18n="chooseLabel">1手を自分で選ぶ</label>
+          <label for="choose-move"><span data-i18n="chooseLabel">変更を自分で選ぶ</span><span class="choose-hint" data-i18n="chooseHint">（アカウントごとに、変えられるものがすべて並びます）</span></label>
           <select id="choose-move"></select>
         </div>
-        <p id="no-move" class="no-move" data-i18n="noMove" hidden>「1手を自分で選ぶ」から手を選ぶと、前後を並べます。</p>
+        <p id="no-move" class="no-move" data-i18n="noMove" hidden>「変更を自分で選ぶ」で変更を選ぶと、変更前と変更後の結果を並べて出します。</p>
         <div id="compare-result" class="compare-result">
           <h3 id="compare-heading" class="compare-heading" tabindex="-1"></h3>
           <div id="compare-summary" class="compare-summary" role="status" aria-live="polite"></div>
+          <p id="compare-why" class="compare-why keep-words" hidden></p>
+          <!-- The title of the attack table, then its legend, then the table (whose caption, with the same title, is for screen readers) -->
+          <p id="attack-title" class="attack-title keep-words" aria-hidden="true"></p>
+          <ul id="attack-legend" class="tab3-legend keep-words"></ul>
           <div id="attack-area" class="table-frame"></div>
           <details id="attack-names" class="attack-names">
-            <summary data-i18n="attackNames">攻撃の名前を見る</summary>
+            <summary data-i18n="attackNames">守れた・新たに倒れるアカウントの名前を見る</summary>
             <div id="attack-names-table" class="table-frame"></div>
           </details>
-          <h3 data-i18n="lockOneHeading">閉め出し（1つ失う）</h3>
-          <ul id="lock-one" class="sentence-list"></ul>
-          <h3 data-i18n="lockTwoHeading">2つ同時に失う</h3>
-          <ul id="lock-two" class="sentence-list"></ul>
           <details id="lock-changes" class="lock-changes">
-            <summary data-i18n="beforeAfterTable">閉め出しの表の前後を見る</summary>
+            <summary data-i18n="beforeAfterTable">閉め出しのタブの表で、変更前と変更後を見る</summary>
+            <p class="tab3-help keep-words" data-i18n="lockChangesHelp">変更の前後で印が変わったアカウントだけを出します。印の読み方は「閉め出し」のタブの表と同じです。</p>
             <ul class="legend-list">
               <li data-i18n="lockLegendPhone">スマホ＝スマホをなくした</li>
               <li data-i18n="lockLegendNumber">番号＝電話番号を手放した</li>
               <li id="lock-changes-mail"></li>
-              <li data-i18n="legendPaper">紙＝紙の回復コードをなくした</li>
             </ul>
             <div id="lock-changes-table" class="table-frame"></div>
           </details>
           <div id="move-notes" class="move-notes"></div>
-          <h3 data-i18n="sameHeading">同じ入口のほかの手と比べる</h3>
+          <h3 id="same-heading" data-i18n="sameHeading">同じ入口のほかの変え方と比べる</h3>
+          <p class="tab3-help keep-words" data-i18n="sameHelp">選んだ変更と同じ入口を、ほかのやり方で変えた場合を並べます。変え方を押すと、その変更の結果が表のすぐ下に出ます（上の比べた結果も、その変更に替わります）。</p>
+          <!-- The way back up names where it goes; one above the table and one under the result of the change pressed there -->
+          <button id="back-to-compare-top" class="back-to-compare" type="button" data-key="back-to-compare-top">▲ 比べた結果（上）へ戻る</button>
           <div id="same-table" class="table-frame"></div>
+          <div id="same-result" class="same-result"></div>
           <p id="same-note" class="note" hidden></p>
-          <button id="back-to-compare" class="back-to-compare" type="button" data-key="back-to-compare" data-i18n="backToCompare">比べた結果へ戻る</button>
+          <button id="back-to-compare" class="back-to-compare" type="button" data-key="back-to-compare">▲ 比べた結果（上）へ戻る</button>
+          <!-- The map before and after the change: its own attack card (apart from the card of "Follow the chain"), the line on
+               that card (or the cards to switch to), the buttons Before and After with the count of the card, then the diagram (wide
+               screens) and the table. Below 720px the band opens up and the buttons Before and After stay at the bottom of the
+               screen while the table is in view (style.css) -->
           <details id="after-map" class="after-map">
-            <summary id="after-map-summary" data-i18n="afterMap">手のあとの地図を見る</summary>
-            <div class="phase-buttons" role="group" aria-labelledby="after-map-summary">
-              <button id="phase-before" type="button" data-key="phase:before" aria-pressed="false" data-i18n="mapBefore">手の前</button>
-              <button id="phase-after" type="button" data-key="phase:after" aria-pressed="true" data-i18n="mapAfter">手のあと</button>
+            <summary id="after-map-summary" data-i18n="afterMap">変更後の地図を見る</summary>
+            <p class="tab3-help keep-words" data-i18n="afterMapHelp">選んだ変更の前と後で、攻撃カード1枚で倒れるアカウントを、地図で比べます（段を最後まで進めた結果です）。最初は、この変更で守れるアカウントがいちばん多いカードを選んでいます。カードは下のボタンで替えます。</p>
+            <div id="after-stage" class="after-stage">
+              <div class="after-band">
+                <div class="cards-row">
+                  <p id="after-cards-label" class="after-cards-label" data-i18n="afterCardsLabel">この地図の攻撃カード</p>
+                  <div class="card-buttons keep-words" role="group" aria-labelledby="after-cards-label">
+                    <button id="after-card-leak" type="button" data-key="after-card:leak" aria-pressed="false" data-i18n="cardLeak">漏えい</button>
+                    <button id="after-card-simswap" type="button" data-key="after-card:simswap" aria-pressed="false" data-i18n="cardSimswap">SIMスワップ</button>
+                    <button id="after-card-mail" type="button" data-key="after-card:mail" aria-pressed="false">メールの乗っ取り（古いメール）</button>
+                    <button id="after-card-desk" type="button" data-key="after-card:desk" aria-pressed="false" data-i18n="cardDesk">ソーシャルエンジニアリング</button>
+                  </div>
+                </div>
+                <div id="after-card-note" class="after-card-note keep-words"></div>
+                <div id="after-phase-bar" class="after-phase-bar">
+                  <div class="phase-buttons" role="group" aria-labelledby="after-map-summary">
+                    <button id="phase-before" type="button" data-key="phase:before" aria-pressed="false" data-i18n="mapBefore">変更前</button>
+                    <button id="phase-after" type="button" data-key="phase:after" aria-pressed="true" data-i18n="mapAfter">変更後</button>
+                  </div>
+                </div>
+                <p id="after-status" class="after-status keep-words" hidden></p>
+              </div>
+              <figure id="after-figure" class="map-figure">
+                <figcaption id="after-key" class="map-key"></figcaption>
+                <p class="key-howto" data-i18n="mapHowto">箱の中の1行が1つの入口で、その入口に必要なものから線が来ます（＋はすべて必要。行が2つ以上ある箱は、どれか1つの入口で入れる）。図は表示だけです。</p>
+              </figure>
+              <p class="map-narrow-note" data-i18n="mapNarrowNote">幅の広い画面（720px以上）では、表の上に地図の図も出ます。</p>
+              <p class="table-howto" data-i18n="afterTableHowto">アカウントの名前を押すと、その行のすぐ下に、変更前と変更後の倒れ方が出ます。</p>
+              <div id="after-legend" class="map-legend-groups"></div>
+              <div id="after-map-table" class="table-frame"></div>
             </div>
-            <p id="map-card" class="map-card"></p>
-            <figure id="after-figure" class="map-figure">
-              <figcaption data-i18n="svgCaption">図は表示だけです。アカウントを選ぶときは、下の表の名前を押します。開＝そのアカウントを開けた入口。実線＝ログイン、破線＝復旧。ロ＝ログイン（カタカナのロ）、復＝復旧。</figcaption>
-            </figure>
-            <p class="map-legend" data-i18n="mapLegend">★＝重要なアカウント　●数字＝倒れた段　裏口＝復旧の入口がなければ、このカードでは倒れなかったアカウント　いまの段＝この段で倒れた行</p>
-            <div id="after-map-table" class="table-frame"></div>
           </details>
         </div>
+        <!-- Room kept at the end of the tab while the same-entrance table is used (see keepRoom in app.js) -->
+        <div id="compare-room" class="compare-room" aria-hidden="true"></div>
       </section>
       <section id="panel-rules" class="panel" role="tabpanel" aria-labelledby="tab-rules" tabindex="0" hidden>
-        <h2 data-i18n="rulesHeading">規則表（単純化した模型）</h2>
+        <h2 data-i18n="rulesHeading">規則表（単純化したシミュレーション）</h2>
         <p data-i18n="rulesIntro">この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。</p>
+        <p data-i18n="rulesScope">規則1〜3と8は、どのタブにも共通の決まりです。規則4〜7は攻撃の数え方（「連鎖を追う」と「1つ変えて比べる」）、規則9は閉め出しの数え方（「閉め出し」と「1つ変えて比べる」）です。規則10には、扱わないものを書いています。</p>
+        <nav class="section-nav" aria-labelledby="rules-nav-label">
+          <p id="rules-nav-label" class="section-nav-label" data-i18n="rulesNavLabel">このタブの中</p>
+          <div class="section-nav-buttons">
+            <button type="button" data-key="rules-nav:rules" data-target="rules-table" data-i18n="rulesNavRules">規則</button>
+            <button type="button" data-key="rules-nav:symbols" data-target="symbol-table" data-i18n="rulesNavSymbols">記号の一覧</button>
+            <button type="button" data-key="rules-nav:notes" data-target="notes-heading" data-i18n="rulesNavNotes">注記</button>
+            <button type="button" data-key="rules-nav:paper" data-target="paper-heading" data-i18n="rulesNavPaper">紙に書いて確かめる（印刷）</button>
+          </div>
+        </nav>
         <div class="table-frame">
-          <table id="rules-table" class="rules-table">
-            <caption data-i18n="rulesCaption">模型の規則</caption>
+          <table id="rules-table" class="rules-table" tabindex="-1">
+            <caption data-i18n="rulesCaption">シミュレーションの規則</caption>
             <thead><tr><th scope="col" class="rules-no"><span aria-hidden="true">#</span><span class="visually-hidden" data-i18n="rulesColNo">番号</span></th><th scope="col" data-i18n="rulesColRule">規則</th></tr></thead>
             <tbody>
               <tr><th scope="row" class="rules-no">1</th><td data-i18n="rule1">アカウントには入口がある。ログインの入口と、復旧（再設定）の入口がある</td></tr>
               <tr><th scope="row" class="rules-no">2</th>
                 <td><span data-i18n="rule2">1つの入口の条件は「かつ」。全部そろえば開く（例：パスワード＋SMSのコード）</span>
-                  <span class="rule-example" data-i18n="rule2Example">例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。線をすべて「または」として数えると、ここで倒れたことになってしまいます。</span></td></tr>
+                  <span class="rule-example" data-i18n="rule2Example">例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。「かつ」を「または」として数えると、ここで倒れたことになってしまいます。</span></td></tr>
               <tr><th scope="row" class="rules-no">3</th><td data-i18n="rule3">入口どうしは「または」。どれか1つ開けば入れる</td></tr>
               <tr><th scope="row" class="rules-no">4</th>
-                <td data-i18n="rule4">攻撃者はカードが渡すものから始め、開いたメールも次の条件に使う。新しく開くものがなくなるまで続ける。1回の見直しで開く分を1段と数える</td></tr>
+                <td data-i18n="rule4">攻撃者は、カードで最初に手にしたものから始める。倒れたメールのアカウントも、次の入口の条件に使う。新しく倒れるアカウントがなくなるまで繰り返し、1回の繰り返しで新しく倒れた分を1段と数える</td></tr>
               <tr><th scope="row" class="rules-no">5</th>
-                <td data-i18n="rule5">パスワードは系統（色と英字）で表す。同じ系統なら、どのアカウントでも同じものとみなす（少し変えた派生を含む）。漏えいのカードは、漏れたサービスがいまログインに使っている系統が、IDと組でそのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、同じ系統を使う入口ではパスワードの条件がそろう</td></tr>
-              <tr><th scope="row" class="rules-no">6</th><td data-i18n="rule6">SMSの条件は電話番号で満たす。攻撃者が持つのはSIMスワップのカードのときだけ</td></tr>
-              <tr><th scope="row" class="rules-no">7</th><td data-i18n="rule7">電話の窓口は個人情報で通る。書類での本人確認（身分証・郵送）を破るカードはない</td></tr>
+                <td data-i18n="rule5">パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）。漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、同じパスワードを使う入口ではパスワードの条件がそろう</td></tr>
+              <tr><th scope="row" class="rules-no">6</th><td data-i18n="rule6">SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ</td></tr>
+              <tr><th scope="row" class="rules-no">7</th><td data-i18n="rule7">電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない</td></tr>
               <tr><th scope="row" class="rules-no">8</th><td data-i18n="rule8">パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある</td></tr>
               <tr><th scope="row" class="rules-no">9</th>
-                <td data-i18n="rule9">閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消」と表し、閉め出しには数えない。パスワードを忘れることは扱わない</td></tr>
+                <td data-i18n="rule9">閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない</td></tr>
               <tr><th scope="row" class="rules-no">10</th><td data-i18n="rule10">時間・確率・通知・不審なログインの検知は扱わない</td></tr>
             </tbody>
           </table>
         </div>
-        <div id="symbol-table" class="table-frame"></div>
-        <h3 data-i18n="notesHeading">注記</h3>
+        <div id="symbol-table" class="table-frame" tabindex="-1"></div>
+        <div id="mark-table" class="table-frame"></div>
+        <h3 id="notes-heading" class="notes-heading" tabindex="-1" data-i18n="notesHeading">注記</h3>
         <ul id="rules-notes" class="note-list rules-notes"></ul>
         <details id="not-in-model" class="not-in-model">
-          <summary data-i18n="notInModel">この模型に入れていないもの</summary>
+          <summary data-i18n="notInModel">このシミュレーションで扱わないもの</summary>
           <ul class="plain-list">
             <li data-i18n="notInModel1">パスワードの強さ</li>
             <li data-i18n="notInModel2">攻撃の確率・手間・時間</li>
             <li data-i18n="notInModel3">不審なログインの検知と通知</li>
-            <li data-i18n="notInModel4">同期パスキーをクラウドの回復で取り出す経路</li>
+            <li data-i18n="notInModel4">同期パスキーをクラウドの復旧で取り出す経路</li>
             <li data-i18n="notInModel5">端末の感染</li>
             <li data-i18n="notInModel6">書類の偽造</li>
             <li data-i18n="notInModel7">パスワードを忘れること</li>
             <li data-i18n="notInModel8">SSOとパスワード管理ソフト</li>
-            <li data-i18n="notInModel9">乗っ取ったあとに攻撃者が回復先を書き換えること</li>
+            <li data-i18n="notInModel9">乗っ取ったあとに攻撃者が再設定先を書き換えること</li>
             <li data-i18n="notInModel10">漏れたパスワードがハッシュで守られていて解けない場合</li>
             <li data-i18n="notInModel11">フィッシング（偽サイトでの入力。パスキーはこれに強い）</li>
           </ul>
         </details>
-        <h3 id="paper-heading" class="paper-heading" tabindex="-1" data-i18n="paperHeading">紙に書いて当てはめる</h3>
-        <p id="paper-intro" data-i18n="paperFormIntro">自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。</p>
-        <button id="print-button" class="print-button" type="button" aria-describedby="paper-intro" data-i18n="printButton">印刷する（3人の地図と空欄の用紙）</button>
+        <h3 id="paper-heading" class="paper-heading" tabindex="-1" data-i18n="paperHeading">自分のアカウントを紙に書いて確かめる</h3>
+        <p id="paper-intro" data-i18n="paperFormIntro">自分のアカウントのつながり（どのアカウントを、どのメールや電話番号で再設定できるか）は、この画面には入力しません。印刷した空欄の用紙に、パスワードそのものは書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。</p>
+        <p id="paper-print-out" data-i18n="paperPrintOut">印刷すると、3人の地図（1人1枚）と、自分用の空欄の用紙（1枚）の4枚が出ます。書き終えたら、多くのアカウントの再設定先になっているメールと、電話番号1本に頼る入口を探します。</p>
+        <button id="print-button" class="print-button" type="button" aria-describedby="paper-intro paper-print-out" data-i18n="printButton">印刷する（3人の地図と空欄の用紙）</button>
       </section>
     </fieldset>
   </main>
@@ -248,58 +343,76 @@
     <div class="help-header"><h2 id="help-title" data-i18n="help">ヘルプと座学</h2>
       <button id="close-help" type="button" data-i18n="close">閉じる</button></div>
     <div class="help-body" role="region" tabindex="0" data-i18n-aria="helpBody" aria-label="ヘルプの本文">
-      <h3 data-i18n="helpFirst">はじめて読むとき</h3>
-      <p data-i18n="helpFirstText">最初は「連鎖を追う」で会社員の漏えいを1段ずつ進めます。次に人物を高齢の親に替えて、見どころの「電話番号を手放すと、銀行に入れない」を押し、「閉め出し」の表の×を見ます。最後に「1手で比べる」で同じ人の1手を試してください。</p>
-      <h3 data-i18n="helpKeysHeading">操作</h3>
-      <p data-i18n="helpKeys">タブは←→・Home・Endで移り、ヘルプはEscで閉じます。</p>
-      <h3 data-i18n="helpTermsHeading">用語</h3>
+      <nav id="help-nav" class="section-nav help-nav" aria-labelledby="help-nav-label">
+        <p id="help-nav-label" class="section-nav-label" data-i18n="helpNavLabel">このヘルプの中</p>
+        <div class="section-nav-buttons">
+          <button type="button" data-target="help-first" data-i18n="helpNavFirst">はじめて読むとき</button>
+          <button type="button" data-target="help-ops" data-i18n="helpNavOps">操作</button>
+          <button type="button" data-target="help-terms-heading" data-i18n="helpNavTerms">用語</button>
+          <button type="button" data-target="lessons-heading" data-i18n="helpNavLessons">座学（1〜10）</button>
+          <button type="button" data-target="help-about" data-i18n="helpNavAbout">この教材について</button>
+        </div>
+      </nav>
+      <h3 id="help-first" tabindex="-1" data-i18n="helpFirst">はじめて読むとき</h3>
+      <p data-i18n="helpFirstText">最初に「連鎖を追う」のタブで、会社員の「漏えい」のカードを選び、「次の段 ▶」で1段ずつ進めます。次に人物を高齢の親に替え、見どころの「電話番号を手放すと、ネットバンキングに入れない」を押して、「閉め出し」の表の×を見ます。最後に「1つ変えて比べる」のタブで、同じ高齢の親について上位の変更を押し、変更前と変更後を比べてください。</p>
+      <h3 id="help-ops" tabindex="-1" data-i18n="helpKeysHeading">操作</h3>
+      <ul class="help-ops">
+        <li data-i18n="helpOpsPerson">人物：3人のボタンで替える。どのタブも、その人の地図になる</li>
+        <li data-i18n="helpOpsChain">連鎖を追う：攻撃カードを選び、「次の段 ▶」で1段ずつ進める。表の名前を押すと、そのアカウントの入口と倒れ方が出る</li>
+        <li data-i18n="helpOpsLockout">閉め出し：表の名前を押すと、その行のすぐ下に入口が出る</li>
+        <li data-i18n="helpOpsCompare">1つ変えて比べる：並べ替えの基準を選び、上位の変更か「変更を自分で選ぶ」で変更を選ぶ。変更前と変更後を比べた結果が出る。「変更後の地図を見る」では、攻撃カードを選んで、変更前と変更後の地図を見比べる</li>
+        <li data-i18n="helpOpsRules">規則表：数え方の決まりを読み、自分用の用紙を印刷する</li>
+        <li data-i18n="helpOpsHelp">ヘルプ：「閉じる」・Escキー・外側の暗い所のどれでも閉じる。開き直すと、読んでいた所から続く</li>
+        <li data-i18n="helpKeys">キーボード：タブは←→・Home・Endキーで切り替える</li>
+      </ul>
+      <h3 id="help-terms-heading" tabindex="-1" data-i18n="helpTermsHeading">用語</h3>
       <dl id="help-terms" class="glossary">
         <dt data-i18n="termAccount">アカウント</dt>
-        <dd data-i18n="termAccountMeaning">メール・銀行・SNSなどの1つ。地図の表の1行（広い画面の図では、資格情報より右に並ぶ箱）</dd>
+        <dd data-i18n="termAccountMeaning">メール・銀行・SNSなどのアカウント1つ。地図の表の1行（広い画面の図では、左の列（パスワードやスマホなど）より右に並ぶ箱）</dd>
         <dt data-i18n="termEntrance">入口</dt>
-        <dd data-i18n="termEntranceMeaning">1つのアカウントに入る手段。ログインの入口と復旧の入口がある</dd>
+        <dd data-i18n="termEntranceMeaning">1つのアカウントに入る手段（ログインや復旧の方法）。ログインの入口と復旧の入口がある</dd>
+        <dt data-i18n="termLine">線</dt>
+        <dd data-i18n="termLineMeaning">図で、パスワードやメールなどの箱から、それを必要とする入口の行へ引いた線。実線はログイン、破線は復旧（広い画面の図だけ）</dd>
         <dt data-i18n="termRequirement">条件</dt>
-        <dd data-i18n="termRequirementMeaning">入口に要るもの。2つ以上なら「かつ」</dd>
+        <dd data-i18n="termRequirementMeaning">入口に入るのに必要なもの（パスワード・スマホ・SMSなど）。2つ以上あれば、すべて必要（かつ）。画面の文で「必要なもの」と書いているものと同じ</dd>
         <dt data-i18n="termAndOr">かつ／または</dt>
         <dd data-i18n="termAndOrMeaning">1つの入口の条件はすべて要る／入口はどれか1つ開けばよい</dd>
-        <dt data-i18n="termFamily">系統</dt>
-        <dd data-i18n="termFamilyMeaning">パスワードを色と英字で表したもの（赤A）。同じ系統は使い回し（少し変えたものを含む）</dd>
-        <dt data-i18n="termLineType">線の種類</dt>
-        <dd data-i18n="termLineTypeMeaning">パスワードの系統・多要素・メール・SMS・窓口・紙の回復コードの6種</dd>
+        <dt data-i18n="termFamily">パスワードA・B・C</dt>
+        <dd data-i18n="termFamilyMeaning">人物ごとに、使っているパスワードに付けた記号。同じ記号は同じパスワード（少し変えただけのものを含む）。変更で、そのアカウントだけに新しく作るパスワードは、まだ使っていない次の記号で表す（会社員ならD、高齢の親ならB、学生ならC）</dd>
         <dt data-i18n="termAttackCard">攻撃カード</dt>
-        <dd data-i18n="termAttackCardMeaning">攻撃者が最初に手にするもの（漏えい・SIMスワップ・メールの乗っ取り・窓口のなりすまし）</dd>
+        <dd data-i18n="termAttackCardMeaning">攻撃者が最初に手にするもの（漏えい・SIMスワップ・メールの乗っ取り・ソーシャルエンジニアリング）</dd>
         <dt data-i18n="termFalls">倒れる</dt>
-        <dd data-i18n="termFallsMeaning">攻撃者がそのアカウントに入れるようになること</dd>
+        <dd data-i18n="termFallsMeaning">攻撃者がそのアカウントに入れること</dd>
         <dt data-i18n="termStep">段</dt>
-        <dd data-i18n="termStepMeaning">段0はカードが渡したもの。段rは、条件がすべて段r−1までにそろった入口で開いたもの</dd>
-        <dt data-i18n="termEntranceUsed">開けた入口</dt>
-        <dd data-i18n="termEntranceUsedMeaning">そのアカウントを開いた入口</dd>
+        <dd data-i18n="termStepMeaning">倒れていく順番。段0は攻撃者が最初に手にしたもの、段1はそれだけで倒れるアカウント、段2は段1までに倒れたものも使って倒れるアカウント（段3からも同じ）</dd>
+        <dt data-i18n="termEntranceUsed">攻撃者が使った入口</dt>
+        <dd data-i18n="termEntranceUsedMeaning">攻撃者がそのアカウントに入るのに使った入口（表のかっこの中と、図の「入られた」）</dd>
         <dt data-i18n="termBackdoor">裏口</dt>
-        <dd data-i18n="termBackdoorMeaning">そのカードで倒れるが、復旧の入口をすべて外すと倒れないアカウント。開けた入口がログインでも、その条件のメールが復旧の線で倒れていれば裏口</dd>
-        <dt data-i18n="termLossCard">喪失カード</dt>
-        <dd data-i18n="termLossCardMeaning">本人が失うもの（スマホをなくした・電話番号を手放した・メールが消えた・紙の回復コードをなくした）</dd>
+        <dd data-i18n="termBackdoorMeaning">復旧の入口を通って倒れたアカウント（途中のメールが復旧で倒れ、そのメールで入られた場合も含む）</dd>
+        <dt data-i18n="termLossCard">失うもの</dt>
+        <dd data-i18n="termLossCardMeaning">なくしたり手放したりして、本人の手元からなくなるもの（スマホ・電話番号・メール・紙の回復コード）</dd>
         <dt data-i18n="termLocked">閉め出し（×）</dt>
         <dd data-i18n="termLockedMeaning">失ったあと、手元に残ったもので入れないこと</dd>
-        <dt data-i18n="termGone">消</dt>
-        <dd data-i18n="termGoneMeaning">メールのアカウントそのものが消えた状態。閉め出しには数えない</dd>
-        <dt data-i18n="termOneMore">あと1つ失うと×</dt>
-        <dd data-i18n="termOneMoreMeaning">○の後ろの「（＋番号で×）」。それも一緒に失うと入れない</dd>
+        <dt data-i18n="termGone">消えた</dt>
+        <dd data-i18n="termGoneMeaning">メールのアカウントそのものがなくなった状態。閉め出しには数えない</dd>
+        <dt data-i18n="termOneMore">△（あと1つ失うと×）</dt>
+        <dd data-i18n="termOneMoreMeaning">閉め出しの表の印。いまは入れるが、もう1つ失うと入れなくなること（例：△（番号も失うと×））</dd>
         <dt data-i18n="termTwoAtOnce">2つ同時</dt>
-        <dd data-i18n="termTwoAtOnceMeaning">2つを同時に失ったときだけ閉め出される</dd>
-        <dt data-i18n="termChange">1手</dt>
-        <dd data-i18n="termChangeMeaning">足す・付け替える・外すのどれか1つで、入口を1つ変える（条件が2つの入口を外すと、線は2本なくなる）</dd>
+        <dd data-i18n="termTwoAtOnceMeaning">2つを同時に失ったときだけ閉め出されること（1つだけなら入れる）</dd>
+        <dt data-i18n="termChange">変更</dt>
+        <dd data-i18n="termChangeMeaning">入口を1つだけ変えること。ログインに認証アプリかパスキーを追加する、入口に必要なものを1つ切り替える、復旧の入口を1つ外す、の3種類</dd>
         <dt data-i18n="termSaved">守れた／新たに倒れる</dt>
-        <dd data-i18n="termSavedMeaning">手の前は倒れ、手のあとは倒れない／その逆</dd>
-        <dt data-i18n="termUnlocked">解ける／新たに×</dt>
-        <dd data-i18n="termUnlockedMeaning">手の前は閉め出され、手のあとは入れる／その逆</dd>
+        <dd data-i18n="termSavedMeaning">変更前は倒れ、変更後は倒れない／その逆</dd>
+        <dt data-i18n="termUnlocked">閉め出しがなくなる／閉め出しが増える</dt>
+        <dd data-i18n="termUnlockedMeaning">変更前は入れず、変更後は入れる／その逆</dd>
         <dt data-i18n="termSum">4枚の合計</dt>
-        <dd data-i18n="termSumMeaning">4枚のカードごとに数えて足した数（同じアカウントを2回以上数えることがある）</dd>
+        <dd data-i18n="termSumMeaning">カード4枚それぞれで数えて足した数（1つのアカウントを最大4回数えるので、アカウントの数より大きくなることがある）</dd>
         <dt data-i18n="termImportant">★</dt>
-        <dd data-i18n="termImportantMeaning">重要なアカウント（並べ方で先に数える）</dd>
+        <dd data-i18n="termImportantMeaning">重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更を並べるとき、守れる★の数を先に比べる</dd>
         <dt data-i18n="termHoldings">手元</dt>
-        <dd data-i18n="termHoldingsMeaning">本人が直接持つもの</dd>
+        <dd data-i18n="termHoldingsMeaning">本人が直接持っているもの（パスワード・スマホ・電話番号など）</dd>
       </dl>
-      <h3 id="lessons-heading" data-i18n="lessonsHeading">座学</h3>
+      <h3 id="lessons-heading" tabindex="-1" data-i18n="lessonsHeading">座学</h3>
       <div id="lessons" class="lessons">
         <details id="lesson-1" class="lesson"><summary></summary>
           <div id="lesson-1-body" class="lesson-body"></div></details>
@@ -322,8 +435,8 @@
         <details id="lesson-10" class="lesson"><summary></summary>
           <div id="lesson-10-body" class="lesson-body"></div></details>
       </div>
-      <h3 data-i18n="helpAboutHeading">この教材について</h3>
-      <p data-i18n="helpAbout">学習用の教材です。本物のアカウントの構成は入れません（入れる欄もありません）。保存するのは言語と明暗の設定だけです。この画面から外へ何かを送る機能はありません。出典のリンクは、押したときだけ別タブで開きます。</p>
+      <h3 id="help-about" tabindex="-1" data-i18n="helpAboutHeading">この教材について</h3>
+      <p data-i18n="helpAbout">学習用の教材です。本物のアカウントの情報は入力しません（入力する欄もありません）。保存するのは言語と明暗の設定だけです。この画面から外へ何かを送る機能はありません。出典のリンクは、押したときだけ別タブで開きます。</p>
     </div>
   </dialog>
   <section id="print-sheet" class="print-sheet"></section>

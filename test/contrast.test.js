@@ -51,25 +51,23 @@ const round2 = (n) => Math.round(n * 100) / 100;
 
 // The spec's table ("動きと色"): value, then the ratio against the paper and against the ground, per theme.
 // --line, --grid and --shadow are the values of the model implementation (used for table rules only).
+// The passwords have no colors any more (パスワードA・B・C): color tells states only (fallen, locked out, chosen), and the dark
+// grid is close to the ground.
 const SPEC = {
   light: {
     bg: '#f6f4ed', paper: '#fffdf7',
     ink: ['#152b45', 14.11, 13.04], muted: ['#44576b', 7.32, 6.76], accent: ['#1d6b5a', 6.25, 5.78],
     fall: ['#a33c34', 6.35, 5.87], lock: ['#7a4f00', 7.01, 6.48], focus: ['#1d6b5a', 6.25, 5.78], 'on-accent': '#fffdf7', onAccentRatio: 6.25,
     line: '#aabccb', grid: '#d9e4e9', shadow: '#d9d6cc',
-    'fam-red': ['#b03a2e', 5.91, 5.47], 'fam-blue': ['#2a63a8', 5.99, 5.53], 'fam-gray': ['#5a6573', 5.83, 5.38],
-    'fam-yellow': ['#7a6100', 5.84, 5.39], 'fam-green': ['#2c7549', 5.51, 5.09], 'fam-purple': ['#76489a', 6.53, 6.03],
   },
   dark: {
     bg: '#0d1b2d', paper: '#172940',
     ink: ['#eaf1f6', 12.90, 15.19], muted: ['#c5d4df', 9.71, 11.44], accent: ['#7fd4bd', 8.44, 9.95],
     fall: ['#ffaaa1', 8.07, 9.50], lock: ['#f2c46d', 9.03, 10.64], focus: ['#7fd4bd', 8.44, 9.95], 'on-accent': '#172940', onAccentRatio: 8.44,
-    line: '#668098', grid: '#30485f', shadow: '#091523',
-    'fam-red': ['#ff9e93', 7.40, 8.72], 'fam-blue': ['#8fbcf2', 7.46, 8.78], 'fam-gray': ['#b8c4d1', 8.30, 9.78],
-    'fam-yellow': ['#f0cf5a', 9.65, 11.37], 'fam-green': ['#8fd9a8', 8.87, 10.45], 'fam-purple': ['#d3b0f2', 7.89, 9.29],
+    line: '#668098', grid: '#16263a', shadow: '#091523',
   },
 };
-const PAIRED = ['ink', 'muted', 'accent', 'fall', 'lock', 'focus', 'fam-red', 'fam-blue', 'fam-gray', 'fam-yellow', 'fam-green', 'fam-purple'];
+const PAIRED = ['ink', 'muted', 'accent', 'fall', 'lock', 'focus'];
 
 test('H: the colors of both themes are the values of the spec, and the variables are only these', () => {
   // One block per theme, and the variables are set nowhere else (a later :root block, a block inside a media query or a variable
@@ -83,8 +81,7 @@ test('H: the colors of both themes are the values of the spec, and the variables
       if (name.startsWith('--')) assert.ok(themeBlock, name + ' set in ' + [...rule.at, rule.selector].join(' '));
     }
   }
-  const expectedNames = ['bg', 'paper', 'ink', 'muted', 'line', 'grid', 'accent', 'fall', 'lock', 'focus', 'shadow', 'on-accent',
-    'fam-red', 'fam-blue', 'fam-gray', 'fam-yellow', 'fam-green', 'fam-purple'].sort();
+  const expectedNames = ['bg', 'paper', 'ink', 'muted', 'line', 'grid', 'accent', 'fall', 'lock', 'focus', 'shadow', 'on-accent'].sort();
   assert.deepEqual(Object.keys(variables(lightBlock)).sort(), expectedNames);
   assert.deepEqual(Object.keys(variables(darkBlock)).sort(), expectedNames);
   for (const [theme, colors] of [['light', light], ['dark', dark]]) {
@@ -124,32 +121,38 @@ test('H: the focus ring and the lines and borders of the diagram (--muted) keep 
     }
   }
   // Every rule of style.css on the screen (all of them, not only the first one for a selector) draws the lines, the boxes and the
-  // cards of the diagram with --muted and the hot or fallen ones with --fall. The other strokes are the divider (--line) and the
-  // dashed frame of a changed entrance (--accent); no other selector sets a stroke. The printed sheets have no diagram.
+  // cards of the diagram with --muted and the hot or fallen ones with --fall (a line the attacker followed is hot through its group,
+  // .map-link.hot). The other strokes are the divider (--line), the dashed frame of a changed entrance (--accent) and the dotted
+  // frame of the account chosen in the table (--ink, a shape apart from the fallen borders); no other selector sets a stroke.
+  // The printed sheets have no diagram.
   const strokes = [];
   for (const rule of screenRules) {
     for (const [name, value] of rule.declarations) {
       if (name !== 'stroke') continue;
       for (const selector of rule.selector.split(',').map((s) => s.trim())) {
         const expected = /\.map-(?:line|box|card)\b/.test(selector) ? (/\.(?:hot|fallen)\b/.test(selector) ? 'var(--fall)' : 'var(--muted)')
-          : /^\.map-divider$/.test(selector) ? 'var(--line)' : /^\.map-svg \.changed$/.test(selector) ? 'var(--accent)' : null;
+          : /^\.map-divider$/.test(selector) ? 'var(--line)' : /^\.map-svg \.changed$/.test(selector) ? 'var(--accent)'
+            : /^\.map-select$/.test(selector) ? 'var(--ink)' : null;
         assert.ok(expected, 'a stroke set on ' + selector);
         assert.equal(value, expected, selector);
         strokes.push(selector);
       }
     }
   }
-  for (const selector of ['.map-line', '.map-line.hot', '.map-box', '.map-card', '.map-box.fallen', '.map-card.fallen']) {
+  for (const selector of ['.map-line', '.map-link.hot > .map-line', '.map-box', '.map-card', '.map-box.fallen', '.map-card.fallen',
+    '.map-select']) {
     assert.ok(strokes.includes(selector), selector + ' has a stroke');
   }
-  // The focus ring is 3px of --focus; the only other outline on the screen is the 3px --accent frame of a selected table row
-  // (no rule takes the ring away or changes its color: outline-offset alone may change)
+  // The focus ring is 3px of --focus; the only other outline on the screen is the 3px frame of a selected table row: --accent, or
+  // --ink in the map tables (a color that does not read as safe next to the fallen accounts). No rule takes the ring away or
+  // changes its color: outline-offset alone may change
   let rings = 0;
   for (const rule of screenRules) {
     for (const [name, value] of rule.declarations) {
       if (!name.startsWith('outline') || name === 'outline-offset') continue;
       const ring = /:focus-visible$/.test(rule.selector) && value === '3px solid var(--focus)';
-      const row = rule.selector.split(',').every((s) => /tr\.selected$/.test(s.trim())) && value === '3px solid var(--accent)';
+      const row = rule.selector.split(',').every((s) => /tr\.selected$/.test(s.trim()))
+        && (value === '3px solid var(--accent)' || (/^\.map-table tr\.selected$/.test(rule.selector) && value === '3px solid var(--ink)'));
       assert.ok(name === 'outline' && (ring || row), rule.selector + ' { ' + name + ': ' + value + ' }');
       if (ring && rule.selector === ':focus-visible') rings++;
     }
