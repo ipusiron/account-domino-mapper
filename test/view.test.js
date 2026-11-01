@@ -17,7 +17,10 @@ const persona = (id) => D.personas.find((p) => p.id === id);
 const cache = {};
 const pv = (id) => (cache[id] ||= C.personaVectors(persona(id)));
 
-// The candidates table of the spec: per person and mode, [move id, effect (ja), effect (en)] in order, or the reason when empty.
+// The candidates table of the spec: per person and mode, [move id, effect (ja), effect (en)] in the order shown on screen,
+// or the reason when empty. For the card modes, candidates are shown in two groups: changes that protect a ★ account first,
+// then the rest, and within each group more accounts saved first (stable; ties keep the ranking order). This re-ordering
+// (compared to the core ranking) swaps items for the sum-over-four-cards mode of the office worker and the student.
 // A change to an email the person loses (the old email, the university email: a column of the lockout tab) is left out of the
 // top changes: the office worker's breach no. 3 and SIM swap nos. 2 and 3, and the student's SIM swap nos. 2 and 3
 // were such changes; the next changes of the ranking take their places (LOST_MAIL_DROPPED below)
@@ -35,9 +38,10 @@ const CANDIDATES = {
     desk: [['replace:mailOld.recDesk:info>idcheck', '守れる7（うち★1）', 'Saves: 7 (including ★1)'],
       ['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる6（うち★1）', 'Saves: 6 (including ★1)'],
       ['replace:shop.recMail:mailMain>paper:shop', '守れる1', 'Saves: 1']],
+    // Sum over four cards: all three protect ★ accounts; the second place (6/★2) and the third (7/★1) swap after the sort
     all: [['replace:mailMain.recMail:mailOld>paper:mailMain', '守れる（4枚の合計）12（うち★2）', 'Saves (sum over 4 cards): 12 (including ★2)'],
-      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（4枚の合計）6（うち★2）', 'Saves (sum over 4 cards): 6 (including ★2)'],
-      ['replace:mailOld.recDesk:info>idcheck', '守れる（4枚の合計）7（うち★1）', 'Saves (sum over 4 cards): 7 (including ★1)']],
+      ['replace:mailOld.recDesk:info>idcheck', '守れる（4枚の合計）7（うち★1）', 'Saves (sum over 4 cards): 7 (including ★1)'],
+      ['replace:mailMain.recSms:phone>paper:mailMain', '守れる（4枚の合計）6（うち★2）', 'Saves (sum over 4 cards): 6 (including ★2)']],
     lockout: 'noLockout',
   },
   parent: {
@@ -65,10 +69,12 @@ const CANDIDATES = {
       ['replace:sns.recMail:mailUni>paper:sns', '守れる1（うち★1）', 'Saves: 1 (including ★1)'],
       ['replace:sec.recMail:mailFree>paper:sec', '守れる1（うち★1）・閉め出し（2つ同時）が1つ増える', 'Saves: 1 (including ★1) · Two-at-once lockouts added: 1']],
     desk: 'noFall',
+    // Sum over four cards: all three protect ★ accounts; after the sort by saves, the mailFree change (4/★2) moves
+    // ahead of the sec change (3/★3), which has fewer saves
     all: [['replace:game.login:pw:green>pw:own-game', '守れる（4枚の合計）4（うち★3）', 'Saves (sum over 4 cards): 4 (including ★3)'],
+      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（4枚の合計）4（うち★2）', 'Saves (sum over 4 cards): 4 (including ★2)'],
       ['replace:sec.recMail:mailFree>paper:sec', '守れる（4枚の合計）3（うち★3）・閉め出し（2つ同時）が1つ増える',
-        'Saves (sum over 4 cards): 3 (including ★3) · Two-at-once lockouts added: 1'],
-      ['replace:mailFree.recMail:mailUni>paper:mailFree', '守れる（4枚の合計）4（うち★2）', 'Saves (sum over 4 cards): 4 (including ★2)']],
+        'Saves (sum over 4 cards): 3 (including ★3) · Two-at-once lockouts added: 1']],
     lockout: [['replace:sub.login:mailUni>mailFree', '閉め出しが1つなくなる・新たに倒れる（4枚の合計）2',
       'Lockouts removed: 1 · Newly fallen (sum over 4 cards): 2']],
   },
@@ -100,12 +106,29 @@ test('F: candidates (up to three, one per entrance, the suggestion first) and th
       const expected = CANDIDATES[id][mode];
       const got = V.candidates(persona(id), pv(id), mode);
       if (typeof expected === 'string') {
-        assert.deepEqual(got, { ids: [], reason: expected }, id + ' ' + mode);
+        assert.deepEqual(got.ids, [], id + ' ' + mode);
+        assert.equal(got.reason, expected, id + ' ' + mode);
         assert.equal(vectors.personas[id].best[mode], null, id + ' ' + mode);
         continue;
       }
-      assert.deepEqual(got, { ids: expected.map((row) => row[0]), reason: null }, id + ' ' + mode);
-      assert.equal(got.ids[0], vectors.personas[id].best[mode], id + ' ' + mode + ' starts with the suggestion');
+      assert.deepEqual(got.ids, expected.map((row) => row[0]), id + ' ' + mode);
+      assert.equal(got.reason, null, id + ' ' + mode);
+      // The suggestion of the core is still among the top changes and still protects a ★ account whenever the mode has one
+      const best = vectors.personas[id].best[mode];
+      assert.ok(got.ids.includes(best), id + ' ' + mode + ' keeps the suggestion');
+      if (mode === 'lockout') {
+        // The lockout mode is not split into two groups: no groups returned
+        assert.equal(got.groups, null, id + ' ' + mode + ' lockout: no groups');
+      } else {
+        // Card modes: candidates split into two groups (with ★ saved, without), their union is the full ids list
+        assert.ok(got.groups, id + ' ' + mode + ' groups');
+        assert.deepEqual([...got.groups.impIds, ...got.groups.otherIds], got.ids, id + ' ' + mode + ' groups cover the ids');
+        // Within each group, saves is non-increasing
+        const savesOf = (moveId) => V.effect(persona(id), pv(id), moveId, mode).saved;
+        for (const group of [got.groups.impIds, got.groups.otherIds]) {
+          for (let i = 1; i < group.length; i += 1) assert.ok(savesOf(group[i - 1]) >= savesOf(group[i]), id + ' ' + mode + ' sorted');
+        }
+      }
       for (const [move, ja, en] of expected) {
         assert.equal(V.effectText(persona(id), pv(id), move, mode, M, 'ja'), ja, id + ' ' + mode + ' ' + move);
         assert.equal(V.effectText(persona(id), pv(id), move, mode, M, 'en'), en, id + ' ' + mode + ' ' + move);
@@ -153,6 +176,29 @@ test('F: the top changes leave out the changes to an email the person loses (the
       assert.equal(ids[0] ?? null, vectors.personas[id].best[mode], id + ' ' + mode + ': the first is still the suggestion');
     }
   }
+});
+
+test('F: the candidates are split into two groups for the card modes: changes that save a ★ account first, the rest '
+  + 'after; within each group, more saves first (stable). The worker and the student sum-over-four-cards each hold three ★ '
+  + 'changes, so after the sort the second and the third candidates differ from the ranking in the data', () => {
+  // The sum over the four cards: all three top candidates protect a ★ account, so impIds is the full list and otherIds is empty.
+  // The within-group sort by saves re-orders the second and the third: the worker's 7-saves change beats the 6-saves change,
+  // and the student's 4-saves change beats the 3-saves change. The suggestion (ranking first) still comes first in both groups.
+  const workerAll = V.candidates(persona('worker'), pv('worker'), 'all');
+  assert.deepEqual(workerAll.groups.impIds, workerAll.ids, 'worker all: every candidate protects a ★ account');
+  assert.deepEqual(workerAll.groups.otherIds, [], 'worker all: no changes land in the other group');
+  assert.equal(workerAll.ids[0], vectors.personas.worker.best.all, 'worker all: the suggestion stays first');
+  const workerAllSaved = workerAll.ids.map((moveId) => V.effect(persona('worker'), pv('worker'), moveId, 'all').saved);
+  assert.deepEqual(workerAllSaved, [...workerAllSaved].sort((a, b) => b - a), 'worker all: more saves first inside the group');
+  // The ★ group of the worker's breach: the three candidates protect 1 ★ account each (saves 5, 4, 1); the sort keeps that order
+  const workerLeak = V.candidates(persona('worker'), pv('worker'), 'leak');
+  assert.equal(workerLeak.groups.impIds.length, 2, 'worker leak: the two ★ changes land in the ★ group');
+  assert.equal(workerLeak.groups.otherIds.length, 1, 'worker leak: the one non-★ change lands in the other group');
+  assert.equal(workerLeak.groups.impIds[0], workerLeak.ids[0], 'worker leak: the suggestion heads the ★ group');
+  // The parent's lockout mode is not split (lockout does not use the ★ grouping): no groups returned
+  const parentLockout = V.candidates(persona('parent'), pv('parent'), 'lockout');
+  assert.equal(parentLockout.groups, null, 'parent lockout: no groups');
+  assert.ok(parentLockout.ids.length);
 });
 
 test('F: the line above the parent\'s candidates: her bank change is no. 3 for the sum of the four cards, and no line '

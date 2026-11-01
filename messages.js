@@ -84,7 +84,7 @@
       termSum: "4枚の合計",
       termSumMeaning: "カード4枚それぞれで数えて足した数（1つのアカウントを最大4回数えるので、アカウントの数より大きくなることがある）",
       termImportant: "★",
-      termImportantMeaning: "重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更を並べるとき、守れる★の数を先に比べる",
+      termImportantMeaning: "重要なアカウント。人物ごとに、失うと困るものとして選んだ3つ（ふだん使うメールや、お金を扱うものなど）。上位の変更は、★のアカウントを守れる変更を先、守れない変更を後に並べる",
       termHoldings: "手元",
       termHoldingsMeaning: "本人が直接持っているもの（パスワード・スマホ・電話番号など）",
       // Person band: stories and highlights
@@ -329,13 +329,14 @@
       rule2: "1つの入口の条件は「かつ」。全部そろえば開く（例：パスワード＋SMSのコード）",
       rule3: "入口どうしは「または」。どれか1つ開けば入れる",
       rule4: "攻撃者は、カードで最初に手にしたものから始める。倒れたメールのアカウントも、次の入口の条件に使う。新しく倒れるアカウントがなくなるまで繰り返し、1回の繰り返しで新しく倒れた分を1段と数える",
-      rule5: "パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）。漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、"
+      rule5: "パスワードはA・B・Cなどの記号で表す（人物ごと）。同じ記号なら、どのアカウントでも同じパスワードとみなす（少し変えただけのものを含む）",
+      rule6: "漏えいのカードは、漏れたサービスのIDとパスワードが、そのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、"
         + "同じパスワードを使う入口ではパスワードの条件がそろう",
-      rule6: "SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ",
-      rule7: "電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない",
-      rule8: "パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある",
-      rule9: "閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない",
-      rule10: "時間・確率・通知・不審なログインの検知は扱わない",
+      rule7: "SMSの条件は、電話番号を持っていれば満たす。攻撃者が電話番号を手にするのは、SIMスワップのカードのときだけ",
+      rule8: "電話の窓口は、個人情報を答えられれば再設定に応じる。書類での本人確認（身分証・郵送）を破るカードはない",
+      rule9: "パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある",
+      rule10: "閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。消えたメールそのものは「消えた」と表し、閉め出しには数えない。パスワードを忘れることは扱わない",
+      rule11: "時間・確率・通知・不審なログインの検知は扱わない",
       rule2Example: "例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。「かつ」を「または」として数えると、ここで倒れたことになってしまいます。",
       symbolCaption: "記号の一覧（入口に必要なもの）",
       symbolColSymbol: "記号",
@@ -457,7 +458,7 @@
       lesson1CountAllOr: "「かつ」も「または」として数える",
       lesson1OpensWith: "{items}だけで開く",
       lesson2Title: "2. 使い回しとリスト型攻撃",
-      lesson2Text1: "よそで漏れたIDとパスワードの組がそのまま出回れば、長いパスワードでも、使い回した先の入口ではパスワードの条件がそろいます（SMSなどほかの条件もある入口は、それだけでは開きません）。漏えいのカードはこの場合を表します（規則表のタブの規則5）。NIST SP "
+      lesson2Text1: "よそで漏れたIDとパスワードの組がそのまま出回れば、長いパスワードでも、使い回した先の入口ではパスワードの条件がそろいます（SMSなどほかの条件もある入口は、それだけでは開きません）。漏えいのカードはこの場合を表します（規則表のタブの規則6）。NIST SP "
         + "800-63B-4（§3.1.1.2）は、パスワードをソルト付きのハッシュで保存するよう求めています。ハッシュを手に入れた攻撃者の、推測1回ごとの手間を増やすためです。漏れたのが平文の組か、正しく作られたハッシュかで、長いパスワードが役に立つかどうかが変わります。"
         + "このシミュレーションは前者だけを扱います。",
       lesson2Text2: "同じパスワードを複数のサイトで使っていた人は43〜51%と見積もられました（Dasら、NDSS 2014。2006〜2012年の漏えいデータで43%、大学での調査で51%）。"
@@ -506,7 +507,7 @@
       lesson6ColCombo: "そろうと倒れる組",
       lesson7Title: "7. 閉め出し",
       lesson7Text1: "攻撃者は、1つの入口の条件をすべてそろえれば入れます。本人は、すべての入口で、それぞれ必要なもののうち少なくとも1つを失うと閉め出されます（Hammannらの§5）。この教材は、失ったものを外したあと、"
-        + "手元に残ったもので同じ規則で入れないアカウントを閉め出しと数えます（規則表のタブの規則9）。",
+        + "手元に残ったもので同じ規則で入れないアカウントを閉め出しと数えます（規則表のタブの規則10）。",
       lesson7Text2: "2020年に20人を面接した研究（CHI 2022）では、全員が自分のアカウントのつながりを一部しか把握していませんでした。電話番号を変えて30日、機種を変えて"
         + "2カ月閉め出された例が語られています。",
       lesson7Text3: "2023年1月に、大手2社のどちらか一方のアカウントについて、米国とドイツの居住者ほぼ半数ずつの185人に設定を尋ねた研究があります。27人（一方の提供者で10人、もう一方で17人の合計）が、1つを失うだけで入れなくなるおそれのある設定で、"
@@ -696,8 +697,11 @@
       legendUnlocked: "閉め出しがなくなる＝変更前は入れず、変更後は入れるアカウントの数",
       legendExposed: "新たに倒れる＝変更前は倒れず、変更後は倒れるアカウントの数",
       legendPairNew: "閉め出し（2つ同時）が増える＝2つを一緒に失ったときにだけ入れなくなるアカウントが、変更で増える（並べ方には使わない）",
-      legendOrderCards: "並び＝守れる★の数が多い順。★の数が同じなら、守れる数が多い順",
+      legendOrderCards: "並び＝「★のアカウントを守れる変更」が先、「★のアカウントを守れない変更」が後。各段の中は、守れる数が多い順",
       legendOrderLockout: "並び＝閉め出しが減る数が多い順。同じなら、新たに倒れる数が少ない順",
+      // The two group headings above the candidates (card modes): with ★ saved, then without
+      candGroupImp: "★のアカウントを守れる変更",
+      candGroupOther: "★のアカウントを守れない変更",
       // The parts of a candidate button: its rank, what its count is, and the important accounts among them
       candRank: "{n}位",
       faceSaved: "守れる",
@@ -712,8 +716,8 @@
       rankingExcludeNoDecrease: "閉め出しが減らない変更",
       rankingExcludeMail: "解約や卒業で消えるメール（「閉め出し」のタブで、失うものに入っているメール）へ切り替える変更。「変更を自分で選ぶ」では選べる",
       rankingOrderLead: "残りの変更を、次の順に比べて並べます。",
-      rankingCards1: "守れる★の数が多い変更が先",
-      rankingCards2: "守れるアカウントの数が多い変更が先",
+      rankingCards1: "★のアカウントを守れる変更が先（★のアカウントを守れない変更は後）",
+      rankingCards2: "各段の中は、守れるアカウントの数が多い変更が先",
       rankingCards3: "閉め出しが減る数が多い変更が先",
       rankingCards4: "4枚のカードで新たに倒れる数の合計が少ない変更が先",
       rankingLockout1: "閉め出しが減る数が多い変更が先",
@@ -795,7 +799,7 @@
       cellCond1Plural: "{p}も失うと×",
       cellCond2: "{p1}か{p2}も失うと×",
       cellCond2Plural: "{p1}か{p2}も失うと×",
-      rulesScope: "規則1〜3と8は、どのタブにも共通の決まりです。規則4〜7は攻撃の数え方（「連鎖を追う」と「1つ変えて比べる」）、規則9は閉め出しの数え方（「閉め出し」と「1つ変えて比べる」）です。規則10には、扱わないものを書いています。",
+      rulesScope: "規則1〜3と9は、どのタブにも共通の決まりです。規則4〜8は攻撃の数え方（「連鎖を追う」と「1つ変えて比べる」）、規則10は閉め出しの数え方（「閉め出し」と「1つ変えて比べる」）です。規則11には、扱わないものを書いています。",
       rulesNavLabel: "このタブの中",
       rulesNavRules: "規則",
       rulesNavSymbols: "記号の一覧",
@@ -986,7 +990,7 @@
         + "of accounts)",
       termImportant: "★ Important",
       termImportantMeaning: "An important account: three per person, chosen as the ones they can least afford to lose (the main email, accounts that "
-        + "hold money, and so on). When top changes are ranked, the ★ accounts saved are compared first",
+        + "hold money, and so on). The top changes list the changes that protect a ★ account first, and the changes that do not after them",
       termHoldings: "What the owner holds",
       termHoldingsMeaning: "What the owner holds directly (passwords, the phone, the phone number and so on)",
       // Person band: stories and highlights
@@ -1240,15 +1244,16 @@
       rule4: "The attacker starts from what the card gives first and uses every fallen email account for further entrances, until no new account "
         + "falls. Each round of newly fallen accounts is one step",
       rule5: "Passwords are shown as letters such as A, B and C (per person). The same letter counts as the same password everywhere, small variations "
-        + "included. A breach card stands for the case where the breached service's ID and password have leaked as-is (in plain text); then the password "
+        + "included",
+      rule6: "A breach card stands for the case where the breached service's ID and password have leaked as-is (in plain text); then the password "
         + "requirement is met on every entrance that uses that password, however long it is",
-      rule6: "An SMS requirement is met by holding the phone number; the attacker gets the phone number only with the SIM-swap card",
-      rule7: "A phone help desk resets the account for anyone who can answer with the personal details; no card defeats a document check (photo ID, "
+      rule7: "An SMS requirement is met by holding the phone number; the attacker gets the phone number only with the SIM-swap card",
+      rule8: "A phone help desk resets the account for anyone who can answer with the personal details; no card defeats a document check (photo ID, "
         + "postal mail)",
-      rule8: "Passkeys and authenticator apps are treated as keys inside the phone; paper recovery codes exist only in the owner's hands",
-      rule9: "Lockout: after removing what the owner lost (one thing, or two at once), the accounts they cannot reach by the same rules from what remains. "
+      rule9: "Passkeys and authenticator apps are treated as keys inside the phone; paper recovery codes exist only in the owner's hands",
+      rule10: "Lockout: after removing what the owner lost (one thing, or two at once), the accounts they cannot reach by the same rules from what remains. "
         + "A vanished email itself is shown as gone and is not counted as locked out. Forgetting a password is not modeled",
-      rule10: "Time, probability, notifications and detection of suspicious log-ins are not modeled",
+      rule11: "Time, probability, notifications and detection of suspicious log-ins are not modeled",
       rule2Example: "Example: the office worker's online bank resets with SMS + personal details. The SIM-swap card alone lacks the personal details, "
         + "so the bank does not fall. Counting AND as OR would wrongly make it fall here.",
       symbolCaption: "Symbols: what an entrance needs",
@@ -1385,7 +1390,7 @@
       lesson2Title: "2. Password reuse and credential stuffing",
       lesson2Text1: "If an ID and password pair leaked elsewhere circulates as-is, the password requirement is met on every entrance that uses that "
         + "password, however long it is (an entrance that also needs something else, such as an SMS code, does not open with the password alone). The "
-        + "breach card stands for this case (rule 5 in the Rules tab). NIST SP 800-63B-4 (§3.1.1.2) requires passwords to be stored salted and hashed, "
+        + "breach card stands for this case (rule 6 in the Rules tab). NIST SP 800-63B-4 (§3.1.1.2) requires passwords to be stored salted and hashed, "
         + "so that an attacker who obtains the hash must spend effort on every guess. Whether a plain-text pair or a properly made hash leaked changes "
         + "whether a long password helps; this model counts only the former.",
       lesson2Text2: "An estimated 43–51% of users reused the same password on several sites (Das et al., NDSS 2014: 43% in leak data from 2006–2012, "
@@ -1463,7 +1468,7 @@
       lesson7Title: "7. Lockout",
       lesson7Text1: "An attacker gets in by meeting every requirement of one entrance. The owner is locked out after losing at least one needed thing "
         + "for every entrance (Hammann et al., §5). This teaching aid counts as locked out the accounts the owner cannot reach by the same rules with "
-        + "what remains after the loss (rule 9 in the Rules tab).",
+        + "what remains after the loss (rule 10 in the Rules tab).",
       lesson7Text2: "In a study based on interviews with 20 people in 2020 (CHI 2022), every participant had only a partial picture of how their accounts "
         + "were connected. Participants told of being locked out for 30 days after changing their phone number and for two months after "
         + "changing their phone.",
@@ -1687,8 +1692,11 @@
       legendUnlocked: "Lockouts removed = accounts the owner cannot get into before the change but can after",
       legendExposed: "Newly fallen = accounts that do not fall before the change but do after",
       legendPairNew: "Two-at-once lockouts added = accounts that become locked out only when two things are lost together (not used for ranking)",
-      legendOrderCards: "Order = more ★ saved first; with the same number of ★, more saved first",
+      legendOrderCards: "Order = changes that protect a ★ account first, then changes that do not. Within each group, more saved first",
       legendOrderLockout: "Order = larger decrease in lockouts first; if equal, fewer newly fallen first",
+      // The two group headings above the candidates (card modes): with ★ saved, then without
+      candGroupImp: "Changes that protect a ★ account",
+      candGroupOther: "Other changes (no ★ account protected)",
       candRank: "Rank {n}",
       faceSaved: "Saves",
       faceSavedAll: "Saves (sum over 4 cards)",
@@ -1701,8 +1709,8 @@
       rankingExcludeMail: "changes to an email that will be gone (one the Lockout tab counts as a loss, gone when an ISP is canceled or the owner "
         + "graduates); “Choose a change yourself” still lists them",
       rankingOrderLead: "The other changes are compared in this order:",
-      rankingCards1: "more ★ accounts saved first",
-      rankingCards2: "more accounts saved first",
+      rankingCards1: "changes that protect a ★ account come first (changes that do not come second)",
+      rankingCards2: "within each group, more accounts saved first",
       rankingCards3: "larger decrease in lockouts first",
       rankingCards4: "fewer accounts newly falling, summed over the four cards, first",
       rankingLockout1: "larger decrease in lockouts first",
@@ -1787,8 +1795,8 @@
       cellCond1Plural: "× if {p} go too",
       cellCond2: "× if {p1} or {p2} goes too",
       cellCond2Plural: "× if {p1} or {p2} go too",
-      rulesScope: "Rules 1–3 and 8 apply everywhere. Rules 4–7 are how attacks are counted (“Follow the chain” and “Try one change”), rule 9 is how "
-        + "lockouts are counted (“Lockout” and “Try one change”), and rule 10 lists what is left out.",
+      rulesScope: "Rules 1–3 and 9 apply everywhere. Rules 4–8 are how attacks are counted (“Follow the chain” and “Try one change”), rule 10 is how "
+        + "lockouts are counted (“Lockout” and “Try one change”), and rule 11 lists what is left out.",
       rulesNavLabel: "In this tab",
       rulesNavRules: "Rules",
       rulesNavSymbols: "Symbols",
@@ -1813,11 +1821,10 @@
       ruleNote4: "Note 4 (paper recovery codes)",
       paperPrintOut: "Printing gives four pages: the maps of the three people (one page each) and a blank sheet for you. When you have filled it in, "
         + "look for the email that many accounts use for recovery and the entrances that rely on a single phone number.",
-      printLegendAttack: "Attack-card columns = the step at which the account falls to that card alone (●0 = the email taken over first, – = does not "
-        + "fall, backdoor = fell through a recovery entrance)",
-      printLegendLoss: "When-lost columns = whether the owner can still get in after losing that (○ = can get in, × = locked out, gone = the email "
-        + "itself is gone, △ (× if the number goes too) = can get in now, but losing the number too locks you out)",
-      printLegendStar: "★ = important account (three per person, the ones they can least afford to lose)",
+      printLegendAttack: "Attack cards = the step the account falls at (●0 = email taken over first, – = does not fall, backdoor = fell via recovery)",
+      printLegendLoss: "When lost = can the owner still get in (○ = yes, × = locked out, gone = email itself gone, "
+        + "△ (× if the number goes too) = yes now, but one more loss locks you out)",
+      printLegendStar: "★ = important (three per person)",
       formHow5: "In the ★ column, mark the accounts you can least afford to lose.",
       helpNavLabel: "In this help",
       helpNavFirst: "First time here",
