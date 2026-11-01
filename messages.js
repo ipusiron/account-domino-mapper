@@ -21,7 +21,7 @@
       personWorker: "会社員 ハルト",
       personParent: "高齢の親 シズエ",
       personStudent: "学生 ミオ",
-      personCounts: "アカウント{n}つ・パスワード{f}つ（{symbols}）。架空の人物で、本物のアカウントの情報を入れる欄はありません。",
+      personCounts: "アカウント{n}つ・パスワード{f}つ（{symbols}）。架空の人物で、本物の情報を入れる欄はありません。",
       statusPerson: "人物：{person}",
       tabChain: "連鎖を追う",
       tabLockout: "閉め出し",
@@ -88,9 +88,9 @@
       termHoldings: "手元",
       termHoldingsMeaning: "本人が直接持っているもの（パスワード・スマホ・電話番号など）",
       // Person band: stories and highlights
-      storyWorker: "多くのアカウントで、パスワードの再設定のメールがメインのメールに届きます。パスワードAを5つのアカウントで使い回し、銀行はパスワードB、古いメールはパスワードCです。",
-      storyParent: "パスワードを使うアカウントは、すべて同じパスワードAです。銀行のネットバンキングは、ログインのワンタイムパスワードも再設定もSMSで、電話番号1本に頼っています。",
-      storyStudent: "大学のメールを、ほかのアカウントの予備や登録先の宛先に使っています。大学のメールは卒業すると消えます。パスワードAを、フリーメール・SNS・ゲームで使い回しています。",
+      storyWorker: "多くのアカウントの再設定メールがメインのメールに届きます。パスワードAを5つのアカウントで使い回し、銀行はB、古いメールはCです。",
+      storyParent: "パスワードを使うアカウントはすべてAです。ネットバンキングは、ログインも再設定もSMSで、電話番号1本に頼っています。",
+      storyStudent: "大学のメールを、ほかのアカウントの予備や登録先に使っていて、卒業で消えます。パスワードAを、フリーメール・SNS・ゲームで使い回しています。",
       statusHighlight: "見どころ：{title}",
       highlightsHeading: "見どころ",
       highlightW1: "ポイントアプリの漏えいから、{n}つのアカウントが倒れるまで",
@@ -773,7 +773,7 @@
       attackLegendTotal: "4枚の合計＝4つの行を足した数（同じアカウントを何度も数える）",
       lockChangesHelp: "変更の前後で印が変わったアカウントだけを出します。印の読み方は「閉め出し」のタブの表と同じです。",
       // The same-entrance table: what it is, its change names, and the result of the change chosen there (right under it)
-      sameHelp: "選んだ変更と同じ入口を、ほかのやり方で変えた場合を並べます。変え方を押すと、その変更の結果が表のすぐ下に出ます（上の比べた結果も、その変更に替わります）。",
+      sameHelp: "選んだ変更と同じ入口を、ほかのやり方で変えた場合を並べます。変え方を押すと、その変更の結果が出ます（上の比べた結果も、その変更に替わります）。",
       sameRowAdd: "認証アプリかパスキーを追加する",
       sameRowRemove: "この復旧の入口を外す",
       sameRowReplace: "{from}を、{to}に切り替える",
@@ -909,7 +909,7 @@
       personWorker: "Haruto, office worker",
       personParent: "Shizue, older parent",
       personStudent: "Mio, student",
-      personCounts: "Accounts: {n} · Passwords: {f} ({symbols}). These are fictional people; there are no fields for real account details.",
+      personCounts: "Accounts: {n} · Passwords: {f} ({symbols}). Fictional people; no fields for real account details.",
       statusPerson: "Person: {person}",
       tabChain: "Follow the chain",
       tabLockout: "Lockout",
@@ -994,12 +994,10 @@
       termHoldings: "What the owner holds",
       termHoldingsMeaning: "What the owner holds directly (passwords, the phone, the phone number and so on)",
       // Person band: stories and highlights
-      storyWorker: "Many accounts send their password reset emails to the main email. Password A is reused on five accounts; the bank uses Password B "
-        + "and the old email Password C.",
-      storyParent: "Every account that uses a password uses the same Password A. Online banking relies on one phone number for both its SMS one-time "
-        + "password at log-in and its SMS reset.",
-      storyStudent: "The university email serves as the backup address and sign-up address of other accounts, and it disappears at graduation. Password A is "
-        + "reused on the free email, social media and a game.",
+      storyWorker: "Many password reset emails go to the main email. Password A is reused on five accounts; the bank uses B and the old email C.",
+      storyParent: "Every password account uses the same Password A. Online banking uses SMS for both log-in and reset — one phone number.",
+      storyStudent: "The university email is the backup and sign-up address of other accounts, and disappears at graduation. Password A is reused "
+        + "on the free email, social media and a game.",
       statusHighlight: "Highlight: {title}",
       highlightsHeading: "Highlights",
       highlightW1: "From the points-app breach to {n} fallen accounts",
@@ -1765,8 +1763,7 @@
       attackLegendFrame: "Framed row = the card chosen under “Rank changes by” above",
       attackLegendTotal: "Total = the four rows added up (the same account counts more than once)",
       lockChangesHelp: "Only the accounts whose marks change are listed. The marks read as in the table of the Lockout tab.",
-      sameHelp: "Other ways to change the same entrance as the chosen change. Press one to see its result right under the table (the comparison "
-        + "above switches to it as well).",
+      sameHelp: "Other ways to change the same entrance as the chosen change. Press one to see its result (the comparison above switches to it as well).",
       sameRowAdd: "Add an authenticator app or passkey",
       sameRowRemove: "Remove this recovery entrance",
       sameRowReplace: "Use {to} instead of {from}",

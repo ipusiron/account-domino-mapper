@@ -53,8 +53,8 @@ PERSON_HEADING = {"ja": "人物（架空）", "en": "Person (fictional)"}
 # The list of password symbols is joined with ・ in Japanese and ", " in English (the sepList message key)
 SYMBOL_JOIN = {"ja": "・", "en": ", "}
 PERSON_COUNTS = {
-    "ja": "アカウント{n}つ・パスワード{f}つ（{symbols}）。架空の人物で、本物のアカウントの情報を入れる欄はありません。",
-    "en": "Accounts: {n} · Passwords: {f} ({symbols}). These are fictional people; there are no fields for real account details.",
+    "ja": "アカウント{n}つ・パスワード{f}つ（{symbols}）。架空の人物で、本物の情報を入れる欄はありません。",
+    "en": "Accounts: {n} · Passwords: {f} ({symbols}). Fictional people; no fields for real account details.",
 }
 STATUS_PERSON = {"ja": "人物：{person}", "en": "Person: {person}"}
 FOOTER = {"ja": "GitHub（ipusiron/account-domino-mapper）", "en": "GitHub (ipusiron/account-domino-mapper)"}
@@ -2894,128 +2894,16 @@ def test_compare_highlights(page, width, language, known, results):
 
 
 # ===== Stage 1c: tab 4 (rules, symbols, notes, what the model leaves out, paper) and the printed sheets =====
-# The rules table of the spec ("規則表（10行）"), the current language only
-RULES = {
-    "ja": ("アカウントには入口がある。ログインの入口と、復旧（再設定）の入口がある",
-           "1つの入口の条件は「かつ」。全部そろえば開く（例：パスワード＋SMSのコード）",
-           "入口どうしは「または」。どれか1つ開けば入れる",
-           "攻撃者はカードが渡すものから始め、開いたメールも次の条件に使う。新しく開くものがなくなるまで続ける。1回の見直しで開く分を1段と数える",
-           "パスワードは系統（色と英字）で表す。同じ系統なら、どのアカウントでも同じものとみなす（少し変えた派生を含む）。漏えいのカードは、"
-           "漏れたサービスがいまログインに使っている系統が、IDと組でそのまま（平文で）出回った場合を表す。そのときは、パスワードが長くても、"
-           "同じ系統を使う入口ではパスワードの条件がそろう",
-           "SMSの条件は電話番号で満たす。攻撃者が持つのはSIMスワップのカードのときだけ",
-           "電話の窓口は個人情報で通る。書類での本人確認（身分証・郵送）を破るカードはない",
-           "パスキーと認証アプリはスマホの中の鍵として扱う。紙の回復コードは本人の手元にだけある",
-           "閉め出し＝本人が失ったもの（1つ、または2つ同時）を外し、手元に残ったものから同じ規則で入れないアカウント。"
-           "消えたメールそのものは「消」と表し、閉め出しには数えない。パスワードを忘れることは扱わない",
-           "時間・確率・通知・不審なログインの検知は扱わない"),
-    "en": ("An account has entrances: log-in entrances and recovery (reset) entrances",
-           "All requirements of one entrance must be met (AND), e.g. password + SMS code",
-           "Any one entrance is enough (OR)",
-           "The attacker starts from what the card gives and uses every opened email for further entrances, until nothing new opens. "
-           "Each round of newly opened accounts is one step",
-           "Passwords are families (color + letter). The same family counts as the same secret everywhere, small variations included. "
-           "A breach card stands for the case where the family that the breached service now uses to log in has leaked as-is "
-           "(in plain text), together with the ID; then the password requirement is met on every entrance that uses that family, "
-           "however long the password is",
-           "An SMS requirement is met by the phone number; the attacker holds it only with the SIM-swap card",
-           "A phone help desk accepts personal details; no card defeats a document check (photo ID, postal mail)",
-           "Passkeys and authenticator apps are treated as keys inside the phone; paper recovery codes exist only in the owner's hands",
-           "Lockout: after removing what the owner lost (one thing, or two at once), the accounts they cannot reach by the same rules from "
-           "what remains. A vanished email itself is shown as gone and is not counted as locked out. Forgetting a password is not modeled",
-           "Time, probability, notifications and detection of suspicious log-ins are not modeled"),
-}
-RULE2_EXAMPLE = {
-    "ja": "例：会社員のネット銀行の再設定はSMS＋個人情報です。SIMスワップのカード1枚では個人情報がないので倒れません。"
-          "線をすべて「または」として数えると、ここで倒れたことになってしまいます。",
-    "en": "Example: the office worker's online bank resets with SMS + personal details. The SIM-swap card alone lacks the personal "
-          "details, so the bank does not fall. Counting every line as OR would wrongly make it fall here.",
-}
-RULE5_WORDS = {"ja": "そのまま（平文で）出回った", "en": "leaked as-is"}
-RULES_INTRO = {
-    "ja": "この画面の結果は、下の規則と、作者が決めた3人の設定から出たものです。実際のサービスの手順は会社ごとに違い、変わることもあります。"
-          "実際のサービスは、ここにない仕組み（不審なログインの検知や通知）も持っています。",
-    "en": "The results on this page come from the rules below and the settings the author chose for the three people. Real services' "
-          "procedures differ from company to company and may change. They also have mechanisms not shown here, such as detecting "
-          "suspicious log-ins and sending notifications.",
-}
-# The symbols table of the spec ("記号の一覧"): headings, then the rows; a blank cell is None
-SYMBOL_HEADS = {"ja": ("記号", "何を表すか", "線の種類", "攻撃者が手にするカード", "本人がなくすカード"),
-                "en": ("Symbol", "Meaning", "Line type", "Attack card that gives it", "Loss card that takes it")}
-SYMBOL_ROWS = {
-    "ja": (("赤Aなど", "パスワードの系統", "パスワードの系統", "漏えい（漏れたサービスの系統）", "（扱わない）"),
-           ("スマホ", "認証アプリ・パスキー", "多要素", "（なし。端末の感染は模型の外）", "スマホをなくした"),
-           ("SMS", "電話番号に届くコード", "SMS", "SIMスワップ", "電話番号を手放した"),
-           ("個人情報", "電話の窓口で答える情報", "窓口", "窓口のなりすまし", "（なくさない扱い）"),
-           ("書類", "身分証・郵送での本人確認", "窓口", "（なし。偽造は模型の外）", "（なくさない扱い）"),
-           ("紙", "紙の回復コード（1手で増える）", "紙の回復コード", "（なし）", "紙をなくした（2つ同時の行と、手のあとの表の「＋紙で×」だけ）"),
-           ("メールの名前", "メールのアカウント", "メール",
-            "メールの乗っ取り（人ごとに1つ＝会社員は古いメール、親はプロバイダーのメール、学生は大学のメール）", "メールが消えた（同じく人ごとに1つ）"),
-           ("ロ／復、＋", "ログインの入口（カタカナのロ）／復旧の入口、かつ（図と印刷で使う。画面の表では「ログイン」「復旧」と書く）", "実線／破線", None, None),
-           ("●1・×・消・★", "段1で倒れた・閉め出し・そのメール自体が消えた・重要", None, None, None)),
-    "en": (("Red A, etc.", "Password family", "Password family", "Breach (the family the breached service uses)", "(not modeled)"),
-           ("Phone", "Authenticator app, passkey", "Multi-factor", "(none; an infected device is outside the model)", "Lost the phone"),
-           ("SMS", "Code sent to the phone number", "SMS", "SIM swap", "Gave up the phone number"),
-           ("Personal details", "Answers given to a phone help desk", "Help desk", "Help-desk impersonation", "(treated as never lost)"),
-           ("Documents", "Identity check with photo ID or postal mail", "Help desk", "(none; forgery is outside the model)",
-            "(treated as never lost)"),
-           ("Paper codes", "Paper recovery codes (added by a change)", "Paper recovery codes", "(none)",
-            "Lost the paper recovery codes (only in two-at-once lines and “× if the paper codes go too” in the after-change table)"),
-           ("Email name", "An email account", "Email",
-            "Email takeover (one per person: the old email, the ISP email, the university email)", "Email gone (one per person, likewise)"),
-           ("Log / Rec, +", "Log-in entrance / recovery entrance, AND (diagram and printed sheets only; tables use the words)",
-            "Solid / dashed", None, None),
-           ("●1 · × · gone · ★", "Fell at step 1 · locked out · the email itself is gone · important", None, None, None)),
-}
-# The four notes of the rules tab (the spec's "注記4つ"); the related tools in the fourth open in a new tab
-RULE_NOTES = {
-    "ja": ("SMSの線は、SIMスワップのカードがあるときだけ攻撃者に開きます。根拠の研究（Leeら、SOUPS 2020。携帯会社を調べたのは2019年）は"
-           "米国のプリペイド5社のもので、日本の携帯会社には当てはめません。",
-           "パスキーと認証アプリはスマホの中の鍵として扱います。このため、パスキーが偽サイトに強いことは数に出ません。"
-           "同期したパスキーをクラウドのアカウントの回復で取り出す経路と、"
-           "端末の感染で乗っ取る経路は、この模型に入れていません。この模型にはスマホを攻撃者に渡すカードがないので、"
-           "スマホを足す手で攻撃の面が悪くなることはありません。「スマホをなくした」の値は、認証アプリやパスキーを、"
-           "ほかの端末やクラウドに移していない（同期・バックアップしていない）場合の値です。",
-           "電話の窓口は個人情報で通ります。この模型には、書類での本人確認を破るカードも、本人が書類をなくすカードもありません。"
-           "このため、書類の確認へ付け替える手で、攻撃と閉め出しが悪くなることはありません。実際には書類は偽造で破られることがあり、"
-           "窓口での回復には待ち時間もかかります。実在の本人確認の手順は書きません。",
-           "紙の回復コードは本人の手元にだけあります。この模型には紙を攻撃者に渡すカードがないので、紙へ付け替える手で攻撃の面が悪くなることはありません。"
-           "実際には置き場所が新しい入口になり、打ち込む場面では偽サイトに強くありません。閉め出しの面では、紙をほかのものと一緒になくすと"
-           "入れなくなることがあります。紙を分けて保管するならDay124 Scatter Seeds・Day125 Overlay QR Sharesへ。"),
-    "en": ("An SMS line opens for the attacker only with the SIM-swap card. The study behind it (Lee et al., SOUPS 2020; "
-           "carrier tests run in 2019) covered five US prepaid carriers and is not applied to Japanese carriers.",
-           "Passkeys and authenticator apps are treated as keys inside the phone. So passkeys' resistance to fake sites does not show "
-           "in the numbers. Retrieving synced passkeys through cloud-account "
-           "recovery, and takeover through an infected device, are outside this model. No card here hands the phone to the attacker, "
-           "so adding the phone never makes the attack side worse. The “Lost the phone” values assume the authenticator app and "
-           "passkeys are not synced or backed up to another device or the cloud.",
-           "A phone help desk accepts personal details. This model has no card that defeats a document check and no card for the "
-           "owner losing their documents, so moving a line to a document check never makes the attack or the lockout worse here. "
-           "In reality documents can be forged, and recovery at a desk takes time. Real identity-check procedures are not described.",
-           "Paper recovery codes exist only in the owner's hands. No card here hands the paper codes to the attacker, so moving a line "
-           "to paper codes never makes the attack side worse. In reality, where you keep them becomes a new entrance, and they are not "
-           "phishing-resistant when you type them in. On the lockout side, losing the paper codes together with something else can "
-           "lock you out. To keep them split across places, see Day124 Scatter Seeds and Day125 Overlay QR Shares."),
-}
+# The text content of each row (every rule, every symbol, every note, every "not in this model" item) is checked in
+# test/text.test.js; this file checks the layout of the panel (the eleven numbered rules, the stacked symbol and mark
+# tables, the four numbered notes with external-tool links, the "not in this model" box that stays open across a redraw,
+# the paper section with its print button) and the keyboard focus on the paper heading from the guide of tab 1.
 NOTE_LINKS = (("Day124 Scatter Seeds", "https://ipusiron.github.io/scatter-seeds/"),
               ("Day125 Overlay QR Shares", "https://ipusiron.github.io/overlay-qr-shares/"))
-NOT_IN_MODEL = {
-    "ja": ("この模型に入れていないもの",
-           ("パスワードの強さ", "攻撃の確率・手間・時間", "不審なログインの検知と通知", "同期パスキーをクラウドの回復で取り出す経路", "端末の感染",
-            "書類の偽造", "パスワードを忘れること", "SSOとパスワード管理ソフト", "乗っ取ったあとに攻撃者が回復先を書き換えること",
-            "漏れたパスワードがハッシュで守られていて解けない場合", "フィッシング（偽サイトでの入力。パスキーはこれに強い）")),
-    "en": ("Not in this model",
-           ("Password strength", "Attack probability, effort and time", "Detection of suspicious log-ins and notifications",
-            "Retrieving synced passkeys through cloud recovery", "Infected devices", "Forged documents", "Forgetting a password",
-            "Single sign-on and password managers", "An attacker changing recovery details after a takeover",
-            "Leaks where the passwords are protected by hashing and cannot be cracked", "Phishing on fake sites (which passkeys resist)")),
-}
-PAPER = {
-    "ja": ("自分の構成は、この画面には入れません。印刷した空欄の用紙に、パスワードを書かずに記号で書きます。用紙には「保管注意（弱点の地図）」の欄があります。",
-           "印刷する（3人の地図と空欄の用紙）"),
-    "en": ("Your own setup is never entered on this page. Print the blank sheet and fill it in with symbols, without passwords. "
-           "The sheet has a “Keep safe (map of weak points)” box.", "Print (three maps and a blank sheet)"),
-}
+# The targets of the four buttons at the top of the rules tab, in order
+RULES_NAV_TARGETS = ("rules-table", "symbol-table", "notes-heading", "paper-heading")
+# A short word from rule 6 (the breach plain-text case) that distinguishes it from rule 5 (the password-symbol rule)
+RULE6_WORDS = {"ja": "平文", "en": "plain text"}
 RULES_STATE = """() => {
   const shown = el => !!el && el.getClientRects().length > 0;
   const text = el => el.textContent.replace(/\\s+/g, ' ').trim();
@@ -3065,56 +2953,68 @@ SCREEN_STATE = """() => ({tab: (document.querySelector('[role="tab"][aria-select
 
 
 def test_rules_tab(page, width, layouts, language):
-    """Tab 4: the rules table (two columns at every width), rule 2 with its example, the symbols table (stacked below
-    720px, each cell with its heading), the four notes with the related tools as new-tab links, what the model leaves out
-    (kept open across a redraw), the paper section, the print button (window.print, no state change) and the guide of
-    tab 1 that goes to the paper heading."""
+    """Tab 4: the eleven-row rules table (always two columns), rule 2's inline example, the symbol and mark tables
+    (stacked below 720px, each cell with its column heading), the four numbered notes (links to related tools open in a
+    new tab), the "not in this model" box (closed to start, opens to show its items, kept open across a person change),
+    the paper section, the print button (window.print, no state change), the four section-nav buttons at the top, and
+    the guide of tab 1 that jumps to the paper heading. Each shown message is matched exactly in test/text.test.js; this
+    function checks only the shape of the panel."""
     page.locator("#tab-rules").click()
     state = page.evaluate(RULES_STATE)
-    check(state["heading"] == PANEL_HEADINGS[language][3] and state["intro"] == RULES_INTRO[language], ("rules heading", state["heading"]))
+    check(state["heading"] == PANEL_HEADINGS[language][3], ("rules heading", state["heading"]))
+    check(bool(state["intro"]), ("rules intro paragraph", state["intro"]))
     rules = state["rules"]
-    check(rules["caption"] and len(rules["heads"]) == 2, ("rules table: two columns", rules["heads"]))
+    check(bool(rules["caption"]) and len(rules["heads"]) == 2, ("rules table: two columns", rules["heads"]))
     # The "#" heading is shown but not read; a screen reader reads a word instead
     check(state["noHead"] == {"hidden": ["#"], "spoken": [{"ja": "番号", "en": "Number"}[language]]}, ("rules table: # read as a word", state["noHead"]))
-    check([row["no"] for row in rules["rows"]] == [str(n) for n in range(1, 11)], ("ten rules", [row["no"] for row in rules["rows"]]))
-    check([row["rule"] for row in rules["rows"]] == list(RULES[language]), ("rules text", [row["rule"][:20] for row in rules["rows"]]))
+    check([row["no"] for row in rules["rows"]] == [str(n) for n in range(1, 12)], ("eleven rules", [row["no"] for row in rules["rows"]]))
+    check(all(row["rule"] for row in rules["rows"]), ("every rule carries text", [row["rule"][:16] for row in rules["rows"]]))
     check(all(row["display"] == "table-row" for row in rules["rows"]), ("the rules table never stacks", width))
-    check(RULE5_WORDS[language] in rules["rows"][4]["rule"], ("rule 5", rules["rows"][4]["rule"]))
-    examples = [(row["no"], row["example"]) for row in rules["rows"] if row["example"]]
-    check(examples == [("2", RULE2_EXAMPLE[language])] and rules["rows"][1]["exampleBlock"] == "block", ("the example under rule 2", examples))
+    # Rule 5 names the password symbols A, B and C (per person); rule 6 covers the breach-as-plain-text case. These two
+    # rules replaced the old single rule 5 of the ten-row table.
+    check(all(letter in rules["rows"][4]["rule"] for letter in ("A", "B", "C")),
+          ("rule 5 names the password symbols A, B, C", rules["rows"][4]["rule"]))
+    check(RULE6_WORDS[language] in rules["rows"][5]["rule"], ("rule 6 covers the plain-text breach", rules["rows"][5]["rule"]))
+    examples = [(row["no"], row["exampleBlock"]) for row in rules["rows"] if row["example"]]
+    check(examples == [("2", "block")], ("rule 2 carries an inline example", examples))
     check(rules["width"] <= rules["frame"] + 0.5 and rules["font"] >= 14, ("rules table inside the panel, 14px", rules["width"], rules["font"]))
     symbols = state["symbols"]
-    check(symbols["caption"] and symbols["headCount"] == 5, ("symbols table", symbols["caption"], symbols["headCount"]))
+    # The symbols table lists the seven kinds of thing a log-in or recovery entrance can need (password family, phone,
+    # SMS, personal details, documents, paper recovery codes, email); each row has four columns (name, meaning, attack
+    # card that gives it, loss card that takes it). The marks of the diagrams and tables are listed below in a separate
+    # mark table with two columns (symbol, meaning).
+    check(bool(symbols["caption"]) and symbols["headCount"] == 4, ("symbols table: four columns", symbols["caption"], symbols["headCount"]))
     check(symbols["width"] <= symbols["frame"] + 0.5 and symbols["font"] >= 14, ("symbols inside the panel, 14px", symbols["width"]))
-    check(len(symbols["rows"]) == 9, ("nine symbols", len(symbols["rows"])))
+    check(len(symbols["rows"]) == 7, ("seven kinds of entrance need", len(symbols["rows"])))
     stacked = width < 720
-    check(symbols["heads"] == ([] if stacked else list(SYMBOL_HEADS[language])), ("symbols headings", width, symbols["heads"]))
-    for row, expected in zip(symbols["rows"], SYMBOL_ROWS[language]):
+    # On wide screens the headings are above the table (thead); when stacked, thead is hidden and each cell shows its own
+    check(bool(symbols["heads"]) != stacked, ("symbols thead shown on wide screens only", width, symbols["heads"]))
+    for row in symbols["rows"]:
         check(row["display"] == ("block" if stacked else "table-row"), ("symbols stack below 720px", width, row["display"]))
-        check([cell["text"] or None for cell in row["cells"]] == list(expected), ("symbol row", [cell["text"] for cell in row["cells"]]))
-        for cell, head, value in zip(row["cells"], SYMBOL_HEADS[language], expected):
-            check(cell["label"] == head, ("each cell carries its heading", cell["label"], head))
-            if stacked:
-                # A stacked cell shows its heading before its value; a blank cell of the spec is left out
-                check(cell["shown"] == (value is not None), ("a blank cell is left out when stacked", head, cell))
-                if value is not None:
-                    check(cell["heading"] == head, ("the heading beside the value", cell["heading"], head))
-            else:
+        for cell in row["cells"]:
+            check(bool(cell["label"]), ("each cell carries its column heading as data-label", cell["label"]))
+            if stacked and cell["shown"]:
+                check(cell["heading"] == cell["label"], ("the heading beside the value when stacked", cell["heading"], cell["label"]))
+            elif not stacked:
                 check(cell["heading"] is None, ("the heading inside the cell is hidden on wide screens", width, cell["heading"]))
-    check(state["notes"] == list(RULE_NOTES[language]), ("the four notes", [note[:16] for note in state["notes"]]))
-    check([(link["text"], link["href"]) for link in state["links"]] == list(NOTE_LINKS), ("links in the paper note", state["links"]))
-    check(all(link["target"] == "_blank" and link["rel"] == "noopener noreferrer" for link in state["links"]), ("new tab", state["links"]))
-    summary, items = NOT_IN_MODEL[language]
-    check(state["notIn"]["summary"] == summary and not state["notIn"]["open"], ("not in the model: closed", state["notIn"]))
-    check(len(items) == 11 and state["notIn"]["items"] == list(items), ("not in the model: eleven items", state["notIn"]["items"]))
+    check(len(state["notes"]) == 4 and all(state["notes"]), ("four numbered notes", [note[:16] for note in state["notes"]]))
+    check([(link["text"], link["href"]) for link in state["links"]] == list(NOTE_LINKS), ("links to related tools in the notes", state["links"]))
+    check(all(link["target"] == "_blank" and link["rel"] == "noopener noreferrer" for link in state["links"]), ("the links open in a new tab", state["links"]))
+    check(bool(state["notIn"]["summary"]) and not state["notIn"]["open"], ("not in the model: closed to start", state["notIn"]))
+    check(len(state["notIn"]["items"]) == 11, ("not in the model: eleven items", state["notIn"]["items"]))
     page.locator("#not-in-model > summary").click()
-    check(page.evaluate(RULES_STATE)["notIn"]["shown"] == len(items), "the eleven items are shown when opened")
+    check(page.evaluate(RULES_STATE)["notIn"]["shown"] == 11, "the eleven items are shown when opened")
     page.locator("#person-parent").click()
     page.locator("#person-worker").click()
     check(page.locator("#not-in-model").evaluate("el => el.open"), "the box stays open across a redraw")
     paper = state["paper"]
-    check(paper["heading"] and paper["tag"] == "H3" and paper["tabindex"] == "-1", ("paper heading", paper))
-    check((paper["intro"], paper["button"]) == PAPER[language] and paper["describedby"] == "paper-intro", ("paper section", paper))
+    check(bool(paper["heading"]) and paper["tag"] == "H3" and paper["tabindex"] == "-1", ("paper heading", paper))
+    check(bool(paper["intro"]) and bool(paper["button"]) and paper["describedby"] == "paper-intro paper-print-out", ("paper section", paper))
+    # The four buttons at the top of the panel jump to the four sections
+    nav = page.locator("#panel-rules .section-nav-buttons button")
+    check(nav.count() == 4, ("four section-nav buttons", nav.count()))
+    for i, target in enumerate(RULES_NAV_TARGETS):
+        check(nav.nth(i).get_attribute("data-target") == target, ("section-nav target", i, nav.nth(i).get_attribute("data-target"), target))
     assert_layout(page, width, "rules", layouts)
     page.locator("#not-in-model > summary").click()
     # The print button prints (window.print, replaced here so that no dialog opens) and changes nothing else
@@ -4205,6 +4105,9 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             page.locator("#tab-chain").click()
             page.screenshot(path=str(output / (name + "-tabs-visited.png")), full_page=False)
             assert_vectors_built(page, "after visiting the tabs", everyone=True)
+            # The shape of the rules tab (eleven rules, the stacked symbol table, the four notes, the paper section)
+            test_rules_tab(page, width, layouts, language)
+            page.screenshot(path=str(output / (name + "-rules.png")), full_page=False)
         saved = test_preferences_interaction(page, language, theme, counts)
         assert_clean(errors, violations)
         return {"case": name, "status": "passed", "layouts": layouts, "saved": saved}

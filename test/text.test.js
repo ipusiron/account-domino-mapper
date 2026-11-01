@@ -417,7 +417,7 @@ test('G: the ranking note follows the mode, and the one-account step summary is 
   assert.equal(V.stepSummary(persona('student'), pv('student').cards.desk, M, 'ja'), 'このカードでは、倒れるアカウントはありません。');
   const counts = V.counts(persona('parent'));
   assert.equal(V.fill(M.en.personCounts, { n: counts.accounts, f: counts.families, symbols: counts.symbols.join(M.en.sepList) }),
-    'Accounts: 7 · Passwords: 1 (A). These are fictional people; there are no fields for real account details.');
+    'Accounts: 7 · Passwords: 1 (A). Fictional people; no fields for real account details.');
 });
 
 test('G: the chain tab texts (card line, step status, map cells, cards needed) for the known scenes', () => {
@@ -663,9 +663,8 @@ test('G: the screen text of tab 3 is the text of the spec', () => {
     // The columns of that table: the loss, then before or after the change
     ['phaseBefore', '変更前', 'before'], ['phaseAfter', '変更後', 'after'],
     ['sameHeading', '同じ入口のほかの変え方と比べる', 'Compare other changes to the same entrance'],
-    ['sameHelp', '選んだ変更と同じ入口を、ほかのやり方で変えた場合を並べます。変え方を押すと、その変更の結果が表のすぐ下に出ます（上の比べた結果も、その変更に替わります）。',
-      'Other ways to change the same entrance as the chosen change. Press one to see its result right under the table (the comparison above '
-        + 'switches to it as well).'],
+    ['sameHelp', '選んだ変更と同じ入口を、ほかのやり方で変えた場合を並べます。変え方を押すと、その変更の結果が出ます（上の比べた結果も、その変更に替わります）。',
+      'Other ways to change the same entrance as the chosen change. Press one to see its result (the comparison above switches to it as well).'],
     ['sameColMove', '変え方', 'Change'], ['sameColSaved', '守れた（4枚の合計）', 'Saved (sum over 4 cards)'],
     ['sameColNewly', '新たに倒れる（4枚の合計）', 'Newly fallen (sum over 4 cards)'], ['sameColLock', '閉め出し（1つ失う）', 'Lockout (one loss)'],
     ['sameColPair', '閉め出し（2つ同時）', 'Lockout (two at once)'],

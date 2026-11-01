@@ -168,11 +168,11 @@ test('H: the first person line is filled in, and the counts follow the data', ()
   const counts = (id) => V.counts(D.personas.find((p) => p.id === id));
   const worker = counts('worker');
   const first = fill(M.ja.personCounts, { n: worker.accounts, f: worker.families, symbols: worker.symbols.join(M.ja.sepList) });
-  assert.equal(first, 'アカウント9つ・パスワード3つ（A・B・C）。架空の人物で、本物のアカウントの情報を入れる欄はありません。');
+  assert.equal(first, 'アカウント9つ・パスワード3つ（A・B・C）。架空の人物で、本物の情報を入れる欄はありません。');
   assert.ok(html.includes('<p id="person-counts" class="person-counts">' + first + '</p>'));
   const parent = counts('parent');
   assert.equal(fill(M.en.personCounts, { n: parent.accounts, f: parent.families, symbols: parent.symbols.join(M.en.sepList) }),
-    'Accounts: 7 · Passwords: 1 (A). These are fictional people; there are no fields for real account details.');
+    'Accounts: 7 · Passwords: 1 (A). Fictional people; no fields for real account details.');
 });
 
 test('H: data-i18n, data-i18n-aria and data-label keep separate roles', () => {
