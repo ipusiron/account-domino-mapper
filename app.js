@@ -819,12 +819,19 @@
       E('dd', {}, row.lines.map((line) => E('span', { class: 'summary-line' }, words(line))))]));
   }
   // Compare with the other changes to the same entrance: the change column holds buttons that pick the change; each lockout
-  // change is a line of its own. The result of the change chosen is shown right under the table (its title and summary), so
-  // that pressing a row shows what it does where the finger is; the comparison above changes too (selectMove keeps the row in place)
+  // change is a line of its own. The result of the change chosen is shown right under the pressed row (its title and summary),
+  // so that pressing a row shows what it does where the finger is; the comparison above changes too (selectMove keeps the row
+  // in place). Below 720px the stacked rows take up the width, and the result sits inside the chosen row's block, so a short
+  // screen does not have to scroll past the other rows to see it. On wide screens the result sits right below the table.
+  const sameNarrowQuery = matchMedia('(max-width: 719px)');
   function renderSame(p, pv, s) {
     const same = View.sameRows(p, pv, state.move, Messages, state.language);
     const heads = ['sameColMove', 'sameColSaved', 'sameColNewly', 'sameColLock', 'sameColPair'].map((key) => t(key));
     const lines = (list) => list.map((line) => E('span', { class: 'cell-line' }, words(line)));
+    // Park #same-result back under #compare-result first; the next replaceChildren on #same-table would otherwise take it
+    // out with the old rows (it may be inside the previous .selected row under 720px)
+    const parkResult = $('compare-result');
+    if ($('same-result').parentElement !== parkResult) parkResult.insertBefore($('same-result'), $('same-note'));
     $('same-table').replaceChildren(stackedTable('same-table', same.heading, heads, same.rows.map((r) => {
       const button = E('button', { type: 'button', class: 'same-button', 'data-key': 'same:' + r.id, 'aria-pressed': String(r.id === state.move) },
         words(r.move));
@@ -834,9 +841,23 @@
     })));
     $('same-result').replaceChildren(E('p', { class: 'same-result-label' }, words(t('sameResultLabel'))),
       E('p', { class: 'same-result-title' }, words(s.title)), summaryRows(s.rows));
+    placeSameResult();
     // The note on removals, under the table when it has a removal that is not the change chosen (that one has the note above)
     setWords($('same-note'), same.removeNote || '');
     $('same-note').hidden = !same.removeNote;
+  }
+  // The result box sits inside the chosen row below 720px (right under where the finger pressed), and under the whole table
+  // on wide screens. The chosen row carries .selected; its block has display: block below 720px, so the result div flows
+  // as the next block inside it. Called from renderSame and from the resize listener for a redraw across 720px.
+  function placeSameResult() {
+    const result = $('same-result'), park = $('compare-result'), parkBefore = $('same-note');
+    const selected = sameNarrowQuery.matches && state.move
+      ? document.querySelector('#same-table tbody > tr.selected') : null;
+    if (selected) {
+      if (result.parentElement !== selected) selected.appendChild(result);
+    } else if (result.parentElement !== park) {
+      park.insertBefore(result, parkBefore);
+    }
   }
   // The map before or after the change, always at the last step (the step buttons belong to tab 1). The steps, the
   // entrances used and the backdoors after the change come from the person after it (cardGives with that person).
@@ -949,6 +970,9 @@
   // Without a change (no suggestion for the mode), the comparison shows the guidance only; its parts are emptied so that
   // nothing of another language or person stays in them.
   function clearComparison() {
+    // Park #same-result under #compare-result first, so that clearing #same-table does not take it out of the DOM
+    const parkResult = $('compare-result');
+    if ($('same-result').parentElement !== parkResult) parkResult.insertBefore($('same-result'), $('same-note'));
     for (const id of ['compare-heading', 'compare-summary', 'compare-why', 'attack-title', 'attack-legend', 'attack-area', 'attack-names-table',
       'lock-changes-mail', 'lock-changes-table', 'move-notes', 'same-table', 'same-result', 'same-note', 'after-card-note', 'after-status',
       'after-legend', 'after-map-table']) {

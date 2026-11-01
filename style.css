@@ -687,10 +687,12 @@ h1 { font-size: clamp(1.4rem, 3vw, 1.85rem); }
 .attack-table th[scope="row"] { vertical-align: middle; }
 .attack-table tr.changed > * { background: var(--bg); }
 .attack-table tr.changed > th { box-shadow: inset 5px 0 0 var(--accent); }
-/* The same-entrance table: one line per lockout change; the result of the change chosen there, right under it */
+/* The same-entrance table: one line per lockout change; the result of the change chosen there, right under it (below 720px
+   the result sits inside the chosen row's stacked block, so a short screen does not scroll past the other rows) */
 .same-table .cell-line { display: block; }
 .same-table .cell-line + .cell-line { margin-top: .2rem; }
 .same-result { margin: .5rem 0; padding: .45rem .75rem; border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--paper); }
+.same-table tr.selected > .same-result { margin: .4rem; }
 .same-result-label { margin: 0; color: var(--muted); font-size: .875rem; font-weight: 700; }
 .same-result-title { margin: .1rem 0 .2rem; font-weight: 700; }
 .back-to-compare { margin: .3rem 0; }
