@@ -66,7 +66,7 @@
           "methods": [
             { "id": "login", "role": "login", "requires": ["pw:red"], "label": { "ja": "パスワード", "en": "Password" } },
             { "id": "recSms", "role": "recovery", "requires": ["phone"], "label": { "ja": "SMSで再設定", "en": "Reset by SMS" } },
-            { "id": "recMail", "role": "recovery", "requires": ["mailOld"], "label": { "ja": "予備のメールで再設定", "en": "Reset via backup email" } }
+            { "id": "recMail", "role": "recovery", "requires": ["mailOld"], "label": { "ja": "古いメールで再設定", "en": "Reset via the old email" } }
           ]
         },
         {
@@ -261,7 +261,7 @@
           "label": { "ja": "フリーメール", "en": "Free email" },
           "methods": [
             { "id": "login", "role": "login", "requires": ["pw:green"], "label": { "ja": "パスワード", "en": "Password" } },
-            { "id": "recMail", "role": "recovery", "requires": ["mailUni"], "label": { "ja": "予備のメール（大学）で再設定", "en": "Reset via backup email (university)" } },
+            { "id": "recMail", "role": "recovery", "requires": ["mailUni"], "label": { "ja": "大学のメールで再設定", "en": "Reset via the university email" } },
             { "id": "recSms", "role": "recovery", "requires": ["phone"], "label": { "ja": "SMSで再設定", "en": "Reset by SMS" } }
           ]
         },

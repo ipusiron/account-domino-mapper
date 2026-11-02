@@ -2106,8 +2106,8 @@ WORKER_LEAK = "replace:points.login:pw:red>pw:own-points"
 STUDENT_SUB = "replace:sub.login:mailUni>mailFree"
 # Known sentences of the spec: the change sentence (the heading of the comparison) and the summary lines
 KNOWN_TITLES = {
-    ("worker", W2_MOVE): {"ja": "メインのメール：復旧（予備のメールで再設定）の古いメールを紙の回復コードに付け替える",
-                          "en": "Main email: in recovery (Reset via backup email), replace the old email with paper recovery codes"},
+    ("worker", W2_MOVE): {"ja": "メインのメール：復旧（古いメールで再設定）の古いメールを紙の回復コードに付け替える",
+                          "en": "Main email: in recovery (Reset via the old email), replace the old email with paper recovery codes"},
     ("worker", W3_MOVE): {"ja": "ネット証券：復旧（メール＋SMSでパスキーを再登録）を外す",
                           "en": "Online brokerage: remove recovery (Re-register passkey by email + SMS)"},
     ("parent", P3_MOVE): {"ja": "銀行のネットバンキング：復旧（SMSで再設定）の電話番号（SMS）を書類での本人確認に付け替える",
