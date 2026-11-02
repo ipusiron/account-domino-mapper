@@ -493,6 +493,47 @@ test('I: the feature table, the technical notes and the screen layout give the n
   }
 });
 
+test('the screen layout describes the current introduction, person band and wide step controls', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+  const details = html.match(/<details id="intro-more"[^>]*>([\s\S]*?)<\/details>/);
+  assert.ok(details, 'the full introduction');
+  const paragraphs = [...details[1].matchAll(/<p class="intro" data-i18n="([^"]+)"/g)].length;
+  const wide = [...css.matchAll(/@media \(min-width: (\d+)px\) \{([\s\S]*?)^\}/gm)]
+    .find((block) => block[2].includes('.stage-band { display: grid;'));
+  assert.ok(wide, 'the wide cards-and-controls layout');
+  for (const lang of LANGS) {
+    const lines = bodyOf(lang, section(lang, h2Title(lang, '📐'))), file = FILES[lang];
+    const overview = tablesIn(lines)[0];
+    const row = (label) => {
+      const found = overview.rows.filter((cells) => cells[0] === label);
+      assert.equal(found.length, 1, `${file}: one layout row for ${label}`);
+      return found[0][1];
+    };
+    const intro = row(lang === 'ja' ? '導入' : 'Introduction');
+    const person = row(lang === 'ja' ? '人物（架空）' : 'Person (fictional)');
+    const chain = lines.find((line) => line.startsWith('- ' + M[lang].tabChain));
+    assert.ok(chain, `${file}: the chain panel layout`);
+    assert.ok(intro.includes(M[lang].introMore), `${file}: the full-introduction control`);
+    const required = lang === 'ja' ? [
+      [intro, ['どの画面幅でも短い1文', `${paragraphs}段落`, '最初は閉じ', '画面幅を変えても開閉状態を保つ']],
+      [person, ['導入の下に全幅で表示']],
+      [chain, [`幅${wide[1]}px以上`, '攻撃カードと段の操作を横に並べ', '案内は段の行の下']],
+    ] : [
+      [intro, ['At every width, one short sentence', `${WORDS[paragraphs]} paragraphs`, 'starts closed',
+        'keeps its open or closed state when the window is resized']],
+      [person, ['full-width below the introduction']],
+      [chain, [`${wide[1]}px wide or more`, 'the cards and controls share a row', 'the guidance is below the step line']],
+    ];
+    for (const [text, fragments] of required) {
+      for (const fragment of fragments) assert.ok(text.includes(fragment), `${file}: ${fragment}`);
+    }
+    assert.doesNotMatch(intro, /幅720px未満の画面では短い|On screens narrower than 720px, one short sentence|^Two paragraphs/);
+    assert.doesNotMatch(person, /導入の右|beside the introduction/);
+    assert.doesNotMatch(chain, /その右に操作の案内|with what they do beside them/);
+  }
+});
+
 test('I: the rules table and the four notes of the technical notes are those of the Rules tab, and the limits list what the model '
   + 'leaves out as the Rules tab does', () => {
   for (const lang of LANGS) {
@@ -754,6 +795,104 @@ test('I: the other uses of the use cases, and their limits, are the same lists i
   }
   assert.deepEqual(counts.en, counts.ja, 'the same number of uses and limits in both languages');
   assert.ok(counts.ja.every((n) => n > 0));
+});
+
+const SESSION_HEADINGS = {
+  ja: ['20分の進め方', '話し合いの問い'],
+  en: ['A 20-minute session', 'Discussion questions'],
+};
+function sessionTable(lang, title) {
+  const use = section(lang, h2Title(lang, '🎯'));
+  const hs = headings(lang).filter((h) => h.level === 3 && h.line >= use.from && h.line < use.to);
+  const at = hs.findIndex((h) => h.title === title);
+  assert.ok(at >= 0, `${FILES[lang]}: ${title} is in Use cases`);
+  assert.equal(hs.filter((h) => h.title === title).length, 1);
+  const lines = prose(lang).slice(hs[at].line + 1, hs[at + 1]?.line ?? use.to);
+  const rows = lines.filter((line) => /^\|/.test(line)).map((line) => line.split('|').slice(1, -1).map((s) => s.trim()));
+  assert.ok(rows.length >= 3, `${FILES[lang]}: ${title} has a table`);
+  assert.ok(rows.every((row) => row.length === 3), `${FILES[lang]}: three columns`);
+  assert.ok(rows[1].every((cell) => /^:?-{3,}:?$/.test(cell)), `${FILES[lang]}: table separator`);
+  return rows.slice(2);
+}
+
+test('the bilingual session has a continuous 20-minute schedule and four discussion questions', () => {
+  for (const lang of LANGS) {
+    const [scheduleTitle, questionsTitle] = SESSION_HEADINGS[lang];
+    const rows = sessionTable(lang, scheduleTitle), questions = sessionTable(lang, questionsTitle);
+    assert.equal(rows.length, 5, `${FILES[lang]}: five session stages`);
+    let end = 0;
+    for (const row of rows) {
+      const span = row[0].match(/^(\d+)–(\d+)(?:分| min)$/);
+      assert.ok(span, `${FILES[lang]}: time range ${row[0]}`);
+      assert.equal(Number(span[1]), end, `${FILES[lang]}: no gap or overlap`);
+      end = Number(span[2]);
+      assert.ok(end > Number(span[1]), `${FILES[lang]}: positive duration`);
+      assert.ok(row[1] && row[2], `${FILES[lang]}: action and observation`);
+    }
+    assert.equal(end, 20, `${FILES[lang]}: ends at 20 minutes`);
+    assert.deepEqual(rows.map((row) => Number(row[0].match(/^(\d+)/)[1])), [0, 3, 8, 12, 17]);
+    assert.deepEqual(questions.map((row) => row[0]), ['1', '2', '3', '4']);
+    assert.ok(questions.every((row) => row[1] && row[2]), `${FILES[lang]}: question and evidence location`);
+    const intro = rows[0].join(' '), homework = rows[4].join(' ');
+    const terms = lang === 'ja' ? ['架空の人物', '攻撃者が入れること', '持ち主が入れなくなること']
+      : ['fictional people', 'attacker can enter', 'owner cannot enter'];
+    const constraints = lang === 'ja' ? ['空欄', '記号', '自分の情報を画面へ入力せず', 'パスワードそのものを紙にも書かない', '提出・共有しない']
+      : ['blank sheet', 'symbols', 'Do not enter personal details on the screen', 'write actual passwords', 'not submitted or shared'];
+    for (const term of terms) assert.ok(intro.includes(term), `${FILES[lang]}: introduction explains ${term}`);
+    for (const value of constraints) assert.ok(homework.includes(value), `${FILES[lang]}: homework preserves ${value}`);
+    const text = plain(rows.flat(), lang);
+    for (const key of ['personWorker', 'personParent', 'tabChain', 'tabLockout', 'tabCompare', 'tabRules',
+      'cardLeak', 'stepFirst', 'stepNext', 'modeHeading', 'modeSimswap', 'afterMap', 'mapBefore', 'mapAfter', 'printButton']) {
+      assert.ok(text.includes(M[lang][key]), `${FILES[lang]}: session uses screen label ${key}`);
+    }
+  }
+});
+
+test('the session counts and the first SIM-swap change follow the current personas', () => {
+  const worker = D.personas.find((p) => p.id === 'worker'), parent = D.personas.find((p) => p.id === 'parent');
+  const wpv = C.personaVectors(worker), ppv = C.personaVectors(parent);
+  const moveId = V.candidates(parent, ppv, 'simswap').ids[0], mv = ppv.moves.find((m) => m.id === moveId);
+  assert.equal(mv.kind, 'replace');
+  assert.equal(mv.service, 'bank');
+  assert.equal(mv.method, 'recSms');
+  assert.equal(mv.from, 'phone');
+  assert.equal(mv.to, 'idcheck');
+  assert.equal(C.lossTable(parent).cells.number.bank.mark, 'locked');
+  const bankMethods = parent.services.find((s) => s.id === 'bank').methods;
+  assert.equal(bankMethods.length, 2);
+  assert.ok(bankMethods.every((m) => m.requires.includes('phone')));
+  assert.ok(mv.losses.number.unlocked.includes('bank'));
+  const saved = V.effect(parent, ppv, moveId, 'simswap').saved;
+  for (const lang of LANGS) {
+    const rows = sessionTable(lang, SESSION_HEADINGS[lang][0]), n = wpv.cards.leak.services.length;
+    const expected = lang === 'ja' ? [`合計${n}つ`, `守れるアカウント${saved}つ`]
+      : [`${n} accounts`, `saves ${saved} account`];
+    for (const [i, value] of [[1, expected[0]], [3, expected[1]]]) {
+      assert.ok(rows[i][2].includes(value), `${FILES[lang]}: session observation includes ${value}`);
+    }
+    const nw = V.names(worker, M, lang), np = V.names(parent, M, lang);
+    for (const id of ['mailMain', 'sns']) {
+      const step = wpv.cards.leak.rank[id], name = nw.short[id];
+      const fragment = lang === 'ja' ? `段${step}の${name}` : `"${name}" at step ${step}`;
+      assert.ok(rows[1][2].includes(fragment), `${FILES[lang]}: ${name} at its actual step`);
+    }
+    assert.ok(rows[2][1].includes(np.full.bank));
+    assert.ok(rows[2][2].includes(M[lang].lockColNumber));
+  }
+});
+
+test('changing the person or attack card starts at step 0 in the instructions', () => {
+  for (const lang of LANGS) {
+    const lines = bodyOf(lang, section(lang, h2Title(lang, '📖')));
+    const step = lines.filter((line) => /^3\. /.test(line));
+    assert.equal(step.length, 1, `${FILES[lang]}: one third instruction`);
+    const expected = lang === 'ja'
+      ? '3. 攻撃カードや人物を替えると、段0から表示する。'
+      : '3. When you switch the attack card or the person, the map starts at step 0.';
+    assert.ok(step[0].startsWith(expected), `${FILES[lang]}: card and person changes start at step 0`);
+    assert.ok(step[0].includes(M[lang].stepNext), `${FILES[lang]}: use the next-step button`);
+    assert.doesNotMatch(step[0], /最後の段|last step|最初から|Start over/, `${FILES[lang]}: no stale last-step hint`);
+  }
 });
 
 test('I: the lead of the use cases particular to this tool is not a heading in either language', () => {
