@@ -4158,6 +4158,28 @@ def test_ranking_notice(page):
     check(len(set(seen)) > 1, "ranking notice updates when its first-ranked result changes")
 
 
+def test_help_backdrop(page):
+    page.locator("#help").click()
+    dialog = page.locator("#help-dialog")
+    box = dialog.bounding_box()
+    inside, outside = (box["x"] + box["width"] / 2, box["y"] + 10), (2, 2)
+    for start, end in ((inside, outside), (outside, inside), (inside, inside)):
+        page.mouse.move(*start)
+        page.mouse.down()
+        page.mouse.move(*end)
+        page.mouse.up()
+        check(dialog.is_visible(), ("a non-backdrop gesture keeps help open", start, end))
+    page.locator("#help-dialog .lesson").evaluate_all("els => els.forEach(el => { el.open = true; })")
+    overflow = page.locator("#help-dialog .table-frame").evaluate_all("els => els.filter(el => el.scrollWidth > el.clientWidth).map(el => ({width: el.clientWidth, scroll: el.scrollWidth}))")
+    check(not overflow, ("expanded help tables fit their frames", overflow))
+    page.mouse.click(*outside)
+    check(not dialog.is_visible(), "a complete backdrop click closes help")
+    check(page.evaluate("() => document.activeElement.id") == "help", "backdrop dismissal restores the help button")
+    page.keyboard.press("Enter")
+    check(dialog.is_visible(), "the restored help button reopens help")
+    page.keyboard.press("Escape")
+
+
 def matrix_case(browser, browser_name, url, width, language, theme, output, counts, stage, known):
     name = f"{browser_name}-{width}-{language}-{theme}"
     context = new_context(browser, browser_name, width, language, theme)
@@ -4208,6 +4230,7 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
         if stage >= "1d":
             test_comparison_bands(page, width, output, name)
             test_ranking_notice(page)
+            test_help_backdrop(page)
             test_mark_contrast(page)
             test_print_word_parts(page, language)
         saved = test_preferences_interaction(page, language, theme, counts)

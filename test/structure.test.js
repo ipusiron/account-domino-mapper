@@ -468,3 +468,12 @@ test('The lockout cross is legible in the mark legend, and compound card words c
   assert.ok(app.includes("const SPLITS = ['ソーシャル|エンジニアリング'];"));
   assert.ok(app.includes("E('span', { class: 'word-part' }, part)"));
 });
+
+
+test('Help dismissal requires a complete backdrop gesture and restores focus to its trigger', () => {
+  const app = read('app.js');
+  assert.match(app, /addEventListener\('pointerdown',[^\n]+helpBackdropDown = isHelpBackdrop\(event\)/);
+  assert.match(app, /const close = helpBackdropDown && isHelpBackdrop\(event\)/);
+  assert.match(app, /addEventListener\('pointercancel',[^\n]+helpBackdropDown = false/);
+  assert.match(app, /addEventListener\('close',[\s\S]*?\$\('help'\)\.focus\(\{ preventScroll: true \}\)/);
+});

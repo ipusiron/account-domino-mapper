@@ -181,7 +181,7 @@
       if (next === undefined || NO_LINE_START.includes(next) || joined.includes(next) || inside.has(i)) return;
       const pair = scriptOf(ch) + '>' + scriptOf(next);
       if ((PARTICLES.includes(ch) && scriptOf(next) !== 'hiragana') || pair === 'katakana>kanji' || pair === 'kanji>katakana'
-        || (next === '（' && ch !== ' ') || ch === '）' || '：＋＝／→・、。'.includes(ch) || split.has(i)) {
+        || ((next === '（' || next === '「') && ch !== ' ') || ch === '）' || '：＋＝／→・、。'.includes(ch) || split.has(i)) {
         flush();
         out.push(E('wbr'));
       }
@@ -1724,13 +1724,23 @@
     helpLanguage = state.language;
   });
   $('close-help').addEventListener('click', () => $('help-dialog').close());
-  // A press outside the dialog (on the dark backdrop) closes it as well. The backdrop belongs to the dialog element, so the
-  // place pressed tells it apart from a press inside
-  $('help-dialog').addEventListener('click', (event) => {
-    if (event.target !== $('help-dialog')) return;
+  // Both ends of a pointer gesture must be on the backdrop; a drag from the help text keeps it open.
+  let helpBackdropDown = false;
+  function isHelpBackdrop(event) {
+    if (event.target !== $('help-dialog')) return false;
     const box = $('help-dialog').getBoundingClientRect();
-    const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
-    if (!inside) $('help-dialog').close();
+    return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+  }
+  $('help-dialog').addEventListener('pointerdown', (event) => { helpBackdropDown = isHelpBackdrop(event); });
+  $('help-dialog').addEventListener('pointercancel', () => { helpBackdropDown = false; });
+  $('help-dialog').addEventListener('click', (event) => {
+    const close = helpBackdropDown && isHelpBackdrop(event);
+    helpBackdropDown = false;
+    if (close) $('help-dialog').close();
+  });
+  $('help-dialog').addEventListener('close', () => {
+    helpBackdropDown = false;
+    $('help').focus({ preventScroll: true });
   });
   for (const button of document.querySelectorAll('.section-nav button[data-target]')) {
     button.addEventListener('click', () => goToSection(button.dataset.target));

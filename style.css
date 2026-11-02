@@ -875,3 +875,7 @@ caption .table-ref { margin-right: .35em; }
 }
 
 .candidate-first-summary { margin: .5rem 0; padding: .4rem .6rem; border-left: 3px solid var(--accent); font-size: .875rem; }
+
+@media (max-width: 719px) {
+  .lesson-backdoors th, .lesson-backdoors td { padding-inline: .1rem; }
+}
