@@ -4061,6 +4061,84 @@ def new_context(browser, browser_name, width, language, theme):
     return browser.new_context(**options)
 
 
+def settle_layout(page):
+    page.evaluate("() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))")
+
+
+def test_comparison_bands(page, width, output, name):
+    page.locator("#person-worker").click()
+    page.locator("#tab-compare").click()
+    page.locator("#mode-all").click()
+    if not page.locator("#after-map").evaluate("el => el.open"):
+        page.locator("#after-map > summary").click()
+    inline, bar = page.locator("#after-phase-inline"), page.locator("#after-phase-bar")
+    if width >= 720:
+        check(not inline.is_visible() and bar.is_visible(), "one comparison control group on wide screens")
+        return
+    inline.evaluate("el => el.scrollIntoView({block: 'center'})")
+    page.wait_for_function("() => document.querySelector('#after-phase-bar').classList.contains('covered-by-inline')")
+    check(not bar.is_visible(), "inline controls suppress the sticky duplicate")
+    before = page.evaluate("() => ({y: scrollY, height: document.documentElement.scrollHeight})")
+    page.locator("#phase-inline-before").evaluate("el => el.focus({preventScroll: true})")
+    page.keyboard.press("Enter")
+    settle_layout(page)
+    check(abs(page.evaluate("() => scrollY") - before["y"]) <= 1, "inline phase choice keeps the scroll position")
+    check(page.locator("#phase-before").get_attribute("aria-pressed") == "true", "both phase groups agree")
+    inline.evaluate("el => { const r = el.getBoundingClientRect(); scrollBy(0, r.bottom - 2); }")
+    settle_layout(page)
+    check(inline.evaluate("el => { const r = el.getBoundingClientRect(); return r.top < 0 && r.bottom > 0; }"), "partial intersection reached")
+    check(not bar.is_visible(), "even two visible pixels of inline controls suppress the duplicate")
+    geometry = bar.evaluate("el => ({height: el.offsetHeight, page: document.documentElement.scrollHeight})")
+    page.evaluate("() => scrollBy(0, 4)")
+    page.wait_for_function("() => !document.querySelector('#after-phase-bar').classList.contains('covered-by-inline')")
+    check(bar.is_visible(), "sticky controls return once inline controls leave the viewport")
+    check(bar.evaluate("el => ({height: el.offsetHeight, page: document.documentElement.scrollHeight})") == geometry,
+          "suppressing controls preserves their layout space")
+    page.locator("#phase-before").evaluate("el => el.focus({preventScroll: true})")
+    inline.evaluate("el => el.scrollIntoView({block: 'center'})")
+    page.wait_for_function("() => document.activeElement.id === 'phase-inline-before'")
+    check(not bar.is_visible(), "focus moves to the corresponding visible inline control")
+    page.screenshot(path=str(output / (name + "-comparison-controls.png")), full_page=False)
+
+
+def test_mark_contrast(page):
+    page.locator("#tab-rules").click()
+    ratios = page.evaluate("""() => {
+      const rgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const lum = value => rgb(value).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; })
+        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+      const ratio = el => { let bg = el;
+        while (bg.parentElement && ['rgba(0, 0, 0, 0)', 'transparent'].includes(getComputedStyle(bg).backgroundColor)) bg = bg.parentElement;
+        const a = lum(getComputedStyle(el).color), b = lum(getComputedStyle(bg).backgroundColor);
+        return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); };
+      const locked = document.querySelector('#mark-table tr[data-row="Locked"] .mark-symbol');
+      const normal = document.querySelector('#mark-table tbody tr:not([data-row="Locked"]) .mark-symbol');
+      return {locked: ratio(locked), size: parseFloat(getComputedStyle(locked).fontSize),
+        normalSize: parseFloat(getComputedStyle(normal).fontSize)};
+    }""")
+    check(ratios["locked"] >= 4.5 and ratios["size"] >= ratios["normalSize"], ("locked mark contrast and size", ratios))
+
+
+def test_print_word_parts(page, language, require_light=False):
+    page.wait_for_selector('#print-sheet[data-ready="true"]', state="attached")
+    page.emulate_media(media="print")
+    try:
+        parts = page.locator("#print-sheet .word-part").evaluate_all("""els => els.map(el => {
+          const range = document.createRange(); range.selectNodeContents(el);
+          return {text: el.textContent, nowrap: getComputedStyle(el).whiteSpace === 'nowrap',
+            lines: new Set(Array.from(range.getClientRects(), r => Math.round(r.top))).size};
+        })""")
+        check(language != "ja" or bool(parts), "Japanese print sheets contain protected word parts")
+        check(all(p["nowrap"] and p["lines"] <= 1 for p in parts), ("printed word parts remain whole", parts))
+        if require_light:
+            colors = page.evaluate("""() => ({scheme: getComputedStyle(document.documentElement).colorScheme,
+              ink: getComputedStyle(document.querySelector('#print-sheet')).color,
+              paper: getComputedStyle(document.querySelector('#print-sheet')).backgroundColor})""")
+            check(colors == {"scheme": "light", "ink": "rgb(0, 0, 0)", "paper": "rgb(255, 255, 255)"}, ("print palette", colors))
+    finally:
+        page.emulate_media(media="screen")
+
+
 def matrix_case(browser, browser_name, url, width, language, theme, output, counts, stage, known):
     name = f"{browser_name}-{width}-{language}-{theme}"
     context = new_context(browser, browser_name, width, language, theme)
@@ -4108,6 +4186,10 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             # The shape of the rules tab (eleven rules, the stacked symbol table, the four notes, the paper section)
             test_rules_tab(page, width, layouts, language)
             page.screenshot(path=str(output / (name + "-rules.png")), full_page=False)
+        if stage >= "1d":
+            test_comparison_bands(page, width, output, name)
+            test_mark_contrast(page)
+            test_print_word_parts(page, language)
         saved = test_preferences_interaction(page, language, theme, counts)
         assert_clean(errors, violations)
         return {"case": name, "status": "passed", "layouts": layouts, "saved": saved}

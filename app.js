@@ -171,7 +171,8 @@
     const flush = () => {
       const marked = ([...piece].slice(1).some((ch) => joined.includes(ch)) && !/\s/.test(piece))
         || wholes.some((label) => piece.includes(label));
-      out.push(marked ? E('span', { class: 'joined' }, piece) : piece);
+      out.push(...(marked ? [E('span', { class: 'joined' }, piece)] : piece.split(/(ソーシャル|エンジニアリング)/).filter(Boolean)
+        .map((part) => /^(ソーシャル|エンジニアリング)$/.test(part) ? E('span', { class: 'word-part' }, part) : part)));
       piece = '';
     };
     chars.forEach((ch, i) => {
@@ -180,7 +181,7 @@
       if (next === undefined || NO_LINE_START.includes(next) || joined.includes(next) || inside.has(i)) return;
       const pair = scriptOf(ch) + '>' + scriptOf(next);
       if ((PARTICLES.includes(ch) && scriptOf(next) !== 'hiragana') || pair === 'katakana>kanji' || pair === 'kanji>katakana'
-        || (next === '（' && ch !== ' ') || ch === '）' || '：＋＝／→・、'.includes(ch) || split.has(i)) {
+        || (next === '（' && ch !== ' ') || ch === '）' || '：＋＝／→・、。'.includes(ch) || split.has(i)) {
         flush();
         out.push(E('wbr'));
       }
@@ -872,7 +873,9 @@
     const X = before ? p : after.person, result = before ? pv.cards[card] : after;
     const step = View.maxRank(result);
     for (const id of CARDS) $('after-card-' + id).setAttribute('aria-pressed', String(id === card));
-    for (const id of PHASES) $('phase-' + id).setAttribute('aria-pressed', String(id === phase));
+    for (const id of PHASES) for (const prefix of ['phase-', 'phase-inline-']) {
+      $(prefix + id).setAttribute('aria-pressed', String(id === phase));
+    }
     renderAfterNotice(p, View.afterCardNotice(p, pv, state.move, card, Messages, state.language));
     renderAfterKey();
     const L = afterLayoutFor(state.persona, state.move, state.language, after.person);
@@ -1513,14 +1516,14 @@
     return tag ? tag.closest('tr') : null;
   }
   function selectPhase(phase, pressed) {
-    const needsAfter = narrowQuery.matches && !nameInView();
+    const needsAfter = narrowQuery.matches && !pressed.closest('#after-phase-inline') && !nameInView();
     keepPlace((narrowQuery.matches && nameInView()) || pressed, () => { state.mapPhase = phase; });
     if (!needsAfter) return;
     const row = firstChangedRow();
     const bar = $('after-phase-bar').getBoundingClientRect();
     if (!row) return;
     const target = row.getBoundingClientRect();
-    const floor = Math.min(innerHeight, bar.top);
+    const floor = $('after-phase-bar').classList.contains('covered-by-inline') ? innerHeight : Math.min(innerHeight, bar.top);
     // The row is above the top: pull it just below the top; below the floor (above the sticky bar): bring its top just under the viewport top
     if (target.top < 0) scrollBy(0, target.top - 8);
     else if (target.bottom > floor) scrollBy(0, Math.min(target.bottom - floor + 8, target.top - 8));
@@ -1538,7 +1541,8 @@
     const button = keepPlace(document.querySelector('[data-key="after-acct:' + id + '"]'), () => { state.mapAccount = id; });
     const detail = $('after-map-table').querySelector('.detail-row');
     if (!button || !detail) return;
-    const floor = narrowQuery.matches ? Math.min(innerHeight, $('after-phase-bar').getBoundingClientRect().top) : innerHeight;
+    const floor = narrowQuery.matches && !$('after-phase-bar').classList.contains('covered-by-inline')
+      ? Math.min(innerHeight, $('after-phase-bar').getBoundingClientRect().top) : innerHeight;
     const bottom = detail.getBoundingClientRect().bottom;
     if (bottom > floor) scrollBy(0, Math.max(0, Math.min(bottom - floor + 8, button.getBoundingClientRect().top - 8)));
   }
@@ -1643,7 +1647,26 @@
   for (const id of PERSONAS) $('person-' + id).addEventListener('click', () => selectPersona(id));
   for (const card of CARDS) $('card-' + card).addEventListener('click', () => selectCard(card));
   for (const mode of MODES) $('mode-' + mode).addEventListener('click', () => selectMode(mode));
-  for (const phase of PHASES) $('phase-' + phase).addEventListener('click', (event) => selectPhase(phase, event.currentTarget));
+  for (const phase of PHASES) for (const prefix of ['phase-', 'phase-inline-']) {
+    $(prefix + phase).addEventListener('click', (event) => selectPhase(phase, event.currentTarget));
+  }
+  // Keep the table in place when the inline controls enter the screen: the sticky bar keeps its space, but cannot take focus.
+  function coverPhaseBar(covered) {
+    const bar = $('after-phase-bar');
+    if (covered && bar.contains(document.activeElement)) {
+      $('phase-inline-' + state.mapPhase).focus({ preventScroll: true });
+    }
+    bar.classList.toggle('covered-by-inline', covered);
+  }
+  if (typeof IntersectionObserver === 'function') {
+    const phaseObserver = new IntersectionObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      coverPhaseBar(entry.isIntersecting);
+    });
+    phaseObserver.observe($('after-phase-inline'));
+  } else {
+    coverPhaseBar(true);
+  }
   for (const card of CARDS) $('after-card-' + card).addEventListener('click', (event) => selectMapCard(card, event.currentTarget));
   $('choose-move').addEventListener('change', (event) => {
     if (event.target.value) selectMove(event.target.value, 'reveal', event.target); else event.target.value = state.move || '';

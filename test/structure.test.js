@@ -448,3 +448,23 @@ test('H: the buttons at the top of the rules tab move to its sections, each of w
   for (const id of ['lock-legend-mail', 'lock-legend-marks', 'lock-story', 'lock-map']) assert.ok(lockout.includes('id="' + id + '"'), id);
   assert.ok(!html.includes('id="lock-entrances"'), 'the entrances go under the row chosen, not under the table');
 });
+
+
+test('Comparison controls keep their place and hide the sticky copy while the inline controls intersect the screen', () => {
+  const app = read('app.js'), style = read('style.css');
+  for (const phase of ['before', 'after']) {
+    assert.match(html, new RegExp('id="phase-inline-' + phase + '"[^>]+data-key="phase-inline:' + phase + '"'));
+  }
+  assert.match(app, /phaseObserver\.observe\(\$\('after-phase-inline'\)\)/);
+  assert.match(app, /coverPhaseBar\(entry\.isIntersecting\)/);
+  assert.match(style, /\.after-phase-bar\.covered-by-inline\s*\{\s*visibility: hidden;/);
+  assert.match(app, /!pressed\.closest\('#after-phase-inline'\)/);
+});
+
+test('The lockout cross is legible in the mark legend, and compound card words cannot wrap inside their parts', () => {
+  const style = read('style.css'), app = read('app.js');
+  assert.match(style, /\.mark-table tr\[data-row="Locked"\] \.mark-symbol\s*\{[^}]*font-size: 1\.35rem;[^}]*color: var\(--lock\)/);
+  assert.match(style, /\.word-part\s*\{\s*white-space: nowrap;/);
+  assert.ok(app.includes("const SPLITS = ['ソーシャル|エンジニアリング'];"));
+  assert.ok(app.includes("E('span', { class: 'word-part' }, part)"));
+});

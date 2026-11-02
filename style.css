@@ -863,3 +863,13 @@ caption .table-ref { margin-right: .35em; }
   .after-detail-rows { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .after-detail-rows dd + dt { margin-top: .3rem; }
 }
+
+
+/* The two parts may wrap between words, including on paper, but never inside either word. */
+.word-part { white-space: nowrap; }
+.mark-table tr[data-row="Locked"] .mark-symbol { font-size: 1.35rem; line-height: 1; color: var(--lock); }
+.after-phase-inline { display: none; }
+@media (max-width: 719px) {
+  .after-phase-inline { display: block; margin: .45rem 0; }
+  .after-phase-bar.covered-by-inline { visibility: hidden; }
+}
