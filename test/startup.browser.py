@@ -91,9 +91,9 @@ SNAPSHOT = """() => {
   return {readyState: document.readyState, ready: document.documentElement.dataset.appReady,
     lang: document.documentElement.lang, theme: document.documentElement.dataset.theme || null,
     h1: text('h1'),
-    // the short intro (always visible) and the long intro (inside the <details id="intro-more">, which starts open) read together
+    // The short explanation is visible; the full introduction and step definitions are in a closed details box.
     intro: Array.from(document.querySelectorAll('.intro'), el => el.textContent).join(' '),
-    chainIntro: text('#panel-chain [data-i18n="chainIntro"]'),
+    chainIntro: text('#panel-chain [data-i18n="chainLead"]'),
     tabs: Array.from(document.querySelectorAll('[role="tab"]'), tab => tab.textContent.trim()),
     personHeading: text('#person-heading'), persons: Array.from(document.querySelectorAll('.person-buttons button'), b => b.textContent),
     counts: text('#person-counts'),
@@ -137,8 +137,7 @@ PRINTED = """() => {
   while ((node = walker.nextNode())) {
     if (node.data.trim() && shown(node.parentElement)) texts.push(getComputedStyle(node.parentElement).color);
   }
-  // the short intro is hidden on narrow screens (and in print), the long intro inside <details id="intro-more"> is open — either
-  // one shown means the introductory Japanese is on screen
+  // The short introduction remains available even when the full explanation is closed.
   const anyIntro = Array.from(document.querySelectorAll('.intro')).some(el => shown(el));
   const visibleIntro = Array.from(document.querySelectorAll('.intro')).find(el => shown(el));
   return {heading: shown(document.querySelector('h1')), intro: anyIntro,
@@ -188,6 +187,14 @@ def pending_contract(page, snap, language, width):
     check(snap["tabs"] == TABS_JA, ("static Japanese tabs", snap["tabs"]))
     check(snap["personHeading"] == "人物（架空）" and len(snap["persons"]) == 3, "static person band")
     check("架空の3人" in snap["intro"] and "倒れる" in snap["chainIntro"], "static Japanese text is readable")
+    check(page.locator('.intro-short').is_visible(), "short introduction is visible before startup")
+    check(page.locator('#panel-chain [data-i18n="chainLead"]').is_visible(), "short step explanation is visible before startup")
+    intro = page.locator('#intro-more')
+    check(not intro.evaluate("el => el.open"), "full introduction starts closed before startup")
+    page.locator('#intro-more > summary').click()
+    check(page.locator('#intro-more [data-i18n="chainIntro"]').is_visible(), "full step definitions open without application code")
+    page.locator('#intro-more > summary').click()
+    check(not intro.evaluate("el => el.open"), "full introduction closes without application code")
     check(not snap["unnamed"], ("unnamed buttons", snap["unnamed"]))
     page.locator("#startup-help > summary").click()
     help_text = page.locator("#startup-help").inner_text()

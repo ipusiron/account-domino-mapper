@@ -457,12 +457,15 @@ h1 { font-size: clamp(1.4rem, 3vw, 1.85rem); }
 }
 .tool-icon { font-size: 1.05em; }
 
-/* Introduction: on wide screens the full text, always open (its summary is not shown) */
+/* A short introduction at every width; the full explanation opens on request. */
 .intro { margin: .25rem 0; font-size: .9375rem; line-height: 1.5; }
-.intro-short { display: none; }
+.intro-short { display: block; margin: .4rem 0 0; }
 .intro-more { margin: 0 0 .5rem; padding: 0; border: 0; border-radius: 0; background: none; }
 .intro-more[open] { padding-bottom: 0; }
-.intro-more > summary { display: none; }
+.intro-more > summary {
+  display: list-item; min-height: 44px; margin: 0; padding: .55rem .2rem; border-radius: 0; background: none; color: var(--accent);
+}
+.intro-more[open] > summary { margin-bottom: .2rem; border-bottom: 0; }
 
 /* Person band: the heading beside the three buttons, the setting of the person under them, then the counts */
 .person-band { margin: .5rem 0; padding: .6rem .9rem; }
@@ -582,28 +585,41 @@ h1 { font-size: clamp(1.4rem, 3vw, 1.85rem); }
   .card-buttons { display: flex; flex-wrap: wrap; gap: .4rem; }
   .card-buttons button { flex: 1 1 auto; }
 }
-/* Wide screens (1000px and up): the introduction and the person band side by side, so that the top of the diagram comes into the
-   first screen (the order of reading stays the same: the introduction, then the people) */
+/* Wide screens keep the short introduction above the full-width person band. */
 @media (min-width: 1000px) {
-  .top-band { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 0 1.1rem; align-items: start; }
-  .top-band .person-band { margin: .45rem 0 0; }
-  .top-band .person-row { grid-template-columns: minmax(0, 1fr); gap: .35rem; margin-bottom: .45rem; }
+  .top-band .person-band { margin: .2rem 0 0; padding-block: .4rem; }
   .top-band .intro, .top-band .story { font-size: .875rem; }
-  /* The counts follow the setting of the person on its last line */
+  /* The counts follow the setting of the person on its last line. */
   .top-band .story, .top-band .person-counts { display: inline; }
   .top-band .story::after { content: " "; }
   .top-band .person-band { line-height: 1.5; }
+  .tabs { margin-top: .5rem; }
+  .panel { padding-top: .5rem; }
+  .highlights-block { margin-bottom: .4rem; }
+  /* Cards and step controls share a row; their explanations still precede the diagram. */
+  .stage-band { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: .6rem; }
+  .cards-row { grid-column: 1; grid-row: 1; display: block; min-width: 0; }
+  .cards-row h3 { margin-bottom: .2rem; }
+  .chain-stage .card-buttons { display: grid; grid-template-columns: .7fr 1fr 1.5fr 1.5fr; gap: .3rem; }
+  .chain-stage .card-buttons button { padding-inline: .3rem; font-size: .875rem; line-height: 1.4; }
+  .step-bar { display: contents; }
+  .step-controls { grid-column: 2; grid-row: 1; align-self: end; }
+  .step-controls button { padding-inline: .35rem; font-size: .875rem; }
+  .card-line, .card-note, .step-line, .step-hint, .step-summary, .map-figure { grid-column: 1 / -1; }
+  .card-line { grid-row: 2; }
+  .card-note { grid-row: 3; }
+  .step-line { grid-row: 4; }
+  .step-hint { grid-row: 5; }
+  .step-summary { grid-row: 6; }
+  .stage-band .map-figure { grid-row: 7; margin-top: .1rem; }
+  .stage-band .map-figure .map-key { padding: .2rem .3rem; }
+  .stage-band .key-items { column-gap: .5rem; }
 }
 /* Narrow screens: a short introduction (the full one behind its summary); no diagram (the table says so); the step buttons and the
    step line stay at the bottom of the screen while the attack cards and the map table are in view, so that a step is pressed
    while looking at the table and nothing jumps */
 @media (max-width: 719px) {
-  .intro-short { display: block; margin: .4rem 0 0; }
   .intro-more { margin: 0 0 .3rem; }
-  .intro-more > summary {
-    display: list-item; min-height: 44px; margin: 0; padding: .55rem .2rem; border-radius: 0; background: none; color: var(--accent);
-  }
-  .intro-more[open] > summary { margin-bottom: .2rem; border-bottom: 0; }
   .map-narrow-note { display: block; margin: .3rem 0 0; color: var(--muted); font-size: .8125rem; }
   .chain-stage { display: flex; flex-direction: column; }
   .stage-band { display: contents; }
@@ -886,4 +902,16 @@ caption .table-ref { margin-right: .35em; }
     forced-color-adjust: none; color: HighlightText; background: Highlight; border: 3px double HighlightText;
   }
   button[aria-pressed="true"] .tag-chosen { color: Highlight; background: HighlightText; }
+}
+
+/* Wide screens: tighter spacing so the first boxes of the map fit on the first screen together with the step lead */
+@media (min-width: 1000px) {
+  #chain-key { font-size: .8125rem; }
+  .tabs { margin-top: 4px; }
+  #panel-chain .panel-intro { margin-bottom: .2rem; }
+  .highlights-block { margin: .1rem 0 .3rem; }
+  .highlights-note { margin-bottom: .1rem; }
+  .highlight-button { padding-top: .2rem; padding-bottom: .2rem; }
+  .stage-band { padding-top: .25rem; padding-bottom: .35rem; }
+  #step-line { margin-top: .15rem; }
 }
