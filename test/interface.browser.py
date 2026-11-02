@@ -3912,14 +3912,23 @@ def playback_case(browser, browser_name, url, width, language, theme, output, kn
         assert_chain(page, k, "worker", "leak", 1, language, "the step stays after the person button")
         # Another card stops it as well, and shows that card at step 0 (setCard resets the step: a fresh start with the new
         # card, from the attacker's starting point, so the user can run through it with Next step or play again). The live
-        # region is emptied without a word.
+        # region reads the starting point and the summary once.
         press(page, "#step-play")
         page.locator("#card-mail").click()
         moved = assert_chain(page, k, "worker", "mail", 0, language, "a card change stops playback")
         check(moved["steps"]["play"]["pressed"] == "false", ("not playing", moved["steps"]["play"]))
         page.clock.run_for(5000)
         assert_chain(page, k, "worker", "mail", 0, language, "nothing moves after the card change")
-        check([write for write in page.evaluate("() => window.__qaStatus") if write] == writes, "only the one status write")
+        card_notice = {
+            "ja": "段0：攻撃者が最初に手にしたのは、古いメールのアカウント。"
+                  "このカードでは、最後の段までに、最初に乗っ取られた古いメールを含めて、"
+                  "9つのうち7つのアカウントが倒れます（うち、★を付けた重要なアカウントは1つ）。",
+            "en": "Step 0: the attacker starts with the old email account. "
+                  "With this card, counting the old email taken over first, "
+                  "7 of the 9 accounts fall by the last step (1 of them important ★).",
+        }[language]
+        spoken = [write for write in page.evaluate("() => window.__qaStatus") if write]
+        check(spoken == writes + [card_notice], ("one playback result and one new-card summary", spoken))
         page.clock.resume()
         page.screenshot(path=str(output / (name + ".png")), full_page=False)
         assert_clean(errors, violations)
@@ -4180,6 +4189,47 @@ def test_help_backdrop(page):
     page.keyboard.press("Escape")
 
 
+def test_action_announcements(page):
+    page.locator("#person-worker").click()
+    page.locator("#tab-chain").click()
+    page.locator("#card-leak").click()
+    press(page, "#step-first")
+    page.evaluate("""() => {
+      window.__actionNotices = [];
+      window.__actionObserver = new MutationObserver(records => {
+        const regions = new Set(records.map(r => (r.target.nodeType === 1 ? r.target : r.target.parentElement)
+          .closest('[role="status"], [aria-live="polite"], [aria-live="assertive"]')).filter(Boolean));
+        for (const el of regions) if (el.textContent.trim() && el.getClientRects().length)
+          window.__actionNotices.push({id: el.id, text: el.textContent});
+      });
+      window.__actionObserver.observe(document.body, {subtree: true, childList: true, characterData: true});
+    }""")
+    try:
+        for selector, expected in (("#step-next", 1), ("#card-simswap", 1), ("#card-simswap", 0)):
+            page.evaluate("() => { window.__actionNotices = []; }")
+            page.locator(selector).click()
+            settle_layout(page)
+            notices = page.evaluate("() => window.__actionNotices")
+            check(len(notices) == expected, ("one announcement for an action, none for an unchanged card", selector, notices))
+    finally:
+        page.evaluate("() => window.__actionObserver.disconnect()")
+
+
+def test_forced_color_selection(page, theme):
+    page.emulate_media(forced_colors="active")
+    try:
+        page.locator("#person-worker").click()
+        page.locator("#tab-chain").click()
+        page.locator("#card-simswap").click()
+        for selected, other in (("#person-worker", "#person-parent"), ("#card-simswap", "#card-leak")):
+            styles = page.locator(selected + ", " + other).evaluate_all("""els => els.map(el => {
+              const s = getComputedStyle(el); return [s.borderTopWidth, s.borderTopStyle, s.borderBottomWidth, s.borderBottomStyle];
+            })""")
+            check(styles[0] != styles[1], ("selection survives forced colors as a border shape", selected, styles))
+    finally:
+        page.emulate_media(forced_colors="none", color_scheme=theme)
+
+
 def matrix_case(browser, browser_name, url, width, language, theme, output, counts, stage, known):
     name = f"{browser_name}-{width}-{language}-{theme}"
     context = new_context(browser, browser_name, width, language, theme)
@@ -4232,7 +4282,9 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             test_ranking_notice(page)
             test_help_backdrop(page)
             test_mark_contrast(page)
-            test_print_word_parts(page, language)
+            test_action_announcements(page)
+            test_forced_color_selection(page, theme)
+            test_print_word_parts(page, language, require_light=True)
         saved = test_preferences_interaction(page, language, theme, counts)
         assert_clean(errors, violations)
         return {"case": name, "status": "passed", "layouts": layouts, "saved": saved}

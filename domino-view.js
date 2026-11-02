@@ -188,6 +188,11 @@
     return step >= maxRank(result)
       ? fill(dictionary(M, lang).stepStatusWithSummary, { status, summary: stepSummary(p, result, M, lang, cardId) }) : status;
   }
+  // A new card announces its starting point and its full result once, through the existing status region.
+  function cardStatus(p, result, cardId, M, lang) {
+    return fill(dictionary(M, lang).stepStatusWithSummary, { status: stepLine(p, result, cardId, 0, M, lang),
+      summary: stepSummary(p, result, M, lang, cardId) });
+  }
   function mapCaption(p, cardId, step, M, lang) {
     const nm = names(p, M, lang);
     return fill(dictionary(M, lang).mapCaption, { person: nm.person, card: nm.card[cardId], step });
@@ -1780,7 +1785,7 @@
   }
 
   return Object.freeze({
-    fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, mapCaption, mapTableCaption,
+    fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, cardStatus, mapCaption, mapTableCaption,
     mapRows, needText,
     detail, fourCards, lockCell, lockTable, lockEntrances, lockChanges, candidates, effect, effectText, rankingNote, sameEntrance, sameRows, afterMap,
     recentCache, moveTitle, moveChoice, moveOptions, attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle,

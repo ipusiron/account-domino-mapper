@@ -403,7 +403,8 @@ th { background: var(--bg); }
   body { min-height: 0; background-image: none; }
   /* Once the page is ready, the printed sheets alone are printed. Before that, or without JavaScript, the sheets are empty
      and the text of the page itself is printed, black on white whatever the theme */
-  :root:not([data-app-ready="true"]) {
+  :root, :root[data-theme="dark"] {
+    color-scheme: light;
     --ink: #000; --muted: #000; --accent: #000; --fall: #000; --lock: #000; --focus: #000; --on-accent: #000;
     --bg: #fff; --paper: #fff; --line: #000; --grid: #fff; --shadow: #fff;
   }
@@ -878,4 +879,11 @@ caption .table-ref { margin-right: .35em; }
 
 @media (max-width: 719px) {
   .lesson-backdoors th, .lesson-backdoors td { padding-inline: .1rem; }
+}
+
+@media screen and (forced-colors: active) {
+  button[aria-pressed="true"]:not([role="tab"]), .map-table tr.selected .name-button, .lock-table tr.selected .name-button {
+    forced-color-adjust: none; color: HighlightText; background: Highlight; border: 3px double HighlightText;
+  }
+  button[aria-pressed="true"] .tag-chosen { color: Highlight; background: HighlightText; }
 }

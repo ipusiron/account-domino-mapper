@@ -1291,7 +1291,7 @@
     restoreFocus(focusKey);
   }
 
-  // ===== Step status (a live region; written only when the step buttons are pressed and once at the end of playback) =====
+  // ===== Step status (one live notice per step action, new card, or completed playback) =====
   function writeStepStatus(text) {
     const p = persona(state.persona);
     $('step-status').textContent = text
@@ -1377,11 +1377,13 @@
   }
   function selectCard(card) {
     stopPlaying();
-    if (card !== state.card) {
-      setCard(card);
-      clearStepStatus();
-    }
+    const changed = card !== state.card;
+    if (changed) setCard(card);
     render();
+    if (changed) {
+      const p = persona(state.persona), result = vectorsFor(state.persona).cards[state.card];
+      writeStepStatus(readable(View.cardStatus(p, result, state.card, Messages, state.language)));
+    }
   }
   function selectPersona(id) {
     if (!PERSONAS.includes(id)) return;
@@ -1772,9 +1774,14 @@
   const narrowQuery = matchMedia('(max-width: 719px)');
   narrowQuery.addEventListener('change', () => {
     const active = document.activeElement;
-    const lost = active && active !== document.body ? !active.getClientRects().length : !!vanished;
+    const hidden = active && active !== document.body ? active : vanished;
+    const lost = hidden && !hidden.getClientRects().length;
     vanished = null;
     if (!lost) return;
+    if (!narrowQuery.matches && $('after-phase-inline').contains(hidden)) {
+      $('phase-' + state.mapPhase).focus({ preventScroll: true });
+      return;
+    }
     // The name of the selected account in a map table that is shown: tab 1, or the map after a change in tab 3
     const name = [['chain-acct:', state.account], ['after-acct:', state.mapAccount]]
       .map(([prefix, id]) => document.querySelector('[data-key="' + prefix + id + '"]'))

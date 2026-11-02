@@ -1652,3 +1652,17 @@ test('The first-ranked summary names the first change and its saved accounts or 
     assert.equal(V.candidateFirstSummary(person, vectors, null, 'all', M, 'ja'), '');
   }
 });
+
+
+test('A new attack card announces its starting point and its summary once, including cards with no later step', () => {
+  for (const person of D.personas) for (const language of ['ja', 'en']) {
+    const vectors = C.personaVectors(person);
+    for (const card of person.cards) {
+      const result = vectors.cards[card.id];
+      const summary = V.stepSummary(person, result, M, language, card.id);
+      const status = V.cardStatus(person, result, card.id, M, language);
+      assert.ok(status.startsWith(V.stepLine(person, result, card.id, 0, M, language)));
+      assert.equal(status.split(summary).length - 1, 1);
+    }
+  }
+});

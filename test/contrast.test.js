@@ -177,3 +177,20 @@ test('H: at most three accent colors (--accent, --fall, --lock), set apart by sh
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic|<link[^>]+rel="(?:preconnect|preload)"/);
 });
+
+
+test('Forced colors distinguish selected controls with system colors and printing always chooses a light palette', () => {
+  const forced = RULES.filter((rule) => rule.at.some((at) => at.includes('(forced-colors: active)')));
+  const selected = forced.find((rule) => rule.selector.includes('button[aria-pressed="true"]:not([role="tab"])'));
+  assert.ok(selected && selected.selector.includes('.map-table tr.selected .name-button'));
+  const declarations = Object.fromEntries(selected.declarations);
+  assert.equal(declarations.color, 'HighlightText');
+  assert.equal(declarations.background, 'Highlight');
+  assert.equal(declarations.border, '3px double HighlightText');
+  assert.equal(declarations['forced-color-adjust'], 'none');
+  const palette = RULES.find((rule) => inPrint(rule) && rule.selector === ':root, :root[data-theme="dark"]');
+  const print = Object.fromEntries(palette.declarations);
+  assert.equal(print['color-scheme'], 'light');
+  assert.equal(print['--ink'], '#000');
+  assert.equal(print['--paper'], '#fff');
+});
