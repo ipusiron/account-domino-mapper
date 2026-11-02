@@ -48,10 +48,11 @@
       <div class="top-band">
         <div class="top-intro">
           <p class="intro intro-short" data-i18n="introShort">1つの攻撃が、ログインや復旧を通じて、ほかのアカウントへ広がる様子を見る教材です。</p>
-          <details id="intro-more" class="intro-more" open>
+          <details id="intro-more" class="intro-more">
             <summary data-i18n="introMore">くわしい説明を読む</summary>
             <p class="intro" data-i18n="intro">架空の3人のアカウントで、1つの攻撃（パスワードの漏えい・SIMスワップなど）が、ログインや復旧（パスワードの再設定など）を通じて、ほかのアカウントへ広がる様子を見る教材です。</p>
             <p class="intro" data-i18n="intro2">入口（ログインや復旧の方法）を1つ変えたとき、広がり方がどう変わるかも比べられます。アカウントの強さは、ログインと復旧のうち、いちばん弱い入口で決まります。よそのサービスからの漏えいは防げなくても、連鎖は自分で断てます。タブは左から順に見ます（攻撃の広がり→本人の閉め出し→入口を1つ変えた前後）。規則表のタブには、数え方の決まりと印刷用の用紙があります。</p>
+            <p class="intro" data-i18n="chainIntro">攻撃カードは、攻撃者が最初に手にするもの（漏れたパスワード、乗っ取った電話番号など）です。カードを1枚選ぶと、攻撃者がそれを使って入れるアカウントを、広がる順に段ごとに示します。攻撃者が入れることを「倒れる」と呼びます。段0は攻撃者が最初に手にしたもの、段1はそれだけで入れるアカウント、段2は段1までに倒れたアカウントも使って入れるアカウントです（段3からも同じです）。</p>
           </details>
         </div>
         <section id="person-band" class="person-band" aria-labelledby="person-heading">
@@ -80,7 +81,7 @@
       </nav>
       <section id="panel-chain" class="panel" role="tabpanel" aria-labelledby="tab-chain" tabindex="0">
         <h2 class="visually-hidden" data-i18n="tabChain">連鎖を追う</h2>
-        <p class="panel-intro" data-i18n="chainIntro">攻撃カードは、攻撃者が最初に手にするもの（漏れたパスワード、乗っ取った電話番号など）です。カードを1枚選ぶと、攻撃者がそれを使って入れるアカウントを、広がる順に段ごとに示します。攻撃者が入れることを「倒れる」と呼びます。段0は攻撃者が最初に手にしたもの、段1はそれだけで入れるアカウント、段2は段1までに倒れたアカウントも使って入れるアカウントです（段3からも同じです）。</p>
+        <p class="panel-intro" data-i18n="chainLead">攻撃カードを選ぶと、攻撃者が入れるアカウントを段ごとに示します。攻撃者が入れることを「倒れる」と呼びます。段0は攻撃者が最初に手にしたものです。</p>
         <div id="highlights-block" class="highlights-block">
           <div class="highlights-head">
             <h3 id="highlights-heading" data-i18n="highlightsHeading">見どころ</h3>

@@ -33,7 +33,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "account-domino-mapper."
 STAGES = ("1a", "1b", "1c", "1d")
-WIDTHS = (320, 390, 720, 808, 1280)
+WIDTHS = (320, 390, 719, 720, 808, 1280, 1440)
 HTTP_WIDTHS = (320, 1280)
 TABS = ("chain", "lockout", "compare", "rules")
 PEOPLE = ("worker", "parent", "student")
@@ -4074,6 +4074,56 @@ def settle_layout(page):
     page.evaluate("() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))")
 
 
+def test_initial_map_visibility(page, width, layouts):
+    """Fresh desktop pages show both first boxes in full without scrolling."""
+    check(page.evaluate("() => scrollY") == 0, "initial view starts at the top")
+    check(not page.locator("#intro-more").evaluate("el => el.open"), "full introduction starts closed")
+    check(page.locator(".intro-short").is_visible(), "short explanation is always visible")
+    if width not in (1280, 1440):
+        return
+    metrics = page.evaluate("""() => {
+      const box = sel => { const r = document.querySelector(sel).getBoundingClientRect();
+        return {top:r.top, bottom:r.bottom, left:r.left, right:r.right, width:r.width, height:r.height}; };
+      return {height:innerHeight, width:innerWidth,
+        boxes:['#chain-figure .map-boxes .map-item', '#chain-figure [data-node="points"]'].map(box),
+        legend:[...document.querySelectorAll('#chain-key li')].map(e => e.getBoundingClientRect().top),
+        cards:box('.card-buttons'), controls:box('.step-controls'),
+        intro:box('.intro-short'), introLine:parseFloat(getComputedStyle(document.querySelector('.intro-short')).lineHeight),
+        order:['.top-intro', '#person-band', '.tabs', '#highlights-block', '.cards-row', '#step-line', '#chain-figure'].map(box)};
+    }""")
+    check(metrics["height"] == 900, "desktop acceptance uses a 900px-high viewport")
+    for box in metrics["boxes"]:
+        check(box["width"] > 0 and box["height"] > 0 and 0 <= box["top"] < box["bottom"] <= 900
+              and 0 <= box["left"] < box["right"] <= width, ("first map box fully visible", box))
+    check(max(metrics["legend"]) - min(metrics["legend"]) < 2, ("legend fits on one row", metrics["legend"]))
+    cards, controls = metrics["cards"], metrics["controls"]
+    check(cards["right"] <= controls["left"] and max(cards["top"], controls["top"]) < min(cards["bottom"], controls["bottom"]),
+          ("attack cards and step controls share a row", cards, controls))
+    check(metrics["intro"]["height"] <= metrics["introLine"] * 2 + 1, "short introduction is at most two lines")
+    check(all(a["bottom"] <= b["top"] + 1 for a, b in zip(metrics["order"], metrics["order"][1:])), "reading order is preserved")
+    layouts.append({"state": "first-map-boxes", **metrics})
+
+
+def test_intro_disclosure(page, width):
+    """Keyboard opening and closing, including resizing, keeps the reader's choice and focus."""
+    summary = page.locator("#intro-more > summary")
+    summary.focus()
+    summary.press("Enter")
+    check(page.locator("#intro-more").evaluate("el => el.open"), "keyboard opens the full explanation")
+    check(page.locator('#intro-more [data-i18n="chainIntro"]').is_visible(), "step definitions remain available")
+    page.set_viewport_size({"width": 1280 if width < 720 else 390, "height": 900})
+    settle_layout(page)
+    check(page.locator("#intro-more").evaluate("el => el.open"), "resizing keeps the explanation open")
+    check(summary.evaluate("el => el === document.activeElement"), "summary focus survives resizing")
+    summary.press("Enter")
+    check(not page.locator("#intro-more").evaluate("el => el.open"), "keyboard closes the explanation")
+    page.set_viewport_size({"width": width, "height": 900})
+    settle_layout(page)
+    check(not page.locator("#intro-more").evaluate("el => el.open"), "resizing keeps the explanation closed")
+    check(summary.evaluate("el => el === document.activeElement"), "closed summary remains focused")
+    page.evaluate("() => scrollTo(0, 0)")
+
+
 def test_comparison_bands(page, width, output, name):
     page.locator("#person-worker").click()
     page.locator("#tab-compare").click()
@@ -4252,7 +4302,9 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
         assert_ready_state(page, language)
         assert_heading(page, language)
         assert_layout(page, width, "initial", layouts)
+        test_initial_map_visibility(page, width, layouts)
         page.screenshot(path=str(output / (name + "-initial.png")), full_page=False)
+        test_intro_disclosure(page, width)
         test_person_band(page, width, layouts, language, counts)
         test_tabs(page, width, layouts, language)
         if stage >= "1b" and width <= 390:

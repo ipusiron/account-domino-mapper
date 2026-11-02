@@ -1632,11 +1632,6 @@
     const [text] = t('toTabs').split('▲');
     for (const button of panelEnds) button.replaceChildren(text, E('span', { 'aria-hidden': 'true' }, '▲'));
   }
-  // The introduction: on narrow screens a short sentence, the full one behind "Read the full introduction" (closed when the page
-  // opens there); on wide screens the full introduction is always open
-  const wideQuery = matchMedia('(min-width: 720px)');
-  if (!wideQuery.matches) $('intro-more').open = false;
-  wideQuery.addEventListener('change', () => { if (wideQuery.matches) $('intro-more').open = true; });
 
   TABS.forEach((name, index) => {
     $('tab-' + name).addEventListener('click', () => selectTab(name));
@@ -1763,7 +1758,7 @@
     if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
 
-  // Crossing 720px hides the diagram (wide screens only) and shows or hides the summary of the introduction. When the focus
+  // Crossing 720px hides the diagram (wide screens only). When the focus
   // was on an element that is no longer shown, it moves to the name of the selected account in the map table. The browser
   // may take the focus away from the hidden element before or after the media query reports the change, so an element
   // that lost the focus while it was no longer shown is remembered.

@@ -477,3 +477,19 @@ test('Help dismissal requires a complete backdrop gesture and restores focus to 
   assert.match(app, /addEventListener\('pointercancel',[^\n]+helpBackdropDown = false/);
   assert.match(app, /addEventListener\('close',[\s\S]*?\$\('help'\)\.focus\(\{ preventScroll: true \}\)/);
 });
+
+test('The short introduction precedes a closed full explanation, with the step definitions still available', () => {
+  assert.match(html, /<details id="intro-more" class="intro-more">/);
+  const start = html.indexOf('<details id="intro-more"');
+  const full = html.slice(start, html.indexOf('</details>', start));
+  for (const key of ['intro', 'intro2', 'chainIntro']) assert.ok(full.includes('data-i18n="' + key + '"'), key);
+  assert.ok(html.indexOf('data-i18n="introShort"') < start);
+  assert.match(html, /class="panel-intro" data-i18n="chainLead"/);
+  const messages = require('../messages.js');
+  for (const lang of ['ja', 'en']) {
+    const lead = messages[lang].chainLead;
+    assert.ok(lead.length < messages[lang].chainIntro.length);
+    assert.ok(lead.includes(lang === 'ja' ? '段0' : 'Step 0'));
+    assert.ok(lead.includes(lang === 'ja' ? '倒れる' : 'fall'));
+  }
+});
