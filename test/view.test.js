@@ -247,7 +247,7 @@ test('F: why the accounts are saved: one of three sentences when a change saves 
   // The examples of the proposal: W2 (two cards with the same accounts saved), P3, and the worker's breach suggestion
   const why = (id, moveId, mode, lang) => V.whyLine(persona(id), pv(id), pv(id).moves.find((m) => m.id === moveId), mode, M, lang);
   assert.equal(why('worker', 'replace:mailMain.recMail:mailOld>paper:mailMain', 'all', 'ja'), '変更前は、メールの乗っ取りでもソーシャルエンジニアリングでも、'
-    + 'メインのメールが復旧の「予備のメールで再設定」から倒れ、そこからポイントアプリなど5つも倒れていました。変更後は、メインのメールを含むこの6つが倒れません。');
+    + 'メインのメールが復旧の「古いメールで再設定」から倒れ、そこからポイントアプリなど5つも倒れていました。変更後は、メインのメールを含むこの6つが倒れません。');
   assert.equal(why('parent', 'replace:bank.recSms:phone>idcheck', 'simswap', 'ja'),
     '変更前は、SIMスワップのカードで、銀行のネットバンキングが復旧の「SMSで再設定」から倒れていました。変更後は、このカードでは倒れません。');
   assert.equal(why('worker', 'replace:points.login:pw:red>pw:own-points', 'leak', 'ja'), '変更前は、漏れたパスワードAをほかのアカウントでも使っていたため、'
@@ -1579,8 +1579,8 @@ test('F: the map after a change: the tags of its boxes, the rows of its table be
   const p = persona('worker'), w2 = V.afterMap(p, 'replace:mailMain.recMail:mailOld>paper:mailMain', 'mail');
   assert.deepEqual(V.afterDetail(p, pv('worker'), w2, 'mail', 'mailMain', M, 'ja'), {
     heading: 'メインのメールの倒れ方（メールの乗っ取り）', mark: 'saved', rows: [
-      { label: '変えた入口', text: '復旧の「予備のメールで再設定」：古いメール → 回復コード（紙）' },
-      { label: '変更前', text: '段1で倒れる。攻撃者が使った入口：復旧の「予備のメールで再設定」' },
+      { label: '変えた入口', text: '復旧の「古いメールで再設定」：古いメール → 回復コード（紙）' },
+      { label: '変更前', text: '段1で倒れる。攻撃者が使った入口：復旧の「古いメールで再設定」' },
       { label: '変更後', text: '倒れない' }] });
   assert.deepEqual(V.afterDetail(p, pv('worker'), w2, 'mail', 'mailOld', M, 'ja').rows.map((r) => r.text),
     ['最初に乗っ取られる（段0）', '最初に乗っ取られる（段0）']);
@@ -1629,4 +1629,40 @@ test('F: a box that a change adds names its account under its name, in both lang
   const L = V.layout(w, C.applyMove(w, C.enumerateMoves(w).find((m) => m.id === 'replace:points.login:pw:red>pw:own-points')), M, 'ja');
   const box = Object.values(L.box).find((b) => b.added);
   assert.deepEqual([box.lines.map((line) => line.value), box.sub.map((line) => line.value)], [['パスワードD'], ['ポイントアプリだけ']]);
+});
+
+
+test('The first-ranked summary names the first change and its saved accounts or removed lockouts in both languages', () => {
+  for (const person of D.personas) {
+    const vectors = C.personaVectors(person);
+    for (const mode of ['all', 'leak', 'simswap', 'mail', 'desk', 'lockout']) for (const language of ['ja', 'en']) {
+      const first = V.candidates(person, vectors, mode).ids[0];
+      const summary = V.candidateFirstSummary(person, vectors, first, mode, M, language);
+      if (!first) { assert.equal(summary, ''); continue; }
+      const change = vectors.moves.find((move) => move.id === first);
+      const effect = V.effect(person, vectors, first, mode);
+      assert.ok(summary.startsWith(language === 'ja' ? '1位：' : 'Rank 1: '));
+      assert.ok(summary.includes(V.moveTitle(person, change, M, language)));
+      const count = mode === 'lockout' ? effect.unlocked : effect.saved;
+      const meaning = language === 'ja' ? (mode === 'lockout' ? '閉め出しがなくなる' + count : '守れる' + count)
+        : (mode === 'lockout' ? 'Lockouts removed: ' + count : 'Saves ' + count);
+      assert.ok(summary.includes(meaning), summary);
+      if (mode === 'all') assert.ok(summary.includes(language === 'ja' ? '4枚の合計' : 'sum over 4 cards'));
+    }
+    assert.equal(V.candidateFirstSummary(person, vectors, null, 'all', M, 'ja'), '');
+  }
+});
+
+
+test('A new attack card announces its starting point and its summary once, including cards with no later step', () => {
+  for (const person of D.personas) for (const language of ['ja', 'en']) {
+    const vectors = C.personaVectors(person);
+    for (const card of person.cards) {
+      const result = vectors.cards[card.id];
+      const summary = V.stepSummary(person, result, M, language, card.id);
+      const status = V.cardStatus(person, result, card.id, M, language);
+      assert.ok(status.startsWith(V.stepLine(person, result, card.id, 0, M, language)));
+      assert.equal(status.split(summary).length - 1, 1);
+    }
+  }
 });

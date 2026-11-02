@@ -14,7 +14,7 @@ const sampleRaw = fs.readFileSync(path.join(__dirname, 'sample.json'));
 const vectorsRaw = fs.readFileSync(path.join(__dirname, 'vectors.json'));
 const sample = JSON.parse(sampleRaw.toString('utf8'));
 const vectors = JSON.parse(vectorsRaw.toString('utf8'));
-const VECTORS_SHA256 = 'cdba12e88e7183704728032deb028f97497360ebd57d195e917161e5d0f5310d';
+const VECTORS_SHA256 = '8ed1f0564795ae6cce781ca724c271dff629fc595fedb25308682be28ecc071a';
 const PEOPLE = ['worker', 'parent', 'student'];
 const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -251,4 +251,18 @@ test('E: two-at-once lockouts (usual, after a change, one to two at once, and co
   assert.equal(unlockedPair, 7);
   assert.equal(both, 4);
   assert.deepEqual(single, { add: 0, replace: 0, remove: 10 });
+});
+
+
+test('Recovery entrance names identify the required email in both languages without changing the calculations', () => {
+  for (const [personId, emailId, labels] of [
+    ['worker', 'mailOld', { ja: '古いメールで再設定', en: 'Reset via the old email' }],
+    ['student', 'mailUni', { ja: '大学のメールで再設定', en: 'Reset via the university email' }]
+  ]) {
+    const person = personOf(personId);
+    const entrance = person.services.flatMap((service) => service.methods).find((method) =>
+      method.role === 'recovery' && method.requires.length === 1 && method.requires[0] === emailId);
+    assert.deepEqual(entrance.label, labels);
+    assert.deepEqual(C.personaVectors(person), vectors.personas[personId]);
+  }
 });

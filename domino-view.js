@@ -188,6 +188,11 @@
     return step >= maxRank(result)
       ? fill(dictionary(M, lang).stepStatusWithSummary, { status, summary: stepSummary(p, result, M, lang, cardId) }) : status;
   }
+  // A new card announces its starting point and its full result once, through the existing status region.
+  function cardStatus(p, result, cardId, M, lang) {
+    return fill(dictionary(M, lang).stepStatusWithSummary, { status: stepLine(p, result, cardId, 0, M, lang),
+      summary: stepSummary(p, result, M, lang, cardId) });
+  }
   function mapCaption(p, cardId, step, M, lang) {
     const nm = names(p, M, lang);
     return fill(dictionary(M, lang).mapCaption, { person: nm.person, card: nm.card[cardId], step });
@@ -479,6 +484,13 @@
     return { label: D[mode === 'all' ? 'faceSavedAll' : 'faceSaved'], n: e.saved, imp: e.imp ? fill(D.faceImp, { imp: e.imp }) : null, extras };
   }
   // 並べ方（モードで替える）：上位に出さない変更の箇条、比べる順の箇条（番号付き）、そのあとの注記
+  function candidateFirstSummary(p, pv, moveId, mode, M, lang) {
+    if (!moveId) return '';
+    const D = dictionary(M, lang), e = effect(p, pv, moveId, mode);
+    const key = mode === 'lockout' ? 'candidateFirstUnlocked' : mode === 'all' ? 'candidateFirstSavedAll' : 'candidateFirstSaved';
+    return fill(D.candidateFirst, { title: moveTitle(p, pv.moves.find((move) => move.id === moveId), M, lang),
+      effect: fill(D[key], { n: mode === 'lockout' ? e.unlocked : e.saved }) });
+  }
   function rankingNote(mode, M, lang) {
     const D = dictionary(M, lang);
     const lockout = mode === 'lockout';
@@ -1773,14 +1785,14 @@
   }
 
   return Object.freeze({
-    fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, mapCaption, mapTableCaption,
+    fill, names, counts, lastStep, maxRank, givesShort, cardLine, cardNote, stepSummary, stepLine, stepStatus, cardStatus, mapCaption, mapTableCaption,
     mapRows, needText,
     detail, fourCards, lockCell, lockTable, lockEntrances, lockChanges, candidates, effect, effectText, rankingNote, sameEntrance, sameRows, afterMap,
     recentCache, moveTitle, moveChoice, moveOptions, attackLine, lossLines, pairLines, moveNotes, sentences, highlights: HIGHLIGHTS, highlightTitle,
     highlightLook, layout, textWidth, wrapText, wrapTags, mailDepths, symbolTable, printTable,
     lessons: LESSONS, lessonRefs: LESSON_REFS, relatedTools: RELATED_TOOLS, lessonScenes: LESSON_SCENES, lesson8Rows: LESSON8_ROWS, lessonTable,
     // タブ3：失うメール・候補のボタンの欄・候補の上の1行・要約の攻撃の文・なぜ守れたか
-    lostMails, effectFace, storyMoveNote, attackParts, whyLine,
+    lostMails, effectFace, candidateFirstSummary, storyMoveNote, attackParts, whyLine,
     // タブ2・タブ4・ヘルプ・印刷
     lockDetail, markTable, lessonTableNumbers,
     // 変更後の地図：地図のカードの選び方・カードについての文・箱の印・題・表の行・選んだアカウントの前後・表の凡例

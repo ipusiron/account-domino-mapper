@@ -171,7 +171,8 @@
     const flush = () => {
       const marked = ([...piece].slice(1).some((ch) => joined.includes(ch)) && !/\s/.test(piece))
         || wholes.some((label) => piece.includes(label));
-      out.push(marked ? E('span', { class: 'joined' }, piece) : piece);
+      out.push(...(marked ? [E('span', { class: 'joined' }, piece)] : piece.split(/(ソーシャル|エンジニアリング)/).filter(Boolean)
+        .map((part) => /^(ソーシャル|エンジニアリング)$/.test(part) ? E('span', { class: 'word-part' }, part) : part)));
       piece = '';
     };
     chars.forEach((ch, i) => {
@@ -180,7 +181,7 @@
       if (next === undefined || NO_LINE_START.includes(next) || joined.includes(next) || inside.has(i)) return;
       const pair = scriptOf(ch) + '>' + scriptOf(next);
       if ((PARTICLES.includes(ch) && scriptOf(next) !== 'hiragana') || pair === 'katakana>kanji' || pair === 'kanji>katakana'
-        || (next === '（' && ch !== ' ') || ch === '）' || '：＋＝／→・、'.includes(ch) || split.has(i)) {
+        || ((next === '（' || next === '「') && ch !== ' ') || ch === '）' || '：＋＝／→・、。'.includes(ch) || split.has(i)) {
         flush();
         out.push(E('wbr'));
       }
@@ -720,6 +721,9 @@
     }
     $('candidates').replaceChildren(...children);
     $('candidates').hidden = !found.ids.length;
+    const firstSummary = View.candidateFirstSummary(p, pv, found.ids[0], state.mode, Messages, state.language);
+    setWords($('candidate-first-summary'), firstSummary);
+    $('candidate-first-summary').hidden = !firstSummary;
     // The reason without candidates is a status message (#candidates-none sits in the live region #candidates-status). It is
     // written only when it changes, so that a redraw that changes nothing (the theme, for example) does not read it again.
     const reason = found.reason ? t(found.reason, { person: t(PERSON_KEYS[state.persona]), name: t(NAME_KEYS[state.persona]) }) : '';
@@ -872,7 +876,9 @@
     const X = before ? p : after.person, result = before ? pv.cards[card] : after;
     const step = View.maxRank(result);
     for (const id of CARDS) $('after-card-' + id).setAttribute('aria-pressed', String(id === card));
-    for (const id of PHASES) $('phase-' + id).setAttribute('aria-pressed', String(id === phase));
+    for (const id of PHASES) for (const prefix of ['phase-', 'phase-inline-']) {
+      $(prefix + id).setAttribute('aria-pressed', String(id === phase));
+    }
     renderAfterNotice(p, View.afterCardNotice(p, pv, state.move, card, Messages, state.language));
     renderAfterKey();
     const L = afterLayoutFor(state.persona, state.move, state.language, after.person);
@@ -1285,7 +1291,7 @@
     restoreFocus(focusKey);
   }
 
-  // ===== Step status (a live region; written only when the step buttons are pressed and once at the end of playback) =====
+  // ===== Step status (one live notice per step action, new card, or completed playback) =====
   function writeStepStatus(text) {
     const p = persona(state.persona);
     $('step-status').textContent = text
@@ -1371,11 +1377,13 @@
   }
   function selectCard(card) {
     stopPlaying();
-    if (card !== state.card) {
-      setCard(card);
-      clearStepStatus();
-    }
+    const changed = card !== state.card;
+    if (changed) setCard(card);
     render();
+    if (changed) {
+      const p = persona(state.persona), result = vectorsFor(state.persona).cards[state.card];
+      writeStepStatus(readable(View.cardStatus(p, result, state.card, Messages, state.language)));
+    }
   }
   function selectPersona(id) {
     if (!PERSONAS.includes(id)) return;
@@ -1513,14 +1521,14 @@
     return tag ? tag.closest('tr') : null;
   }
   function selectPhase(phase, pressed) {
-    const needsAfter = narrowQuery.matches && !nameInView();
+    const needsAfter = narrowQuery.matches && !pressed.closest('#after-phase-inline') && !nameInView();
     keepPlace((narrowQuery.matches && nameInView()) || pressed, () => { state.mapPhase = phase; });
     if (!needsAfter) return;
     const row = firstChangedRow();
     const bar = $('after-phase-bar').getBoundingClientRect();
     if (!row) return;
     const target = row.getBoundingClientRect();
-    const floor = Math.min(innerHeight, bar.top);
+    const floor = $('after-phase-bar').classList.contains('covered-by-inline') ? innerHeight : Math.min(innerHeight, bar.top);
     // The row is above the top: pull it just below the top; below the floor (above the sticky bar): bring its top just under the viewport top
     if (target.top < 0) scrollBy(0, target.top - 8);
     else if (target.bottom > floor) scrollBy(0, Math.min(target.bottom - floor + 8, target.top - 8));
@@ -1538,7 +1546,8 @@
     const button = keepPlace(document.querySelector('[data-key="after-acct:' + id + '"]'), () => { state.mapAccount = id; });
     const detail = $('after-map-table').querySelector('.detail-row');
     if (!button || !detail) return;
-    const floor = narrowQuery.matches ? Math.min(innerHeight, $('after-phase-bar').getBoundingClientRect().top) : innerHeight;
+    const floor = narrowQuery.matches && !$('after-phase-bar').classList.contains('covered-by-inline')
+      ? Math.min(innerHeight, $('after-phase-bar').getBoundingClientRect().top) : innerHeight;
     const bottom = detail.getBoundingClientRect().bottom;
     if (bottom > floor) scrollBy(0, Math.max(0, Math.min(bottom - floor + 8, button.getBoundingClientRect().top - 8)));
   }
@@ -1643,7 +1652,26 @@
   for (const id of PERSONAS) $('person-' + id).addEventListener('click', () => selectPersona(id));
   for (const card of CARDS) $('card-' + card).addEventListener('click', () => selectCard(card));
   for (const mode of MODES) $('mode-' + mode).addEventListener('click', () => selectMode(mode));
-  for (const phase of PHASES) $('phase-' + phase).addEventListener('click', (event) => selectPhase(phase, event.currentTarget));
+  for (const phase of PHASES) for (const prefix of ['phase-', 'phase-inline-']) {
+    $(prefix + phase).addEventListener('click', (event) => selectPhase(phase, event.currentTarget));
+  }
+  // Keep the table in place when the inline controls enter the screen: the sticky bar keeps its space, but cannot take focus.
+  function coverPhaseBar(covered) {
+    const bar = $('after-phase-bar');
+    if (covered && bar.contains(document.activeElement)) {
+      $('phase-inline-' + state.mapPhase).focus({ preventScroll: true });
+    }
+    bar.classList.toggle('covered-by-inline', covered);
+  }
+  if (typeof IntersectionObserver === 'function') {
+    const phaseObserver = new IntersectionObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      coverPhaseBar(entry.isIntersecting);
+    });
+    phaseObserver.observe($('after-phase-inline'));
+  } else {
+    coverPhaseBar(true);
+  }
   for (const card of CARDS) $('after-card-' + card).addEventListener('click', (event) => selectMapCard(card, event.currentTarget));
   $('choose-move').addEventListener('change', (event) => {
     if (event.target.value) selectMove(event.target.value, 'reveal', event.target); else event.target.value = state.move || '';
@@ -1698,13 +1726,23 @@
     helpLanguage = state.language;
   });
   $('close-help').addEventListener('click', () => $('help-dialog').close());
-  // A press outside the dialog (on the dark backdrop) closes it as well. The backdrop belongs to the dialog element, so the
-  // place pressed tells it apart from a press inside
-  $('help-dialog').addEventListener('click', (event) => {
-    if (event.target !== $('help-dialog')) return;
+  // Both ends of a pointer gesture must be on the backdrop; a drag from the help text keeps it open.
+  let helpBackdropDown = false;
+  function isHelpBackdrop(event) {
+    if (event.target !== $('help-dialog')) return false;
     const box = $('help-dialog').getBoundingClientRect();
-    const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
-    if (!inside) $('help-dialog').close();
+    return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom;
+  }
+  $('help-dialog').addEventListener('pointerdown', (event) => { helpBackdropDown = isHelpBackdrop(event); });
+  $('help-dialog').addEventListener('pointercancel', () => { helpBackdropDown = false; });
+  $('help-dialog').addEventListener('click', (event) => {
+    const close = helpBackdropDown && isHelpBackdrop(event);
+    helpBackdropDown = false;
+    if (close) $('help-dialog').close();
+  });
+  $('help-dialog').addEventListener('close', () => {
+    helpBackdropDown = false;
+    $('help').focus({ preventScroll: true });
   });
   for (const button of document.querySelectorAll('.section-nav button[data-target]')) {
     button.addEventListener('click', () => goToSection(button.dataset.target));
@@ -1736,9 +1774,14 @@
   const narrowQuery = matchMedia('(max-width: 719px)');
   narrowQuery.addEventListener('change', () => {
     const active = document.activeElement;
-    const lost = active && active !== document.body ? !active.getClientRects().length : !!vanished;
+    const hidden = active && active !== document.body ? active : vanished;
+    const lost = hidden && !hidden.getClientRects().length;
     vanished = null;
     if (!lost) return;
+    if (!narrowQuery.matches && $('after-phase-inline').contains(hidden)) {
+      $('phase-' + state.mapPhase).focus({ preventScroll: true });
+      return;
+    }
     // The name of the selected account in a map table that is shown: tab 1, or the map after a change in tab 3
     const name = [['chain-acct:', state.account], ['after-acct:', state.mapAccount]]
       .map(([prefix, id]) => document.querySelector('[data-key="' + prefix + id + '"]'))

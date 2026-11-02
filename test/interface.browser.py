@@ -2106,8 +2106,8 @@ WORKER_LEAK = "replace:points.login:pw:red>pw:own-points"
 STUDENT_SUB = "replace:sub.login:mailUni>mailFree"
 # Known sentences of the spec: the change sentence (the heading of the comparison) and the summary lines
 KNOWN_TITLES = {
-    ("worker", W2_MOVE): {"ja": "メインのメール：復旧（予備のメールで再設定）の古いメールを紙の回復コードに付け替える",
-                          "en": "Main email: in recovery (Reset via backup email), replace the old email with paper recovery codes"},
+    ("worker", W2_MOVE): {"ja": "メインのメール：復旧（古いメールで再設定）の古いメールを紙の回復コードに付け替える",
+                          "en": "Main email: in recovery (Reset via the old email), replace the old email with paper recovery codes"},
     ("worker", W3_MOVE): {"ja": "ネット証券：復旧（メール＋SMSでパスキーを再登録）を外す",
                           "en": "Online brokerage: remove recovery (Re-register passkey by email + SMS)"},
     ("parent", P3_MOVE): {"ja": "銀行のネットバンキング：復旧（SMSで再設定）の電話番号（SMS）を書類での本人確認に付け替える",
@@ -3912,14 +3912,23 @@ def playback_case(browser, browser_name, url, width, language, theme, output, kn
         assert_chain(page, k, "worker", "leak", 1, language, "the step stays after the person button")
         # Another card stops it as well, and shows that card at step 0 (setCard resets the step: a fresh start with the new
         # card, from the attacker's starting point, so the user can run through it with Next step or play again). The live
-        # region is emptied without a word.
+        # region reads the starting point and the summary once.
         press(page, "#step-play")
         page.locator("#card-mail").click()
         moved = assert_chain(page, k, "worker", "mail", 0, language, "a card change stops playback")
         check(moved["steps"]["play"]["pressed"] == "false", ("not playing", moved["steps"]["play"]))
         page.clock.run_for(5000)
         assert_chain(page, k, "worker", "mail", 0, language, "nothing moves after the card change")
-        check([write for write in page.evaluate("() => window.__qaStatus") if write] == writes, "only the one status write")
+        card_notice = {
+            "ja": "段0：攻撃者が最初に手にしたのは、古いメールのアカウント。"
+                  "このカードでは、最後の段までに、最初に乗っ取られた古いメールを含めて、"
+                  "9つのうち7つのアカウントが倒れます（うち、★を付けた重要なアカウントは1つ）。",
+            "en": "Step 0: the attacker starts with the old email account. "
+                  "With this card, counting the old email taken over first, "
+                  "7 of the 9 accounts fall by the last step (1 of them important ★).",
+        }[language]
+        spoken = [write for write in page.evaluate("() => window.__qaStatus") if write]
+        check(spoken == writes + [card_notice], ("one playback result and one new-card summary", spoken))
         page.clock.resume()
         page.screenshot(path=str(output / (name + ".png")), full_page=False)
         assert_clean(errors, violations)
@@ -4061,6 +4070,166 @@ def new_context(browser, browser_name, width, language, theme):
     return browser.new_context(**options)
 
 
+def settle_layout(page):
+    page.evaluate("() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))")
+
+
+def test_comparison_bands(page, width, output, name):
+    page.locator("#person-worker").click()
+    page.locator("#tab-compare").click()
+    page.locator("#mode-all").click()
+    if not page.locator("#after-map").evaluate("el => el.open"):
+        page.locator("#after-map > summary").click()
+    inline, bar = page.locator("#after-phase-inline"), page.locator("#after-phase-bar")
+    if width >= 720:
+        check(not inline.is_visible() and bar.is_visible(), "one comparison control group on wide screens")
+        return
+    inline.evaluate("el => el.scrollIntoView({block: 'center'})")
+    page.wait_for_function("() => document.querySelector('#after-phase-bar').classList.contains('covered-by-inline')")
+    check(not bar.is_visible(), "inline controls suppress the sticky duplicate")
+    before = page.evaluate("() => ({y: scrollY, height: document.documentElement.scrollHeight})")
+    page.locator("#phase-inline-before").evaluate("el => el.focus({preventScroll: true})")
+    page.keyboard.press("Enter")
+    settle_layout(page)
+    check(abs(page.evaluate("() => scrollY") - before["y"]) <= 1, "inline phase choice keeps the scroll position")
+    check(page.locator("#phase-before").get_attribute("aria-pressed") == "true", "both phase groups agree")
+    inline.evaluate("el => { const r = el.getBoundingClientRect(); scrollBy(0, r.bottom - 2); }")
+    settle_layout(page)
+    check(inline.evaluate("el => { const r = el.getBoundingClientRect(); return r.top < 0 && r.bottom > 0; }"), "partial intersection reached")
+    check(not bar.is_visible(), "even two visible pixels of inline controls suppress the duplicate")
+    geometry = bar.evaluate("el => ({height: el.offsetHeight, page: document.documentElement.scrollHeight})")
+    page.evaluate("() => scrollBy(0, 4)")
+    page.wait_for_function("() => !document.querySelector('#after-phase-bar').classList.contains('covered-by-inline')")
+    check(bar.is_visible(), "sticky controls return once inline controls leave the viewport")
+    check(bar.evaluate("el => ({height: el.offsetHeight, page: document.documentElement.scrollHeight})") == geometry,
+          "suppressing controls preserves their layout space")
+    page.locator("#phase-before").evaluate("el => el.focus({preventScroll: true})")
+    inline.evaluate("el => el.scrollIntoView({block: 'center'})")
+    page.wait_for_function("() => document.activeElement.id === 'phase-inline-before'")
+    check(not bar.is_visible(), "focus moves to the corresponding visible inline control")
+    page.screenshot(path=str(output / (name + "-comparison-controls.png")), full_page=False)
+
+
+def test_mark_contrast(page):
+    page.locator("#tab-rules").click()
+    ratios = page.evaluate("""() => {
+      const rgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const lum = value => rgb(value).map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; })
+        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+      const ratio = el => { let bg = el;
+        while (bg.parentElement && ['rgba(0, 0, 0, 0)', 'transparent'].includes(getComputedStyle(bg).backgroundColor)) bg = bg.parentElement;
+        const a = lum(getComputedStyle(el).color), b = lum(getComputedStyle(bg).backgroundColor);
+        return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); };
+      const locked = document.querySelector('#mark-table tr[data-row="Locked"] .mark-symbol');
+      const normal = document.querySelector('#mark-table tbody tr:not([data-row="Locked"]) .mark-symbol');
+      return {locked: ratio(locked), size: parseFloat(getComputedStyle(locked).fontSize),
+        normalSize: parseFloat(getComputedStyle(normal).fontSize)};
+    }""")
+    check(ratios["locked"] >= 4.5 and ratios["size"] >= ratios["normalSize"], ("locked mark contrast and size", ratios))
+
+
+def test_print_word_parts(page, language, require_light=False):
+    page.wait_for_selector('#print-sheet[data-ready="true"]', state="attached")
+    page.emulate_media(media="print")
+    try:
+        parts = page.locator("#print-sheet .word-part").evaluate_all("""els => els.map(el => {
+          const range = document.createRange(); range.selectNodeContents(el);
+          return {text: el.textContent, nowrap: getComputedStyle(el).whiteSpace === 'nowrap',
+            lines: new Set(Array.from(range.getClientRects(), r => Math.round(r.top))).size};
+        })""")
+        check(language != "ja" or bool(parts), "Japanese print sheets contain protected word parts")
+        check(all(p["nowrap"] and p["lines"] <= 1 for p in parts), ("printed word parts remain whole", parts))
+        if require_light:
+            colors = page.evaluate("""() => ({scheme: getComputedStyle(document.documentElement).colorScheme,
+              ink: getComputedStyle(document.querySelector('#print-sheet')).color,
+              paper: getComputedStyle(document.querySelector('#print-sheet')).backgroundColor})""")
+            check(colors == {"scheme": "light", "ink": "rgb(0, 0, 0)", "paper": "rgb(255, 255, 255)"}, ("print palette", colors))
+    finally:
+        page.emulate_media(media="screen")
+
+
+def test_ranking_notice(page):
+    page.locator("#person-worker").click()
+    page.locator("#tab-compare").click()
+    seen = []
+    for mode in ("all", "simswap", "mail"):
+        button = page.locator("#mode-" + mode)
+        button.evaluate("el => el.focus({preventScroll: true})")
+        before = page.evaluate("() => scrollY")
+        page.keyboard.press("Enter")
+        settle_layout(page)
+        check(abs(page.evaluate("() => scrollY") - before) <= 1, ("mode choice does not scroll", mode))
+        notice = page.locator("#candidate-first-summary")
+        check(notice.is_visible() and notice.inner_text().strip(), ("first-ranked change is explained", mode))
+        first = page.locator("#candidates .cand-button").first
+        check(first.get_attribute("aria-pressed") == "true", ("mode chooses the first candidate", mode))
+        seen.append(notice.inner_text())
+    check(len(set(seen)) > 1, "ranking notice updates when its first-ranked result changes")
+
+
+def test_help_backdrop(page):
+    page.locator("#help").click()
+    dialog = page.locator("#help-dialog")
+    box = dialog.bounding_box()
+    inside, outside = (box["x"] + box["width"] / 2, box["y"] + 10), (2, 2)
+    for start, end in ((inside, outside), (outside, inside), (inside, inside)):
+        page.mouse.move(*start)
+        page.mouse.down()
+        page.mouse.move(*end)
+        page.mouse.up()
+        check(dialog.is_visible(), ("a non-backdrop gesture keeps help open", start, end))
+    page.locator("#help-dialog .lesson").evaluate_all("els => els.forEach(el => { el.open = true; })")
+    overflow = page.locator("#help-dialog .table-frame").evaluate_all("els => els.filter(el => el.scrollWidth > el.clientWidth).map(el => ({width: el.clientWidth, scroll: el.scrollWidth}))")
+    check(not overflow, ("expanded help tables fit their frames", overflow))
+    page.mouse.click(*outside)
+    check(not dialog.is_visible(), "a complete backdrop click closes help")
+    check(page.evaluate("() => document.activeElement.id") == "help", "backdrop dismissal restores the help button")
+    page.keyboard.press("Enter")
+    check(dialog.is_visible(), "the restored help button reopens help")
+    page.keyboard.press("Escape")
+
+
+def test_action_announcements(page):
+    page.locator("#person-worker").click()
+    page.locator("#tab-chain").click()
+    page.locator("#card-leak").click()
+    press(page, "#step-first")
+    page.evaluate("""() => {
+      window.__actionNotices = [];
+      window.__actionObserver = new MutationObserver(records => {
+        const regions = new Set(records.map(r => (r.target.nodeType === 1 ? r.target : r.target.parentElement)
+          .closest('[role="status"], [aria-live="polite"], [aria-live="assertive"]')).filter(Boolean));
+        for (const el of regions) if (el.textContent.trim() && el.getClientRects().length)
+          window.__actionNotices.push({id: el.id, text: el.textContent});
+      });
+      window.__actionObserver.observe(document.body, {subtree: true, childList: true, characterData: true});
+    }""")
+    try:
+        for selector, expected in (("#step-next", 1), ("#card-simswap", 1), ("#card-simswap", 0)):
+            page.evaluate("() => { window.__actionNotices = []; }")
+            page.locator(selector).click()
+            settle_layout(page)
+            notices = page.evaluate("() => window.__actionNotices")
+            check(len(notices) == expected, ("one announcement for an action, none for an unchanged card", selector, notices))
+    finally:
+        page.evaluate("() => window.__actionObserver.disconnect()")
+
+
+def test_forced_color_selection(page, theme):
+    page.emulate_media(forced_colors="active")
+    try:
+        page.locator("#person-worker").click()
+        page.locator("#tab-chain").click()
+        page.locator("#card-simswap").click()
+        for selected, other in (("#person-worker", "#person-parent"), ("#card-simswap", "#card-leak")):
+            styles = page.locator(selected + ", " + other).evaluate_all("""els => els.map(el => {
+              const s = getComputedStyle(el); return [s.borderTopWidth, s.borderTopStyle, s.borderBottomWidth, s.borderBottomStyle];
+            })""")
+            check(styles[0] != styles[1], ("selection survives forced colors as a border shape", selected, styles))
+    finally:
+        page.emulate_media(forced_colors="none", color_scheme=theme)
+
+
 def matrix_case(browser, browser_name, url, width, language, theme, output, counts, stage, known):
     name = f"{browser_name}-{width}-{language}-{theme}"
     context = new_context(browser, browser_name, width, language, theme)
@@ -4108,6 +4277,14 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             # The shape of the rules tab (eleven rules, the stacked symbol table, the four notes, the paper section)
             test_rules_tab(page, width, layouts, language)
             page.screenshot(path=str(output / (name + "-rules.png")), full_page=False)
+        if stage >= "1d":
+            test_comparison_bands(page, width, output, name)
+            test_ranking_notice(page)
+            test_help_backdrop(page)
+            test_mark_contrast(page)
+            test_action_announcements(page)
+            test_forced_color_selection(page, theme)
+            test_print_word_parts(page, language, require_light=True)
         saved = test_preferences_interaction(page, language, theme, counts)
         assert_clean(errors, violations)
         return {"case": name, "status": "passed", "layouts": layouts, "saved": saved}
