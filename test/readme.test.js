@@ -822,7 +822,7 @@ test('the bilingual session has a continuous 20-minute schedule and four discuss
     assert.equal(rows.length, 5, `${FILES[lang]}: five session stages`);
     let end = 0;
     for (const row of rows) {
-      const span = row[0].match(/^(\d+)–(\d+)(?:分| min)$/);
+      const span = row[0].match(lang === 'ja' ? /^(\d+)〜(\d+)分$/ : /^(\d+)–(\d+) min$/);
       assert.ok(span, `${FILES[lang]}: time range ${row[0]}`);
       assert.equal(Number(span[1]), end, `${FILES[lang]}: no gap or overlap`);
       end = Number(span[2]);

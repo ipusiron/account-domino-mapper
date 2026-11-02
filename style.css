@@ -903,3 +903,15 @@ caption .table-ref { margin-right: .35em; }
   }
   button[aria-pressed="true"] .tag-chosen { color: Highlight; background: HighlightText; }
 }
+
+/* Wide screens: tighter spacing so the first boxes of the map fit on the first screen together with the step lead */
+@media (min-width: 1000px) {
+  #chain-key { font-size: .8125rem; }
+  .tabs { margin-top: 4px; }
+  #panel-chain .panel-intro { margin-bottom: .2rem; }
+  .highlights-block { margin: .1rem 0 .3rem; }
+  .highlights-note { margin-bottom: .1rem; }
+  .highlight-button { padding-top: .2rem; padding-bottom: .2rem; }
+  .stage-band { padding-top: .25rem; padding-bottom: .35rem; }
+  #step-line { margin-top: .15rem; }
+}
