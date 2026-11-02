@@ -873,3 +873,5 @@ caption .table-ref { margin-right: .35em; }
   .after-phase-inline { display: block; margin: .45rem 0; }
   .after-phase-bar.covered-by-inline { visibility: hidden; }
 }
+
+.candidate-first-summary { margin: .5rem 0; padding: .4rem .6rem; border-left: 3px solid var(--accent); font-size: .875rem; }

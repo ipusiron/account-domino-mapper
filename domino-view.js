@@ -479,6 +479,13 @@
     return { label: D[mode === 'all' ? 'faceSavedAll' : 'faceSaved'], n: e.saved, imp: e.imp ? fill(D.faceImp, { imp: e.imp }) : null, extras };
   }
   // 並べ方（モードで替える）：上位に出さない変更の箇条、比べる順の箇条（番号付き）、そのあとの注記
+  function candidateFirstSummary(p, pv, moveId, mode, M, lang) {
+    if (!moveId) return '';
+    const D = dictionary(M, lang), e = effect(p, pv, moveId, mode);
+    const key = mode === 'lockout' ? 'candidateFirstUnlocked' : mode === 'all' ? 'candidateFirstSavedAll' : 'candidateFirstSaved';
+    return fill(D.candidateFirst, { title: moveTitle(p, pv.moves.find((move) => move.id === moveId), M, lang),
+      effect: fill(D[key], { n: mode === 'lockout' ? e.unlocked : e.saved }) });
+  }
   function rankingNote(mode, M, lang) {
     const D = dictionary(M, lang);
     const lockout = mode === 'lockout';
@@ -1780,7 +1787,7 @@
     highlightLook, layout, textWidth, wrapText, wrapTags, mailDepths, symbolTable, printTable,
     lessons: LESSONS, lessonRefs: LESSON_REFS, relatedTools: RELATED_TOOLS, lessonScenes: LESSON_SCENES, lesson8Rows: LESSON8_ROWS, lessonTable,
     // タブ3：失うメール・候補のボタンの欄・候補の上の1行・要約の攻撃の文・なぜ守れたか
-    lostMails, effectFace, storyMoveNote, attackParts, whyLine,
+    lostMails, effectFace, candidateFirstSummary, storyMoveNote, attackParts, whyLine,
     // タブ2・タブ4・ヘルプ・印刷
     lockDetail, markTable, lessonTableNumbers,
     // 変更後の地図：地図のカードの選び方・カードについての文・箱の印・題・表の行・選んだアカウントの前後・表の凡例

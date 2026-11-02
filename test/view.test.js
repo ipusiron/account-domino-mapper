@@ -1630,3 +1630,25 @@ test('F: a box that a change adds names its account under its name, in both lang
   const box = Object.values(L.box).find((b) => b.added);
   assert.deepEqual([box.lines.map((line) => line.value), box.sub.map((line) => line.value)], [['パスワードD'], ['ポイントアプリだけ']]);
 });
+
+
+test('The first-ranked summary names the first change and its saved accounts or removed lockouts in both languages', () => {
+  for (const person of D.personas) {
+    const vectors = C.personaVectors(person);
+    for (const mode of ['all', 'leak', 'simswap', 'mail', 'desk', 'lockout']) for (const language of ['ja', 'en']) {
+      const first = V.candidates(person, vectors, mode).ids[0];
+      const summary = V.candidateFirstSummary(person, vectors, first, mode, M, language);
+      if (!first) { assert.equal(summary, ''); continue; }
+      const change = vectors.moves.find((move) => move.id === first);
+      const effect = V.effect(person, vectors, first, mode);
+      assert.ok(summary.startsWith(language === 'ja' ? '1位：' : 'Rank 1: '));
+      assert.ok(summary.includes(V.moveTitle(person, change, M, language)));
+      const count = mode === 'lockout' ? effect.unlocked : effect.saved;
+      const meaning = language === 'ja' ? (mode === 'lockout' ? '閉め出しがなくなる' + count : '守れる' + count)
+        : (mode === 'lockout' ? 'Lockouts removed: ' + count : 'Saves ' + count);
+      assert.ok(summary.includes(meaning), summary);
+      if (mode === 'all') assert.ok(summary.includes(language === 'ja' ? '4枚の合計' : 'sum over 4 cards'));
+    }
+    assert.equal(V.candidateFirstSummary(person, vectors, null, 'all', M, 'ja'), '');
+  }
+});

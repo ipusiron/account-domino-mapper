@@ -4139,6 +4139,25 @@ def test_print_word_parts(page, language, require_light=False):
         page.emulate_media(media="screen")
 
 
+def test_ranking_notice(page):
+    page.locator("#person-worker").click()
+    page.locator("#tab-compare").click()
+    seen = []
+    for mode in ("all", "simswap", "mail"):
+        button = page.locator("#mode-" + mode)
+        button.evaluate("el => el.focus({preventScroll: true})")
+        before = page.evaluate("() => scrollY")
+        page.keyboard.press("Enter")
+        settle_layout(page)
+        check(abs(page.evaluate("() => scrollY") - before) <= 1, ("mode choice does not scroll", mode))
+        notice = page.locator("#candidate-first-summary")
+        check(notice.is_visible() and notice.inner_text().strip(), ("first-ranked change is explained", mode))
+        first = page.locator("#candidates .cand-button").first
+        check(first.get_attribute("aria-pressed") == "true", ("mode chooses the first candidate", mode))
+        seen.append(notice.inner_text())
+    check(len(set(seen)) > 1, "ranking notice updates when its first-ranked result changes")
+
+
 def matrix_case(browser, browser_name, url, width, language, theme, output, counts, stage, known):
     name = f"{browser_name}-{width}-{language}-{theme}"
     context = new_context(browser, browser_name, width, language, theme)
@@ -4188,6 +4207,7 @@ def matrix_case(browser, browser_name, url, width, language, theme, output, coun
             page.screenshot(path=str(output / (name + "-rules.png")), full_page=False)
         if stage >= "1d":
             test_comparison_bands(page, width, output, name)
+            test_ranking_notice(page)
             test_mark_contrast(page)
             test_print_word_parts(page, language)
         saved = test_preferences_interaction(page, language, theme, counts)

@@ -721,6 +721,9 @@
     }
     $('candidates').replaceChildren(...children);
     $('candidates').hidden = !found.ids.length;
+    const firstSummary = View.candidateFirstSummary(p, pv, found.ids[0], state.mode, Messages, state.language);
+    setWords($('candidate-first-summary'), firstSummary);
+    $('candidate-first-summary').hidden = !firstSummary;
     // The reason without candidates is a status message (#candidates-none sits in the live region #candidates-status). It is
     // written only when it changes, so that a redraw that changes nothing (the theme, for example) does not read it again.
     const reason = found.reason ? t(found.reason, { person: t(PERSON_KEYS[state.persona]), name: t(NAME_KEYS[state.persona]) }) : '';
